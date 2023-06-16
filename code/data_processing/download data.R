@@ -1,0 +1,51 @@
+# download data from Regrow shared google drive
+
+library(readr)  # for unzip
+
+
+# LOAD OpTIS data 
+datil <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/OpTIS Adoption Acres/IL_counties_adoption_acreage.csv")
+datny <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/OpTIS Adoption Acres/NY_counties_adoption_acreage.csv")
+
+# SAVE OpTIS data to github project
+write.csv(datil, "data/optis/datil.csv", row.names=F)
+write.csv(datny, "data/optis/datny.csv", row.names=F)
+
+# LOAD scenario data
+scenil <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/il_adoption_scenarios_final_outputs.csv")
+scena <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/almonds_adoption_scenarios_final_outputs.csv")
+sceng <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/grape_adoption_scenarios_final_outputs.csv")
+scenh <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/hops_adoption_scenarios_final_outputs.csv")
+scenny <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/ny_adoption_scenarios_final_outputs.csv")
+
+# SAVE scenario data
+write.csv(scenil, "data/scenarios/scenil.csv", row.names=F)
+write.csv(scena, "data/scenarios/scena.csv", row.names=F)
+write.csv(sceng, "data/scenarios/sceng.csv", row.names=F)
+write.csv(scenh, "data/scenarios/scenh.csv", row.names=F)
+write.csv(scenny, "data/scenarios/scenny.csv", row.names=F)
+
+# LOAD biomass
+bm <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/max_biomass_summary.csv")
+
+# LOAD soil metadata
+soils <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/simulation_points_w_soils.csv")
+
+# LOAD un-weighted DNDC results (all systems) ("post_weighting" in the file name refers to the vine and tree crops being weighted for % row that is tree/vine and % alley)
+unw <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/yearly_outputs_post_weighting.csv")
+
+# SAVE biomass, soil metadata, and un-weighted results
+write.csv(bm, "data/bm.csv", row.names=F)
+write.csv(soils, "data/soils.csv", row.names=F)
+write.csv(unw, "data/unw.csv", row.names=F)
+
+################ THE FOLLOWING WORKS WHEN WE'RE READY TO DEAL WITH BIG FILES - HASN'T BEEN COMPLETED
+# Daily nitrogen (600 MB) - a zipped file that includes files for each simulation run. These include daily nitrogen loading and flux information for each management system.
+unzip("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/day_soil_n_files-AFT.zip", exdir="/tempdir")
+temp <- list.files("/tempdir", pattern="*.csv")
+setwd("/tempdir")
+dailyn <- lapply(temp, read.delim)  # this is 11.1 GB
+# next step would be to convert this to one dataframe
+
+# Daily water (666 MB) -  zipped file that includes files for each simulation run. These files include daily evaporation and transpiration rates that are lost through each management system.
+unzip("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Water/day_water_files-AFT.zip", exdir="/tempdir")
