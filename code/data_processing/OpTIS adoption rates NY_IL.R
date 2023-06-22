@@ -17,24 +17,95 @@ library(dplyr)
 
 # load the data
 datil <- read.csv("data/optis/datil.csv")
-datny <- read.csv("data/optis/datny.csv")
+# datny <- read.csv("data/optis/datny.csv")
 
-# combine the data into one df
-dat <- rbind(datil, datny)
-# clean up
-rm(datil)
-rm(datny)
+# # combine the data into one df
+# dat <- rbind(datil, datny)
+# # clean up
+# rm(datil)
+# rm(datny)
 
-colnames(dat)[1] <- "state"
-dat <- dat[,c(-2, -10)]
 
-sum(is.na(dat$kpi_value))
+datil <- datil[,c(-2, -10)]
+colnames(datil)[1:3] <- c("state", "county", "fips")
+
+sum(is.na(datil$kpi_value))
+
+# fix one county spelling
+datil$county <- ifelse(datil$county %in% "De Witt County", "DeWitt County", datil$county)
+
+
 
 # unique(dat$kpi_name)
 # cast data into wide form for separate columns by kpi_name and kpi_value
-datw <- dcast(dat, ...~kpi_name, value.var="kpi_value")
-colnames(datw)[c(2,3,7:11)] <- c("county", "fips", "acres", "ct.acres", "cc.acres", "nt.acres", "rt.acres") 
+datw <- dcast(datil, ...~kpi_name, value.var="kpi_value")
+colnames(datw)[c(2,3,7:11)] <- c("county", "fips", "eval.acres", "ct.acres", "cc.acres", "nt.acres", "rt.acres") 
 # $acres is acres analyzed by OpTIS
+
+
+# compare acres evaluated to harvested cropland acres from Ag Census
+ILac <- aggregate(eval.acres ~ county + year, dat=datw, FUN="sum") %>%  # first sum acres across crops per year
+  arrange(year,county)
+
+# #  add harvested cropland acres by IL county from 2017 ag census
+# acres <- read.csv("C:/Users/BonnieMcGillPhD/American Farmland Trust/CLM-19 FFAR GHG - Documents/General/Results/NASS Quick Stats IL harvested crop acres by county 2017.csv", header=T)
+# acres <- acres[,c("County", "Value")]
+# colnames(acres) <- c("county", "harv_ac")
+# acres$harv_ac <- gsub(',', '', acres$harv_ac)
+# acres$harv_ac <- as.numeric(acres$harv_ac)
+# # make county names in acres match OpTIS data
+# acres$county <- tolower(acres$county)
+# acres$county <- tools::toTitleCase(acres$county)
+# acres$county <- paste0(acres$county, " County")
+# # clean up county names to match OpTIS data (OpTIS spellings are correct)
+# acres$county <- ifelse(acres$county %in% "De Witt County", "DeWitt County",
+#                        ifelse(acres$county %in% "De Kalb County", "DeKalb County",
+#                               ifelse(acres$county %in% "Du Page County", "DuPage County",
+#                                      ifelse(acres$county %in% "La Salle County", "LaSalle County",
+#                                             ifelse(acres$county %in% "Mcdonough County", "McDonough County",
+#                                                    ifelse(acres$county %in% "Mchenry County", "McHenry County",
+#                                                           ifelse(acres$county %in% "Mclean County", "McLean County",
+#                                                                  ifelse(acres$county %in% "St Clair County", "St. Clair County",
+#                                                                         ifelse(acres$county %in% "will County", "Will County", acres$county)))))))))
+# acres <- arrange(acres, county)
+# write.csv(acres, "data/IL_harvested_cropland_2017census.csv", row.names=F)
+acres <- read.csv("data/IL_harvested_cropland_2017census.csv")
+ILac <- left_join(ILac, acres)
+ILac$perc_eval <- round((ILac$eval.acres / ILac$harv_ac), digits=2)
+
+# look for outliers, remember the Ag Census is not necessarily the truth either
+min(ILac$perc_eval)
+hist(ILac$perc_eval)
+small <- ILac[ILac$perc_eval < 0.50,]
+ # Hardin Co. borders Kentucky and is mostly forested. In 2017 Census it was 13,421 acres
+   # in 2012 census it was 9,318. OpTIS is evaluating about 5500 ac per year, which is only
+   # about 40% of the county's cropland, each year it is low. Why is it low every year?
+   # I would expect it to be low like some years, when its cloudy or something. Is it because
+   # so much forest intermixed, it is hard to discern forest and fields?
+   ###### exclude Hardin County all years?
+ # Union Co. also shows up every year around 40% evaluated. In the ag census it has
+   # 84,872 ac in 2017, and 59,743 acres in 2012, quite a fluctuation. OpTIS is evaluating about 
+   # 37k acres. Union Co. is also in southern IL, bordering MO, and has lots of forest
+   # land intermixed with ag fields.
+ # Jo Daviess County is the NE corner of the state, bordering IA, WI. It is ag with pockets
+   # of forest mixed in. In 2017 Ag Census says it had 183k acres and in 2012 172k. OpTIS is evaluating
+   # about 89k in 2015 and 2016, very nearly 50%, in following years it gets up to 90k. 
+ # Alexander Co. in 2019 is at 38% evaluated (14,500 ac). In the ag census in 2017 it was 38k ac
+   # harvested, and 2012 it was 48k ac harvested.This is a small county in the very southern tip of IL
+   # with a big patch of forest, and farm fields. Could be that not much of the county fields grow corn?
+   # Ag census corn acres are 5,211 in 2017, 11,833 in 2012. 2017 soybeans were 31,000 ac, 32k in 2012.
+   ###### perhaps throw out Alexander Co. 2019 data?
+ # Jackson County in 2019 also low just that year but nearly half (46%)
+ # Johnson County in 2019 also low just that year but nearly half (49%)
+
+big <- ILac[ILac$perc_eval > 1.2,]
+ # DuPage - looking at the Ag Census data it looks like the harvested cropland acres for DuPage county
+   # were underestimated/reported in 2017. OpTIS evaluates about 4000 ac every year
+   # and the 2012 census reported 5,643. (not 1,272 ac as in 2017). So DuPage is OK.
+   # As you can tell by the acreage, DuPage is not a big farming county, it is mostly Chicago suburbs.
+ # Putnam county in Census was 41,934 in 2017 and 46,212 in 2012. OpTIS is evaluating
+   # about 54,000 ac.Putnam Co. altogether is about 110,000 ac. Roughly half of which is 
+   # in ag, looking at google maps satellite. So 41k, 46k, and 54k, are all plausible.
 
 # calculate percentages
 datw$perc_ct <- 100*(datw$ct.acres / datw$acres)
