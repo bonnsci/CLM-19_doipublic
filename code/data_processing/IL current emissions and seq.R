@@ -58,11 +58,77 @@ unw <- read.csv("data/unw.csv")
 
 ###current GHG emissions and C sequestration from corn-soybean agriculture in Illinois
 ##state level
+# n2o tonne N/ha Calendar year daily sum (Jan. 1 - Dec. 31) of nitrous oxide direct emissions in co2 equivalents.
+# ch4 tonne C/ha Calendar year daily sum (Jan. 1 - Dec. 31) of methane emissions in co2 equivalents.
+# cseq == dsoc tonne C/ha Calendar year change in soil organic carbon stocks (Dec. 31 - Jan. 1).
 
 
+scenil %>% filter (scenario.code == 1 & year ==2022) %>% #taking only scenario 1 and 2022 for analysis
+  select(climate_scenario, dsoc, n2o, ch4) %>%
+  gather(var, value, dsoc:ch4) %>%
+  group_by(climate_scenario, var) %>%
+  summarise_all(list(mean, sd)) %>% #fn1, fn2
+  ggplot(aes(x=climate_scenario, y=fn1, group=climate_scenario)) + 
+  geom_bar(stat="identity", position=position_dodge(), aes(fill=climate_scenario)) +
+  geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
+                position=position_dodge(0.9), width=0.2) +
+  facet_wrap(~var, scales = "free_y") +
+  scale_fill_manual(values=c("#DDAA33", "#228833", "#66CCEE"), 
+                    #labels=c("Corn", "Soybeans", "Winter Wheat"),
+                    name="Climate Scenario") +
+  #scale_y_continuous(breaks=seq(0,70,10)) +
+  ylab("co2 equivalents (Tn/ha)") +
+  xlab("") +
+  theme_bw()+
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank() ,
+    axis.text=element_text(size=12),
+    axis.title.x=element_text(size=12, face="bold"),
+    axis.title.y=element_text(size=12, face="bold"),
+    panel.background = element_rect(fill = 'white') ,
+    panel.border=element_rect(color="grey50", fill=NA, linewidth=0.5),
+    strip.text=element_text(size=12, face="bold"),
+    legend.text=element_text(size=11),
+    legend.title=element_text(size=12, face="bold"),
+    plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")
+  )
 
-
+ggsave("plots/ch4_n20_dsoc_2022sn1.png", width=12, height=6)     
+  
 
 ##by sub-scenario
+##year by year trends 
+unw %>% filter (site_name == "IL-n_1" & year %in% (2010:2022) & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+  select(management, year, dsoc, n2o, ch4) %>%
+  gather(var, value, dsoc:ch4) %>%
+  ggplot(aes(as.numeric(year), value, color= management)) +
+  geom_point () +
+  facet_wrap(~var, scales = "free_y") +
+  geom_line() +
+  scale_x_continuous(breaks=seq(2010,2022,1))
+  
+ggsave("plots/temp1.png", width=12, height=6)     
+
+  
+  
+###summary figure by management practice
+  
+unw %>% filter (site_name == "IL-n_1" & year %in% (2010:2022) & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+  select(management,dsoc, n2o, ch4) %>%
+  gather(var, value, dsoc:ch4) %>%
+  group_by(management, var) %>%
+  summarise_all(list(mean, sd)) %>% #fn1, fn2
+  ggplot(aes(x=management, y=fn1, group=management)) + 
+  geom_bar(stat="identity", position=position_dodge(), aes(fill=management)) +
+  geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
+                position=position_dodge(0.9), width=0.2) +
+  facet_wrap(~var, scales = "free_y") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+ggsave("plots/temp2.png", width=12, height=6)     
+
+##do anova analysis for management effect 
 
 
