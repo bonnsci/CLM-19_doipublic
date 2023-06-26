@@ -5,7 +5,8 @@
 # load packages
 library(reshape2) # for dcast()
 library(ggplot2)
-library(dplyr)
+library (tidyverse)
+#library(dplyr) #is having conflict with 'filter' lap
 
 # to update data, run "download data.R"
 
@@ -53,3 +54,15 @@ unw <- read.csv("data/unw.csv")
 # ghg_n2o           tonne co2e/ha Calendar year daily sum (Jan. 1 - Dec. 31) of nitrous oxide direct emissions in co2 equivalents.
 # ghg_indirect_n2o  tonne co2e/ha Calendar year daily sum (Jan. 1 - Dec. 31) of nitrous oxide indirect emissions in co2 equivalents.
 # ghg_total_n2o     tonne co2e/ha Sum of ghg_n2o and ghg_indirect_n2o in co2 equivalents 
+
+
+###current GHG emissions and C sequestration from corn-soybean agriculture in Illinois
+##state level
+
+
+
+
+
+##by sub-scenario
+
+
