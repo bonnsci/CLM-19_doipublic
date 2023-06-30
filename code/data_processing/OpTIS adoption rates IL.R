@@ -35,7 +35,6 @@ sum(is.na(datil$kpi_value))
 datil$county <- ifelse(datil$county %in% "De Witt County", "DeWitt County", datil$county)
 
 
-
 # unique(dat$kpi_name)
 # cast data into wide form for separate columns by kpi_name and kpi_value
 datw <- dcast(datil, ...~kpi_name, value.var="kpi_value")
@@ -43,6 +42,9 @@ colnames(datw)[c(2,3,7:11)] <- c("county", "fips", "eval.acres", "ct.acres", "cc
 # $acres is acres analyzed by OpTIS
 
 
+
+
+######### DATA CLEANING
 # compare acres evaluated to harvested cropland acres from Ag Census
 ILac <- aggregate(eval.acres ~ county + year, dat=datw, FUN="sum") %>%  # first sum acres across crops per year
   arrange(year,county)
@@ -71,22 +73,54 @@ ILac <- aggregate(eval.acres ~ county + year, dat=datw, FUN="sum") %>%  # first 
 # write.csv(acres, "data/IL_harvested_cropland_2017census.csv", row.names=F)
 acres <- read.csv("data/IL_harvested_cropland_2017census.csv")
 ILac <- left_join(ILac, acres)
-ILac$perc_eval <- round((ILac$eval.acres / ILac$harv_ac), digits=2)
+ILac$perc_eval <- round((100*ILac$eval.acres / ILac$harv_ac), digits=1)
 
 # look for outliers, remember the Ag Census is not necessarily the truth either
 min(ILac$perc_eval)
 hist(ILac$perc_eval)
-small <- ILac[ILac$perc_eval < 0.50,]
+small <- ILac[ILac$perc_eval < 50,] %>%
+  arrange(county)
+# small
+#     county           year eval.acres   harv_ac    perc_eval
+# 1   Alexander County 2019  14541.616   38737      37.5
+# 2      Hardin County 2015   5234.984   13421      39.0
+# 3      Hardin County 2016   5301.364   13421      39.5
+# 4      Hardin County 2017   5551.443   13421      41.4
+# 5      Hardin County 2018   5665.805   13421      42.2
+# 6      Hardin County 2019   5009.524   13421      37.3
+# 7      Hardin County 2020   5837.969   13421      43.5
+# 8      Hardin County 2021   5711.928   13421      42.6
+# 9     Jackson County 2019  73051.877  157102      46.5
+# 10 Jo Daviess County 2015  88683.906  183158      48.4
+# 11 Jo Daviess County 2016  88943.708  183158      48.6
+# 12 Jo Daviess County 2017  91325.322  183158      49.9
+# 13    Johnson County 2019  18442.644   37375      49.3
+# 14      Union County 2015  34804.867   84872      41.0
+# 15      Union County 2016  36957.190   84872      43.5
+# 16      Union County 2017  37166.939   84872      43.8
+# 17      Union County 2018  36717.970   84872      43.3
+# 18      Union County 2019  22960.301   84872      27.1
+# 19      Union County 2020  35842.927   84872      42.2
+# 20      Union County 2021  37441.373   84872      44.1
  # Hardin Co. borders Kentucky and is mostly forested. In 2017 Census it was 13,421 acres
    # in 2012 census it was 9,318. OpTIS is evaluating about 5500 ac per year, which is only
    # about 40% of the county's cropland, each year it is low. Why is it low every year?
    # I would expect it to be low like some years, when its cloudy or something. Is it because
    # so much forest intermixed, it is hard to discern forest and fields?
    ###### exclude Hardin County all years?
+   ###### Hardin Co. is fourth for highest %NT and %CC in state (should it be??)
+   ###### should we eliminate counties with < X acres acres?? 
+   ###### what is the lower 10th percentile in terms of harvested acres?
+   ###### Hardin in lower tenth percentile, gets excluded
+
+tenthp <- quantile(acres$harv_ac, probs=0.1)
+#  70245.6 acres
+
  # Union Co. also shows up every year around 40% evaluated. In the ag census it has
    # 84,872 ac in 2017, and 59,743 acres in 2012, quite a fluctuation. OpTIS is evaluating about 
    # 37k acres. Union Co. is also in southern IL, bordering MO, and has lots of forest
    # land intermixed with ag fields.
+   ####### (Union Co. is 2nd highest %NT county in the state (once we exclude lower 10% counties by acre)--should it be?)
  # Jo Daviess County is the NE corner of the state, bordering IA, WI. It is ag with pockets
    # of forest mixed in. In 2017 Ag Census says it had 183k acres and in 2012 172k. OpTIS is evaluating
    # about 89k in 2015 and 2016, very nearly 50%, in following years it gets up to 90k. 
@@ -94,38 +128,102 @@ small <- ILac[ILac$perc_eval < 0.50,]
    # harvested, and 2012 it was 48k ac harvested.This is a small county in the very southern tip of IL
    # with a big patch of forest, and farm fields. Could be that not much of the county fields grow corn?
    # Ag census corn acres are 5,211 in 2017, 11,833 in 2012. 2017 soybeans were 31,000 ac, 32k in 2012.
-   ###### perhaps throw out Alexander Co. 2019 data?
+   ### excluded with lower 10% cut
  # Jackson County in 2019 also low just that year but nearly half (46%)
  # Johnson County in 2019 also low just that year but nearly half (49%)
 
-big <- ILac[ILac$perc_eval > 1.2,]
+
+
+big <- ILac[ILac$perc_eval > 120,]
  # DuPage - looking at the Ag Census data it looks like the harvested cropland acres for DuPage county
    # were underestimated/reported in 2017. OpTIS evaluates about 4000 ac every year
    # and the 2012 census reported 5,643. (not 1,272 ac as in 2017). So DuPage is OK.
    # As you can tell by the acreage, DuPage is not a big farming county, it is mostly Chicago suburbs.
+   ### excluded when cut lower 10th percentile
  # Putnam county in Census was 41,934 in 2017 and 46,212 in 2012. OpTIS is evaluating
    # about 54,000 ac.Putnam Co. altogether is about 110,000 ac. Roughly half of which is 
    # in ag, looking at google maps satellite. So 41k, 46k, and 54k, are all plausible.
-
-# calculate percentages
-datw$perc_ct <- 100*(datw$ct.acres / datw$acres)
-datw$perc_cc <- 100*(datw$cc.acres / datw$acres)
-datw$perc_nt <- 100*(datw$nt.acres / datw$acres)
-datw$perc_rt <- 100*(datw$rt.acres / datw$acres)
+   ### excluded when cut lower 10th percentile
 
 # number of counties represented in IL data
-datw %>%
-  filter(state %in% "IL") %>%
-  distinct(county) %>%
-  n_distinct()
+# datw %>%
+#   filter(state %in% "IL") %>%
+#   distinct(county) %>%
+#   n_distinct()
 # 101 # 102 counties in IL, Lake County is missing, it's a tiny county between
 # Chicago and Wisconsin border, basically still Chicago outlying area. No ag.
 # surprised cook county (Chicago) is even in dataset!
 
 
+# remove lowest 10 percent of counties based on acreage (keep upper 90%)
+ILac_up90 <- ILac[ILac$harv_ac > tenthp,]
+# remove counties with < 50% acres evaluated
+# first remove counties with < 50% in 2017 (corresponds to year of harvested cropland data)
+ILac_ev50 <- ILac_up90 %>%
+                filter(year==2017, perc_eval>50)
+# then join these counties with ILac_up90
+ILac_up90 <- inner_join(ILac_up90, ILac_ev50[,c(1,4)])
+
+# clean up
+rm(ILac_ev50, big, small, acres)                
+  
+
+
+# # counties excluded:
+# ILac_lo10 <- ILac[ILac$harv_ac <= tenthp,] %>%
+#               filter(year== 2015)
+# # Alexander, DuPage, Hardin, Johnson, Putnam now all excluded
+# # Union still in, barely makes the cutoff.
+# # ILac_lo10
+# #    county            year eval.acres  harv_ac    perc_eval
+# # 1   Alexander County 2015  42645.819   38737     110.1
+# # 2       Brown County 2015  59885.648   69625      86.0
+# # 3     Calhoun County 2015  30301.075   54453      55.6
+# # 4        Cook County 2015   7761.593   10095      76.9
+# # 5      DuPage County 2015   3923.015    1272     308.4
+# # 6      Hardin County 2015   5234.984   13421      39.0
+# # 7     Johnson County 2015  19141.045   37375      51.2
+# # 8        Pope County 2015  17526.383   19823      88.4
+# # 9      Putnam County 2015  54470.438   41934     129.9
+# # 10 Williamson County 2015  40985.528   61440      66.7
+# rm(ILac_lo10)
+
+
+# "Described the total acres evaluated and how the % was calculated." 
+# % CC, NT, RT was calculated by dividing the number of acres with those practices 
+# detected by the number of cropland acres evaluated by OpTIS per county-year
+
+# what proportion of cropland acres did OpTIS evaluate per county?
+# counties in the lowest 10% of cropland acres (according to ag census 2017) were excluded
+# Counties with <50% of cropland acres evaluated in 2017 were excluded
+ILac_up90 <- ILac_up90 %>%  
+  arrange(perc_eval)
+hist(ILac_up90$perc_eval, breaks=15)
+mean(ILac_up90$perc_eval) # 85.6
+min(ILac_up90$perc_eval) # 46.5 - one county had >50% in 2017, but <50% in one year.
+max(ILac_up90$perc_eval) # 114.5 - cropland acres reported in the census change from year to year, so it is
+ # possible that the acres evaluated were > number of acres reported in 2017, or that the number of acres reported
+ # differs from what the satellites detect.
+ # On average, OpTIS evaluated 86% of a county's harvested cropland acres (for those counties not excluded). 
+
+
+
+
+
+
+################# CALCULATE RATES
+
+# calculate percentages
+datw$perc_ct <- round(100*(datw$ct.acres / datw$eval.acres), digits=1)
+datw$perc_cc <- round(100*(datw$cc.acres / datw$eval.acres), digits=1)
+datw$perc_nt <- round(100*(datw$nt.acres / datw$eval.acres), digits=1)
+datw$perc_rt <- round(100*(datw$rt.acres / datw$eval.acres), digits=1)
+
+datw <- inner_join(datw, ILac_up90[,c(1,2,5)]) #  inner_join() only keeps observations from x that have a matching key in y.
+
 
 # long form again, but leave out acreages, only need %s
-datl <- melt(datw[, -c(6:11)], id=c("state", "county", "fips", "year", "crop_name"), na.rm=T)
+datl <- melt(datw[, -c(6:11)], id=c("state", "county", "fips", "year", "crop_name", "perc_eval"), na.rm=T)
 # using na.rm = TRUE because do not have all combinations of crop acres per cover crop or tillage acres, e.g. 
 # we have soybean acres in Ulster County, NY in 2015, but we do not have soybean cover crop acres for that 
 # county-year. So when we melt, we get a bunch of Value = NA rows.
@@ -136,10 +234,22 @@ se <- function(x) sd(x) / sqrt(length(x))
 
 # what are the average county adoption rates and number of acres evaluated? (are any small counties driving percents up?)
 # which counties are hotspots?
+# use this to make map of counties see "/code/plot_making/OpTIS_county_heatmap_IL.R"
 means_county <- datl %>%
                 filter(year>2017) %>%
                 group_by(state, county, variable) %>%
-                summarize(Mean.perc = mean(value))
+                summarize(mean.perc = round(mean(value), digits=1), 
+                          mean.eval = round(mean(perc_eval), digits=1)) %>%
+                arrange(variable, desc(mean.perc)) %>%
+                ungroup() %>%
+                group_by(variable) %>%
+                mutate(rank = seq_along(variable))
+
+# write.csv(means_county, "data/optis/IL_means_county.csv", row.names=F)
+
+# use this to make table of top 5
+means_county_top5 <- means_county %>%
+                     filter(rank<6)
 
 # do we mean small counties in terms of number of acres evaluated or small counties in terms of number of crop acres period?
 # corn.acres <- datw[datw$state %in% "IL" & datw$crop_name %in% "Corn", c(1,2,7)]
