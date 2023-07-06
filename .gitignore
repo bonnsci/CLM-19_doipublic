@@ -2,4 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-data/gis/
+data/large_data/
+*JSON
