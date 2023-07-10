@@ -13,62 +13,42 @@ library(dplyr)
 # to update data, run "download data.R"
 
 
+# standard error
+se <- function(x){sd(x)/(sqrt(length(x)))}
+
 # load the data
-datil <- read.csv("data/optis/datil_clean.csv")
+datil <- read.csv("data/optis/datil_cleanlong.csv")
 
 
-# do we mean small counties in terms of number of acres evaluated or small counties in terms of number of crop acres period?
-# corn.acres <- datw[datw$state %in% "IL" & datw$crop_name %in% "Corn", c(1,2,7)]
-# corn.acres <- corn.acres %>%
-#               group_by(county) %>%
-#               summarize(Mean.ac.eval = mean(acres))
-# means_county <- left_join(means_county, corn.acres)
-# cc <- means_county %>%
-#   filter(variable %in% "perc_nt", state %in% "IL")
+
 
 # what are the state average adoption rates by year and crop
-means_cropyear <- datl %>% 
+means_cropyear <- datil %>% 
                 group_by(state, year, crop_name, variable) %>%
-                summarize(Mean = mean(value))
+                summarize(Mean = mean(value), se=se(value))
                           
 
 # # what are the state average adoption rates by year (across all crops)
-means_year <- datl%>%
-              filter (! crop_name %in% "Alfalfa")  %>%
-                  # because Alf is perennial no tillage, no covers
-              filter(!(crop_name %in% "Winter Wheat" & variable == "perc_cc")) %>%
-                  # because Alf is a perennial and winter wheat grows at same time as covers
+means_year <- datil%>%
               group_by(state, year, variable) %>%
               summarize(Mean = mean(value))
 
 # what are the state average adoption rates across all available years (2015-2021) per crop?
-means_crop <- datl%>%
-                    filter (! crop_name %in% "Alfalfa")  %>%
-                    # because Alf is perennial no tillage, no covers
-                    filter(!(crop_name %in% "Winter Wheat" & variable == "perc_cc")) %>%
-                    # because Alf is a perennial and winter wheat grows at same time as covers
+means_crop <- datil%>%
                     group_by(state, crop_name, variable) %>%
-                    summarize(Mean = mean(value))
+                    summarize(Mean = mean(value), se=se(value))
 
 # what are the state average adoption rates across MOST RECENT 4 YEARS 2018-2021?  
 # note results not all that different between means_crop and means_crop_1821
 # for now, will report most recent data:
-means_crop_1821 <- datl%>%
+means_crop_1821 <- datil%>%
               filter(year>2017) %>%
-              filter (! crop_name %in% "Alfalfa")  %>%
-              # because Alf is perennial no tillage, no covers
-              filter(!(crop_name %in% "Winter Wheat" & variable == "perc_cc")) %>%
-              # because Alf is a perennial and winter wheat grows at same time as covers
-              group_by(state, crop_name, variable) %>%
+              group_by(crop_name, variable) %>%
               summarize(Mean = mean(value), se=se(value))
 
 # what are the state average adoption rates across all years and crops
-means_global <- datl%>%
-                filter (! crop_name %in% "Alfalfa")  %>%
-                  # because Alf is perennial no tillage, no covers
-                filter(!(crop_name %in% "Winter Wheat" & variable == "perc_cc")) %>%
-                  # because Alf is a perennial and winter wheat grows at same time as covers
-                group_by(state, variable) %>%
+means_global <- datil%>%
+                group_by(variable) %>%
                 summarize(Mean = mean(value), se = se(value))
 
 
@@ -76,52 +56,112 @@ means_global <- datl%>%
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
-ggplot(dat=means_crop_1821[means_crop_1821$state=="IL",], aes(x=variable, y=Mean, group=crop_name)) + 
-    geom_bar(stat="identity", position=position_dodge(), aes(fill=crop_name)) +
-    geom_errorbar(aes(ymin=Mean-se, ymax=Mean+se), linewidth=0.8, color="#000000",
-                  position=position_dodge(0.9), width=0.2) +
-    scale_x_discrete(limits=c("perc_cc", "perc_nt", "perc_rt"), 
-                       labels=c("Cover\nCrops", "No\nTill", "Reduced\nTill")) +  # ok to just leave out conventional till?
-    scale_fill_manual(values=c("#DDAA33", "#228833", "#66CCEE"), 
-                      labels=c("Corn", "Soybeans", "Winter Wheat"),
-                      name="Crops") +
-    scale_y_continuous(breaks=seq(0,70,10)) +
-    ylab("Mean Percent Adoption 2018-2021") +
-    xlab("Soil Health Practice") +
-    geom_text(aes(y=Mean +5, 
-                  label=paste0(format(round(Mean, digits=1), nsmall=1), "%")), 
-                  position=position_dodge(0.9)) +
-    # facet_grid(.~state) +
-    theme(
-        #legend.text.align=0,
+
+# State mean change over time
+# facet by crop
+
+pal4 <- c("#999933", "#332288", "#88ccee",  "#cc6677")
+
+
+ggplot(data=means_cropyear, aes(x=year, y=Mean, group=variable)) +
+  geom_line(aes(color=variable), linewidth=0.4) +
+  geom_point(aes(color=variable), size=0.5) +
+  geom_errorbar(aes(ymin=Mean-se, ymax=Mean+se, color=variable), width=0.1, linewidth=0.6) +
+  scale_color_manual(values=pal4, 
+                     name="Practice",
+                     breaks=c("perc_cc", "perc_nt", "perc_rt", "perc_ct"),
+                     labels=c("Cover Crops", "No Till", "Reduced Till", "Conventional Till")) +
+  facet_grid(rows=vars(crop_name)) + 
+  scale_x_continuous(breaks=seq(2015,2021, 1), name="Year") +
+  ylab("State Mean Percent Adoption") +
+  theme(
         panel.grid.minor=element_blank(), 
         panel.grid.major=element_blank() ,
-        # axis.text.x=element_text(angle=-30, hjust=0, size=11),
-        axis.text=element_text(size=12),
-        axis.title.x=element_text(size=12, face="bold"),
-        axis.title.y=element_text(size=12, face="bold"),
+        axis.text.x=element_text(size=10),
+        axis.text.y=element_text(size=10),
+        axis.title.x=element_text(size=14, face="bold"),
+        axis.title.y=element_text(size=14, face="bold"),
         panel.background = element_rect(fill = 'white') ,
-        panel.border=element_rect(color="grey50", fill=NA, linewidth=0.5),
+        panel.border=element_rect(color="grey50", fill=NA, size=0.5),
         strip.text=element_text(size=12, face="bold"),
         legend.text=element_text(size=11),
         legend.title=element_text(size=12, face="bold"),
-        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")
-    )
-       
-ggsave("plots/IL_bar_means_crop_1821.png")    
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
+        legend.key=element_rect(fill="white"),
+        legend.key.size = unit(0.4, "cm")
+  )	 
+
+ggsave("plots/state_rates_15-21_IL.png")
+
+
+library(lme4)
+# rate of change - all practices together
+summary(lm(value~year*variable + county + crop_name, data=datil))
+mem <- lmer(value~year*variable + crop_name + (1|county), data=datil)
+isSingular(mem)
+summary(lm(value~year, data=datil))
+summary(lm(value~year*variable, data=datil))
+summary(lm(value~year + crop_name, data=datil))
+summary(lm(value~year + county, data=datil))
+summary(lm(value~year*variable + crop_name, data=datil)) # no improvement with crop_name
+summary(lm(value~year*variable + county, data=datil)) # no improvement with county
+
+# rate of change - cover crops
+summary(lm(value~year, data=datil[datil$variable %in% "perc_cc",])) # R2 only 0.05, p is sig., slope=0.926
+summary(lm(value~year + county, data=datil[datil$variable %in% "perc_cc",])) # improves R2 to 0.5, slope=0.942
+# slope means that cc adoption is increasing by 0.9% per year. trend is significant (i.e. not zero)
+# which looks about right given the plot above.
+# at this rate we will reach 50% adoption in year ___?
+# according to means_global IL cover crop adoption is at 6.5% (+/- 0.19).
+# increasing by 0.94% per year
+(50-6.5)/0.94  # 46 years. 
+2023+46 # 2069
+
+# rate of change - no till
+summary(lm(value~year, data=datil[datil$variable %in% "perc_nt",])) # R2 only 0.02, p is sig., slope=-1.53
+summary(lm(value~year + county, data=datil[datil$variable %in% "perc_nt",])) # improves R2 to 0.5, slope=-1.53
+# slope means that nt adoption is DECREASING on average by 1.5% per year.  trend is significant (i.e. not zero)
+# which looks about right given the plot above.
+# at this rate we will reach 50% adoption in year ___?
+# according to means_global IL no till adoption is at 43.5% (+/- 0.53).
+# decreasing by 1.53% per year
+43.5/1.53  # in 28 years no no-till 
+2023+28 # 2051
+
+# rate of change - reduced till
+summary(lm(value~year, data=datil[datil$variable %in% "perc_rt",])) # R2 only 0.02, p is sig., slope=1.21
+summary(lm(value~year + county, data=datil[datil$variable %in% "perc_rt",])) # improves R2 to 0.27, slope=1.21
+# slope means that rt adoption is increasing on average by 1.2% per year.  trend is significant (i.e. not zero)
+# which looks about right given the plot above.
+# at this rate we will reach 50% adoption in year ___?
+# according to means_global IL rt adoption is at 39.9% (+/- 0.41).
+# increasing by 1.21% per year
+(50-39.9)/1.21  # 8 years. 
+2023+8 # 2031
+
+# rate of change - conventional till
+summary(lm(value~year, data=datil[datil$variable %in% "perc_ct",])) # R2 only 0.01, p is sig., slope=0.80
+summary(lm(value~year + county, data=datil[datil$variable %in% "perc_ct",])) # improves R2 to 0.36, slope=0.80
+# slope means that ct adoption is increasing on average by 0.8% per year.  trend is significant (i.e. not zero)
+# which looks about right given the plot above.
+# at this rate we will reach 50% adoption in year ___?
+# according to means_global IL cover crop adoption is at 15.3% (+/-0.36).
+# increasing by 0.80% per year
+(50-15.3)/0.80  # 43 years. 
+2023+43 # 2066
 
 
 
 
 
 
-# how does adoption rate change over time?
 
-windows(xpinch=200, ypinch=200, width=5, height=5)
 
-ggplot(data=datw, aes(y=perc_cc, x=year, group=county)) +
-  geom_line(aes(color=county), show.legend=F) + #, position="jitter", size=0.5) +
-  facet_grid(rows=vars(crop_name), cols=vars(state))
+
+
+
+
+
 
 # which counties have at least 5 years of consecutive measurements?
 # work with a subset of data

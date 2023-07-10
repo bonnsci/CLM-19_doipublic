@@ -125,7 +125,7 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 pcc <- ggplot() +
   geom_polygon(data=ill[ill$variable %in% "perc_cc",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
-               color="black", size=0.2) +
+               color="black", linewidth=0.2) +
  coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=pal6,
@@ -150,7 +150,7 @@ ggsave("plots/county_heatmap_ILcc.png")
 pnt <- ggplot() +
   geom_polygon(data=ill[ill$variable %in% "perc_nt",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
-               color="black", size=0.2) +
+               color="black", linewidth=0.2) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=pal8,
@@ -174,7 +174,7 @@ ggsave("plots/county_heatmap_ILnt.png")
 prt <- ggplot() +
   geom_polygon(data=ill[ill$variable %in% "perc_rt",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
-               color="black", size=0.2) +
+               color="black", linewidth=0.2) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=pal6,
@@ -197,7 +197,7 @@ ggsave("plots/county_heatmap_ILrt.png")
 pct <- ggplot() +
   geom_polygon(data=ill[ill$variable %in% "perc_ct",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
-               color="black", size=0.2) +
+               color="black",linewidth=0.2) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=pal5,
