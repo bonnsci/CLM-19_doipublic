@@ -13,6 +13,7 @@ library (tidyverse)
 # load IL DNDC scenario output 
 # (corresponds to "il_adoption_scenarios_final_outputs.csv")
 scenil <- read.csv("data/scenarios/scenil.csv")
+
 ########### METADATA IN 3 ROWS per data column (column name -- unit -- description)
 # column name       unit          description
 # site_name         NA            String combination of one of the locations we simulated on. In the format of {x}_{y} where x refers to the region and y refers to the numeric id of that site. These will be of the format of h_{}, v_{}, a_{}, f_{}, IL-n_{}, IL-s_{} which represents the points for hops, vineyards, almonds, and forage, Illinois North, Illinois South respectively
@@ -36,6 +37,7 @@ scenil <- read.csv("data/scenarios/scenil.csv")
 # load IL unweighted simulation DNDC output 
 # (corresponds to "yearly_outputs_post-weighting.csv")
 unw <- read.csv("data/unw.csv")
+
 ########### METADATA IN 3 ROWS per data column (column name -- unit -- description)
 # column name       unit          description
 # site_name         NA            String combination of one of the locations we simulated on. In the format of {x}_{y} where x refers to the region and y refers to the numeric id of that site. These will be of the format of h_{}, v_{}, a_{}, f_{}, IL-n_{}, IL-s_{} which represents the points for hops, vineyards, almonds, and forage, Illinois North, Illinois South respectively
@@ -159,7 +161,8 @@ ggsave("plots/Net_2022sn1.png", width=6, height=8)
 
 ##by sub-scenario
 ##year by year trends for all managements
-unw %>% filter (site_name == "IL-n_1" & year %in% (2010:2022) & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+unw %>% filter (grepl('IL-', site_name)) %>%
+  filter (year %in% (2010:2022) & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
   select(management, year, ghg_dsoc, ghg_total_n2o) %>% 
   mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
   gather(var, value, ghg_dsoc:Net) %>%
@@ -173,9 +176,10 @@ ggsave("plots/trend_s1_shms.png", width=12, height=6)
 
   
   
-###summary figure by management practice across years
+###summary figure by management practice across years 
   
-unw %>% filter (site_name == "IL-n_1" & year %in% (2010:2022) & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+unw %>% filter (grepl('IL-', site_name)) %>%
+  filter (year == 2022 & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
   select(management,ghg_dsoc, ghg_total_n2o) %>%
   mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
   gather(var, value, ghg_dsoc:Net) %>%
@@ -192,8 +196,8 @@ unw %>% filter (site_name == "IL-n_1" & year %in% (2010:2022) & climate_scenario
 ggsave("plots/mean_s1_shms.png", width=12, height=6)     
 
 #dropping the fertilizer from management code
-
-unw %>% filter (site_name == "IL-n_1" & year %in% (2010:2022) & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+unw %>% filter (grepl('IL-', site_name)) %>%
+  filter (year == 2022 & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
   mutate( management2= str_sub(management, 1, 5)) %>%
   select(management2,ghg_dsoc, ghg_total_n2o) %>%
   mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
@@ -209,7 +213,7 @@ unw %>% filter (site_name == "IL-n_1" & year %in% (2010:2022) & climate_scenario
                 position=position_dodge(0.9), width=0.2) +
   facet_wrap(var ~., scales = "free_y", ncol=1, strip.position = "right") +
   #facet_wrap(var ~., ncol=1) +
-  ylim(-3.5,2) +
+  ylim(-4,2) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   coord_flip() +
   xlab("Soil Health Management Systems") +
@@ -234,7 +238,8 @@ ggsave("plots/mean_s1_shms-noN.png", width=6, height=8)
 
 
 #summarizing some numbers to write the results 
-unw %>% filter (site_name == "IL-n_1" & year %in% (2010:2022) & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+unw %>% filter (grepl('IL-', site_name)) %>%
+  filter (year == 2022 & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
   mutate( management2= str_sub(management, 1, 5)) %>%
   select(management2,ghg_dsoc, ghg_total_n2o) %>%
   mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
@@ -255,9 +260,49 @@ dif = -1.388 - (-1.16)
 p_dif = dif/1.16
 
 
+##Anova analysis for management effect 
+
+dta<-unw %>% filter (grepl('IL-', site_name)) %>%
+             filter (year == 2022 & climate_scenario == "rcp26") %>%
+             mutate(Net = ghg_dsoc + ghg_total_n2o)
 
 
+n2o_eff<- aov(ghg_total_n2o ~ management +  site_name, 
+                  data= dta) 
 
-##do anova analysis for management effect 
+summary(n2o_eff)
+TukeyHSD(n2o_eff)
+TukeyHSD(n2o_eff, conf.level=.90)$management %>% as.data.frame() %>%
+  filter (`p adj` < 0.01)
 
 
+net_eff<- aov(Net ~ management +  site_name, 
+              data= dta) 
+
+summary(net_eff)
+TukeyHSD(net_eff)
+TukeyHSD(net_eff, conf.level=.90)$management %>% as.data.frame() %>%
+  filter (`p adj` < 0.01)
+
+
+library(emmeans)
+library(multcomp)
+library(multcompView)
+
+
+model <- lm(Net ~ management, data = dta)
+
+# get (adjusted) means
+model_means <- emmeans(object = model,
+                       specs = ~ management) 
+
+# add letters to each mean
+model_means_cld <- cld(object = model_means,
+                       adjust = "Tukey",
+                       Letters = letters,
+                       alpha = 0.05)
+
+model_means_cld <- model_means_cld %>% 
+  as.data.frame() 
+
+#next add letters into plot once we have final version 
