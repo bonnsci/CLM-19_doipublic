@@ -64,70 +64,65 @@ library(tidyverse) # contains:
 # library(tidyr) # creating tidy data
 # library(glue) # pass variables into strings
 # install.packages("listviewer")
-# library(listviewer)
+library(listviewer)
+# install.packages("janitor")
+library(janitor)
+
+
 
 # weather data 
 json_file <- "G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/aft_rcp_data.json"
 dat <- fromJSON(txt=json_file)
-weather <- tibble(place=dat)
+
+
+weather <- tibble(place=dat) # necessary?
 # jsonedit(weather)  # not working
 # jsonedit(dat) # not working
-weather2 <- weather %>%
+weather <- weather %>%
   unnest_wider(place) %>%
   unnest(rcp_data) %>%
-  unnest(rcp_data) %>%
-  unnest(dndc)%>%
+  unnest(rcp_data) 
+
+names(weather$dndc) <- paste0(weather$name, "_", weather$scenario)  # worked
+
+weather$dndc <- lapply(weather$dndc, function(i){  #worked
+  i <- row_to_names(i, row_number=1)
+  i <- data.frame(i)
+  i
+})
+
+weather <- weather %>%
+  unnest_longer(dndc) %>%
   unnest(dndc)
 
-  hoist(dndc) %>%
-  
-    unnest(dndc)
-  hoits(dnd)
-  select(doy=4, year=5)
-  filter(year==max(year) & doy==max(doy))
-  # rename()
-  
-weather3<-flatten(weather) %>%
-  flatten(weather)
+write.csv(weather, "data/large_data/clm_data_unpacked.csv")
 
-  
-weather2 <- weather$place$rcp_data
-weather2<- lapply(weather2, function(i){
-  i <- i%>%
-    unnest(dndc) %>%
-    
-})  
-    
-weather %>%
-  unnest(place) %>%
-  unnest(rcp_data)%>%
-  hoist(dndc,
-        )
-  
-  
-  # unnest(dndc) %>%
-  hoist(dndc,
-        "doy",
-        "year",
-        "min_temp",
-        "avg_temp",
-        "max_temp",
-        "precip")
-        
 
-  
+##### testing code on subset to figure out how to unnest properly
+##### this code works fyi
+# test <- weather[1:10,1:4]
+# names(test$dndc) <-  paste0(test$name, "_", test$scenario)
+# y<- test$dndc[[1]]
+# y <- row_to_names(y, row_number=1) # worked
+# colnames(y) # 
+# y <- data.frame(y)
 
 
 
 
-names(dat$rcp_data) <- dat$name
-dat2 <- dat$rcp_data
-dat2 <- bind_rows(dat2, .id="id")
+
+
+
+
+
+
+
+
+
+
+
 unique(dat2$model)
 # [1] "IPSL-CM5A-LR"
-dat3 <- dat2$dndc
-dat3 <- dplyr::bind_rows(dat3)
-dat3 <- data.frame(dat2$dndc)
 
 
 # extract Illinois climate data from 32 sites (16 north and 16 south)
