@@ -107,29 +107,4 @@ write.csv(weather, "data/large_data/clm_data_unpacked.csv")
 # colnames(y) # 
 # y <- data.frame(y)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-unique(dat2$model)
-# [1] "IPSL-CM5A-LR"
-
-
-# extract Illinois climate data from 32 sites (16 north and 16 south)
-il_lists <- grep("IL-", dat$name)
-# subset data
-clm_il <- dat[il_lists,]
-# flatten list to one dataframe
-clm_il2 <- bind_rows(clm_il, )
-
                      
