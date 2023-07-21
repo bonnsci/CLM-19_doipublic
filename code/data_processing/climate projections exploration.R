@@ -59,7 +59,7 @@ library(reshape2)
 ################
 ################
 ################
-
+############################ SET UP THE DATA
 
 
 dat <- read.csv("data/large_data/clm_il.csv")
@@ -88,13 +88,29 @@ dat$decade <- ifelse(dat$year <2011, "2000s",
 
 
 
-# convert doy to dates
+# convert doy to dates # Takes a sec to run
 dat <- dat %>%
               mutate(date_ = as.Date(doy-1, origin=paste0(year, "-01-01")),  # subtract 1 b/c R uses a 0 base index
                      month = strftime(date_, "%m"),
                      day = strftime(date_, "%d")) 
 
-# get annual data
+# assign seasons: MAM, JJA, SON, DJF
+# https://www.ncei.noaa.gov/news/meteorological-versus-astronomical-seasons#:~:text=The%20Meteorological%20Seasons,-Meteorologists%20and%20climatologists&text=Meteorological%20spring%20in%20the%20Northern,December%2C%20January%2C%20and%20February.
+
+dat$season <- ifelse(dat$month %in% c("03", "04", "05"), "Spring", 
+                     ifelse(dat$month %in% c("06", "07", "08"), "Summer",
+                            ifelse(dat$month %in% c("09", "10", "11"), "Fall", "Winter")))
+dat$season <- ordered(dat$season, levels=c("Winter", "Spring", "Summer", "Fall"))                          
+
+
+
+
+
+
+############
+############
+############
+#################################################### annual data & plots
 dat.ann <- dat %>%
   group_by(name, scenario, decade, year) %>%
   summarize(meanann.min_temp = mean(min_temp),
@@ -273,8 +289,10 @@ ggsave("plots/climate/IL-S_precip_anntot_line.png")
 
 
 # are the stations different? 
-# eyeballing the above graphs it seems they show similar overall patterns year to year with slightly different y-intercepts
+# are the RCPs different?
+# eyeballing the above graphs it seems the stations show similar overall patterns year to year with slightly different y-intercepts
 # averaging them could lose some granularity when comparing to DNDC output by site
+# when analyzing DNDC data compared to weather should compare by site, since the site-specific data were used
 
 
 # ideas for characterizing periods
@@ -283,6 +301,207 @@ ggsave("plots/climate/IL-S_precip_anntot_line.png")
 # look at monthly normals for hottest, coldest, wettest, driest months
 # focus in on those months.
 # https://www.ncei.noaa.gov/access/us-climate-normals/#dataset=normals-monthly&timeframe=30&station=USC00112500
+# hottest month of growing season, May-Sept: July
+# coldest month of GS: May
+# wettest month of GS: May
+# driest month of GS: Sept
+# Seasonal total rainfall
+# number of rainy days per season
+# Rainfall intensity (mm/rainy days)
+
+
+###############
+###############
+###############
+############################## SEASONAL PRECIP ANALYSES
+
+# seasonal total rainfall
+# number of rainy days per season
+# Rainfall intensity (mm/rainy days)
+# Seasonal normals for Dwight, IL
+# winter = 5.55 in = 140.97
+# spring = 10.94 in = 277.876
+# summer = 12.18 in = 309.372
+# fall = 9.02 in = 229.108
+
+precip <- dat %>%
+  group_by(name, scenario, year, season) %>%
+  summarize(ssn.tot = sum(precip),
+            rainyd = sum(precip>0),  # count the rows where precip >0
+            intens = ssn.tot/rainyd) %>%
+  ungroup()
+
+# put data in long form for plotting
+precipl <- melt(precip, id.vars = c("name", "scenario", "year", "season"), value.name="value")
+
+
+hlinedat <- data.frame(scenario=c(rep("rcp26", 4), rep("rcp60", 4)),
+                       season=rep(c("Winter", "Spring", "Summer", "Fall"),2),
+                       y=rep(c(141, 278, 309, 229),2),
+                       variable=rep("ssn.tot", 8)) # from seasonal normals commented in above
+
+windows(xpinch=200, ypinch=200, width=5, height=5)
+
+ggplot(data=precipl[precipl$year>2020 & 
+                      precipl$year<2073,], # & 
+                      # precipl$name %in% c("IL-s_1"),], # &
+                      # precipl$season %in% "Summer",], 
+       aes(x=year, y=value, group =season)) +
+  geom_point(aes(color=season), size=0.5, alpha=0.3, show.legend=F) +
+  geom_hline(data=hlinedat, aes(yintercept=y), color="black", linewidth=0.4, linetype="dashed") +
+  geom_smooth(method="lm", color="blue", linewidth=0.7) +
+  scale_color_manual(values=c("#4477AA", "#228833", "#EE6677", "#AA3377")) +
+  facet_grid(rows=vars(factor(variable, levels=c("ssn.tot", "rainyd", "intens"))), 
+             cols=vars(scenario,factor(season, levels=c("Winter", "Spring", "Summer", "Fall"))), 
+             scales="free_y",
+             labeller = as_labeller(
+               c(ssn.tot = "Total Precip (mm)", rainyd = "No. Wet Days", intens = "Precip. Intensity (mm/day)",
+                 rcp26 = "RCP 2.6",rcp60= "RCP 6.0",
+                 Winter = "Winter",Spring = "Spring",Summer = "Summer",Fall = "Fall")),
+             switch="y") +
+  labs(y=NULL) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank()  ,
+    axis.text.x=element_text(size=6, angle=-40, vjust=-0.3),
+    # axis.text.y=element_text(size=10),
+    # axis.title.x=element_text(size=14, face="bold"),
+    # axis.title.y=element_text(size=14, face="bold"),
+    panel.background = element_rect(fill = 'gray95') ,
+    strip.background = element_blank(),  
+    strip.placement = "outside",
+    # panel.border=element_rect(color="grey50", fill=NA, size=0.5),
+    strip.text=element_text(size=8) # ,
+    # legend.text=element_text(size=11),
+    # legend.title=element_text(size=10) # ,
+    # plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
+    # legend.key=element_rect(fill="white"),
+    # legend.key.size = unit(0.4, "cm")
+  )	 
+
+ggsave("plots/climate/IL_precip_ssn.png")
+
+
+# let's mean-center the year
+center_scale <- function(x) {
+  scale(x, scale=F)
+}
+
+precip$year.sc <- center_scale(precip$year)
+
+plm1 <- lm(ssn.tot~ year.sc + scenario + factor(season, ordered=F) + year.sc:scenario:factor(season, ordered =F), dat=precip)
+summary(plm1)
+# DO I really need to show if something is changing significantly? Might be too detailed
+# For reports, AGU talk etc.
+# For now, have data ready to be manipulated as needed. Will come back.
+
+
+# Ideas for next steps:
+# Could calculate Palmer Drought Severity Index with ET
+# R package for PDSI https://www.rdocumentation.org/packages/scPDSI/versions/0.1.3/topics/pdsi
+# could find the 99%ile heavy storms for 2010-2020
+# find number of days of precip per year exceed 99% in future
+# similar for temp: hottest 99% temp for 2010-2020
+# find number of days exceed 99% for future years.
+
+
+
+
+
+
+
+
+############
+############
+############
+################################# SEASONAL TEMPERATURE ANALYSES
+
+
+### DWIGHT, IL seasonal normals
+# max temps
+# Winter 33.9F 1.06C
+# Spring 60.1  15.61C
+# Summer 82.2  27.89C
+# Fall 63.2   17.33
+
+# min temps
+# Winter 17.0   -8.33
+# Spring 37.6   3.11
+# Summer 60.2   15.67
+# Fall 40.3     4.61
+
+# avg temps
+# Winter 25.5  -3.61
+# Spring 48.9  9.39
+# Summer 71.2  21.78
+# Fall 51.8   11
+
+
+
+tempc <- dat %>%
+  group_by(name, scenario, year, season) %>%
+  summarize(ssn.avg = mean(avg_temp),
+            ssn.min = min(min_temp),
+            ssn.max = max(max_temp)) %>%
+  ungroup()
+
+# put data in long form for plotting
+tempcl <- melt(tempc, id.vars = c("name", "scenario", "year", "season"), value.name="value")
+
+
+hlinedat <- data.frame(scenario=rep(c(rep("rcp26", 4), rep("rcp60", 4)), 3),
+                       season=rep(c("Winter", "Spring", "Summer", "Fall"),6),
+                       y=c(rep(c(1.06,15.61,27.89,17.33),2), # from seasonal normals commented in above
+                           rep(c(-8.33,3.11,15.67,4.61),2),
+                           rep(c(-3.61,9.39,21.78,11),2)),
+                       variable=c(rep("ssn.max", 8), rep("ssn.min", 8), rep("ssn.avg", 8))) 
+
+windows(xpinch=200, ypinch=200, width=5, height=5)
+
+
+ggplot(data=tempcl[tempcl$year>2020 & 
+                     tempcl$year<2073,], # & 
+       # tempcl$name %in% c("IL-s_1"),], # &
+       # tempcl$season %in% "Summer",], 
+       aes(x=year, y=value, group =season)) +
+  geom_point(aes(color=season), size=0.5, alpha=0.3, show.legend=F) +
+  geom_hline(data=hlinedat, aes(yintercept=y), color="black", linewidth=0.4, linetype="dashed") +
+  geom_smooth(method="lm", color="blue", linewidth=0.7) +
+  scale_color_manual(values=c("#4477AA", "#228833", "#EE6677", "#AA3377")) +
+  facet_grid(rows=vars(factor(variable, levels=c("ssn.max", "ssn.min", "ssn.avg"))), 
+             cols=vars(scenario,factor(season, levels=c("Winter", "Spring", "Summer", "Fall"))), 
+             scales="free_y",
+             labeller = as_labeller(
+               c(ssn.max = "Maximum T deg C", ssn.min = "Minimum T deg C", ssn.avg = "Mean T deg C",
+                 rcp26 = "RCP 2.6",rcp60= "RCP 6.0",
+                 Winter = "Winter",Spring = "Spring",Summer = "Summer",Fall = "Fall")),
+             switch="y") +
+  labs(y=NULL) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank()  ,
+    axis.text.x=element_text(size=6, angle=-40, vjust=-0.3),
+    # axis.text.y=element_text(size=10),
+    # axis.title.x=element_text(size=14, face="bold"),
+    # axis.title.y=element_text(size=14, face="bold"),
+    panel.background = element_rect(fill = 'gray95') ,
+    strip.background = element_blank(),  
+    strip.placement = "outside",
+    # panel.border=element_rect(color="grey50", fill=NA, size=0.5),
+    strip.text=element_text(size=8) # ,
+    # legend.text=element_text(size=11),
+    # legend.title=element_text(size=10) # ,
+    # plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
+    # legend.key=element_rect(fill="white"),
+    # legend.key.size = unit(0.4, "cm")
+  )	 
+
+ggsave("plots/climate/IL_temp_ssn.png")
+
+
+
+
+
 
 
 
