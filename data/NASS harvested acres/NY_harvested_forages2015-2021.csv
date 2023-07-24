@@ -1,0 +1,268 @@
+"year","county","crop_name","harv_ac"
+2020,"Allegany","Corn grain",6640
+2020,"Allegany","Corn silage",10300
+2018,"Allegany","Corn grain",8900
+2018,"Allegany","Corn silage",6300
+2017,"Allegany","Corn grain",7400
+2017,"Allegany","Corn silage",8000
+2016,"Allegany","Corn grain",8200
+2016,"Allegany","Corn silage",7400
+2015,"Allegany","Corn silage",7000
+2021,"Cattaraugus","Corn grain",8950
+2021,"Cattaraugus","Corn silage",14500
+2020,"Cattaraugus","Corn grain",6450
+2020,"Cattaraugus","Corn silage",15800
+2019,"Cattaraugus","Corn silage",14700
+2018,"Cattaraugus","Corn grain",9900
+2018,"Cattaraugus","Corn silage",13700
+2017,"Cattaraugus","Corn grain",8900
+2017,"Cattaraugus","Corn silage",14400
+2016,"Cattaraugus","Corn grain",11800
+2016,"Cattaraugus","Corn silage",12300
+2015,"Cattaraugus","Corn grain",11100
+2015,"Cattaraugus","Corn silage",11600
+2021,"Cayuga","Corn grain",34700
+2021,"Cayuga","Corn silage",28600
+2020,"Cayuga","Corn grain",26500
+2020,"Cayuga","Corn silage",38000
+2019,"Cayuga","Corn grain",44000
+2018,"Cayuga","Corn grain",43900
+2017,"Cayuga","Corn grain",34000
+2017,"Cayuga","Corn silage",26400
+2016,"Cayuga","Corn grain",36300
+2016,"Cayuga","Corn silage",26800
+2015,"Cayuga","Corn grain",34500
+2015,"Cayuga","Corn silage",26300
+2021,"Chautauqua","Corn grain",14400
+2021,"Chautauqua","Corn silage",8440
+2020,"Chautauqua","Corn grain",9960
+2020,"Chautauqua","Corn silage",13400
+2019,"Chautauqua","Corn grain",14500
+2018,"Chautauqua","Corn grain",11500
+2018,"Chautauqua","Corn silage",12700
+2017,"Chautauqua","Corn grain",12300
+2017,"Chautauqua","Corn silage",14000
+2016,"Chautauqua","Corn grain",10000
+2016,"Chautauqua","Corn silage",16700
+2015,"Chautauqua","Corn silage",15800
+2021,"Cortland","Corn grain",6350
+2021,"Cortland","Corn silage",8870
+2020,"Cortland","Corn grain",5360
+2020,"Cortland","Corn silage",10100
+2019,"Cortland","Corn grain",4600
+2019,"Cortland","Corn silage",11200
+2018,"Cortland","Corn grain",6400
+2018,"Cortland","Corn silage",8800
+2017,"Cortland","Corn grain",4300
+2017,"Cortland","Corn silage",12400
+2016,"Cortland","Corn silage",10900
+2015,"Cortland","Corn grain",7100
+2015,"Cortland","Corn silage",8700
+2021,"Erie","Corn grain",14700
+2021,"Erie","Corn silage",8910
+2020,"Erie","Corn grain",10000
+2020,"Erie","Corn silage",12300
+2019,"Erie","Corn grain",9600
+2019,"Erie","Corn silage",13300
+2018,"Erie","Corn grain",15000
+2018,"Erie","Corn silage",12400
+2017,"Erie","Corn grain",9100
+2017,"Erie","Corn silage",13400
+2016,"Erie","Corn grain",11400
+2016,"Erie","Corn silage",15500
+2015,"Erie","Corn grain",15400
+2015,"Erie","Corn silage",12900
+2021,"Genesee","Corn grain",30900
+2020,"Genesee","Corn grain",29300
+2020,"Genesee","Corn silage",16400
+2019,"Genesee","Corn grain",28600
+2019,"Genesee","Corn silage",20300
+2018,"Genesee","Corn grain",33100
+2018,"Genesee","Corn silage",22600
+2017,"Genesee","Corn grain",28600
+2016,"Genesee","Corn grain",30200
+2016,"Genesee","Corn silage",22000
+2021,"Livingston","Corn grain",36300
+2021,"Livingston","Corn silage",26900
+2020,"Livingston","Corn grain",33800
+2020,"Livingston","Corn silage",25800
+2019,"Livingston","Corn grain",37000
+2019,"Livingston","Corn silage",26600
+2018,"Livingston","Corn grain",41800
+2018,"Livingston","Corn silage",22600
+2017,"Livingston","Corn grain",27900
+2017,"Livingston","Corn silage",30800
+2016,"Livingston","Corn grain",30500
+2016,"Livingston","Corn silage",33000
+2015,"Livingston","Corn grain",26900
+2015,"Livingston","Corn silage",31100
+2021,"Onondaga","Corn grain",18900
+2021,"Onondaga","Corn silage",14500
+2020,"Onondaga","Corn grain",18200
+2020,"Onondaga","Corn silage",14900
+2019,"Onondaga","Corn grain",20800
+2019,"Onondaga","Corn silage",15600
+2018,"Onondaga","Corn grain",21000
+2018,"Onondaga","Corn silage",16100
+2017,"Onondaga","Corn grain",18000
+2017,"Onondaga","Corn silage",17000
+2016,"Onondaga","Corn grain",19500
+2016,"Onondaga","Corn silage",14100
+2015,"Onondaga","Corn grain",23900
+2015,"Onondaga","Corn silage",13400
+2021,"Ontario","Corn grain",27500
+2021,"Ontario","Corn silage",14900
+2020,"Ontario","Corn grain",21900
+2020,"Ontario","Corn silage",19200
+2019,"Ontario","Corn grain",23800
+2019,"Ontario","Corn silage",14000
+2018,"Ontario","Corn grain",24400
+2018,"Ontario","Corn silage",17800
+2017,"Ontario","Corn grain",19300
+2017,"Ontario","Corn silage",14500
+2016,"Ontario","Corn grain",30100
+2016,"Ontario","Corn silage",13000
+2015,"Ontario","Corn grain",26600
+2015,"Ontario","Corn silage",15300
+2021,"Tompkins","Corn grain",5400
+2021,"Tompkins","Corn silage",8310
+2020,"Tompkins","Corn grain",5630
+2020,"Tompkins","Corn silage",8850
+2019,"Tompkins","Corn silage",7200
+2018,"Tompkins","Corn grain",10400
+2018,"Tompkins","Corn silage",3700
+2017,"Tompkins","Corn grain",5700
+2017,"Tompkins","Corn silage",8300
+2016,"Tompkins","Corn silage",8900
+2015,"Tompkins","Corn silage",8800
+2021,"Wayne","Corn grain",22500
+2021,"Wayne","Corn silage",4480
+2020,"Wayne","Corn grain",23900
+2020,"Wayne","Corn silage",3940
+2019,"Wayne","Corn grain",26100
+2018,"Wayne","Corn grain",26900
+2018,"Wayne","Corn silage",4600
+2017,"Wayne","Corn grain",20600
+2017,"Wayne","Corn silage",3400
+2016,"Wayne","Corn grain",25500
+2015,"Wayne","Corn grain",27000
+2021,"Wyoming","Corn grain",25100
+2021,"Wyoming","Corn silage",28600
+2020,"Wyoming","Corn grain",19100
+2020,"Wyoming","Corn silage",35700
+2019,"Wyoming","Corn grain",20000
+2019,"Wyoming","Corn silage",30000
+2018,"Wyoming","Corn grain",22800
+2018,"Wyoming","Corn silage",31900
+2017,"Wyoming","Corn grain",17800
+2017,"Wyoming","Corn silage",37600
+2016,"Wyoming","Corn grain",14900
+2016,"Wyoming","Corn silage",43000
+2015,"Wyoming","Corn grain",22500
+2015,"Wyoming","Corn silage",38500
+2021,"Yates","Corn grain",14700
+2021,"Yates","Corn silage",5870
+2020,"Yates","Corn grain",8470
+2019,"Yates","Corn grain",6500
+2019,"Yates","Corn silage",3000
+2016,"Yates","Corn silage",5000
+2015,"Yates","Corn grain",10400
+2015,"Yates","Corn silage",5500
+2021,"Allegany","Soybeans",1040
+2020,"Allegany","Soybeans",770
+2019,"Allegany","Soybeans",700
+2018,"Allegany","Soybeans",1150
+2017,"Allegany","Soybeans",830
+2015,"Allegany","Soybeans",1000
+2021,"Cattaraugus","Soybeans",3940
+2020,"Cattaraugus","Soybeans",4420
+2019,"Cattaraugus","Soybeans",3700
+2017,"Cattaraugus","Soybeans",4000
+2016,"Cattaraugus","Soybeans",4460
+2015,"Cattaraugus","Soybeans",4000
+2021,"Cayuga","Soybeans",29900
+2020,"Cayuga","Soybeans",31000
+2019,"Cayuga","Soybeans",29700
+2018,"Cayuga","Soybeans",32800
+2017,"Cayuga","Soybeans",27400
+2016,"Cayuga","Soybeans",34000
+2015,"Cayuga","Soybeans",33900
+2021,"Chautauqua","Soybeans",4050
+2020,"Chautauqua","Soybeans",3590
+2019,"Chautauqua","Soybeans",3100
+2017,"Chautauqua","Soybeans",3290
+2015,"Chautauqua","Soybeans",3500
+2021,"Cortland","Soybeans",1250
+2020,"Cortland","Soybeans",890
+2017,"Cortland","Soybeans",1390
+2016,"Cortland","Soybeans",1570
+2021,"Erie","Soybeans",8750
+2020,"Erie","Soybeans",6830
+2019,"Erie","Soybeans",4400
+2018,"Erie","Soybeans",6900
+2017,"Erie","Soybeans",6970
+2016,"Erie","Soybeans",6960
+2015,"Erie","Soybeans",6100
+2021,"Genesee","Soybeans",16400
+2020,"Genesee","Soybeans",15700
+2019,"Genesee","Soybeans",9600
+2018,"Genesee","Soybeans",15700
+2017,"Genesee","Soybeans",16300
+2016,"Genesee","Soybeans",15000
+2015,"Genesee","Soybeans",13000
+2021,"Livingston","Soybeans",23200
+2020,"Livingston","Soybeans",22100
+2019,"Livingston","Soybeans",16700
+2018,"Livingston","Soybeans",25100
+2017,"Livingston","Soybeans",17700
+2016,"Livingston","Soybeans",24000
+2015,"Livingston","Soybeans",20200
+2021,"Onondaga","Soybeans",12000
+2020,"Onondaga","Soybeans",12500
+2019,"Onondaga","Soybeans",7800
+2018,"Onondaga","Soybeans",12000
+2017,"Onondaga","Soybeans",8990
+2016,"Onondaga","Soybeans",11400
+2015,"Onondaga","Soybeans",12100
+2021,"Ontario","Soybeans",24100
+2020,"Ontario","Soybeans",24400
+2019,"Ontario","Soybeans",18400
+2018,"Ontario","Soybeans",24100
+2017,"Ontario","Soybeans",17100
+2016,"Ontario","Soybeans",26000
+2015,"Ontario","Soybeans",23600
+2021,"Steuben","Soybeans",5900
+2020,"Steuben","Soybeans",5050
+2019,"Steuben","Soybeans",4800
+2018,"Steuben","Soybeans",5880
+2017,"Steuben","Soybeans",4280
+2016,"Steuben","Soybeans",6550
+2015,"Steuben","Soybeans",5900
+2021,"Tompkins","Soybeans",3950
+2020,"Tompkins","Soybeans",4140
+2019,"Tompkins","Soybeans",3500
+2018,"Tompkins","Soybeans",4740
+2017,"Tompkins","Soybeans",4400
+2016,"Tompkins","Soybeans",4900
+2015,"Tompkins","Soybeans",4450
+2021,"Wayne","Soybeans",24400
+2020,"Wayne","Soybeans",24100
+2019,"Wayne","Soybeans",19100
+2018,"Wayne","Soybeans",25900
+2017,"Wayne","Soybeans",18800
+2016,"Wayne","Soybeans",24000
+2015,"Wayne","Soybeans",21700
+2021,"Wyoming","Soybeans",4280
+2020,"Wyoming","Soybeans",3750
+2019,"Wyoming","Soybeans",3400
+2018,"Wyoming","Soybeans",4500
+2017,"Wyoming","Soybeans",3230
+2016,"Wyoming","Soybeans",3400
+2015,"Wyoming","Soybeans",3800
+2021,"Yates","Soybeans",4430
+2020,"Yates","Soybeans",4970
+2019,"Yates","Soybeans",4300
+2018,"Yates","Soybeans",4700
+2017,"Yates","Soybeans",3700
+2016,"Yates","Soybeans",5740
+2015,"Yates","Soybeans",4500
