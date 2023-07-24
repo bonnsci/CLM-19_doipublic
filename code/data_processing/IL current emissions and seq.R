@@ -34,7 +34,7 @@ scenil <- read.csv("data/scenarios/scenil.csv")
 
 # load IL unweighted simulation DNDC output 
 # (corresponds to "yearly_outputs_post-weighting.csv")
-unw <- read.csv("data/unw.csv")
+unw <- read.csv("data/un-weighted_results.csv")
 ########### METADATA IN 3 ROWS per data column (column name -- unit -- description)
 # column name       unit          description
 # site_name         NA            String combination of one of the locations we simulated on. In the format of {x}_{y} where x refers to the region and y refers to the numeric id of that site. These will be of the format of h_{}, v_{}, a_{}, f_{}, IL-n_{}, IL-s_{} which represents the points for hops, vineyards, almonds, and forage, Illinois North, Illinois South respectively

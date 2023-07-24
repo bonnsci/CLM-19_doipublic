@@ -22,7 +22,7 @@ library(reshape2)
 # # subset data
 # clm_il <- dat[dat$name %in% sites_il,]
 # # save data
-# write.csv(clm_il, "data/large_data/clm_il.csv")
+# write.csv(clm_il, "data/large_data/clm_il.csv", row.names=F)
 # 
 # # extract NY climate data from 16 sites
 # # site names
@@ -30,7 +30,7 @@ library(reshape2)
 # # subset data
 # clm_ny <- dat[dat$name %in% sites_ny,]
 # # save data
-# write.csv(clm_ny, "data/large_data/clm_ny.csv")
+# write.csv(clm_ny, "data/large_data/clm_ny.csv", row.names=F)
 # 
 # # extract almond climate data from 16 sites
 # # site names
@@ -38,7 +38,7 @@ library(reshape2)
 # # subset data
 # clm_alm <- dat[dat$name %in% sites_alm,]
 # # save data
-# write.csv(clm_alm, "data/large_data/clm_alm.csv")
+# write.csv(clm_alm, "data/large_data/clm_alm.csv", row.names=F)
 # 
 # # extract vineyard grape climate data from 16 sites
 # # site names
@@ -46,7 +46,7 @@ library(reshape2)
 # # subset data
 # clm_vin <- dat[dat$name %in% sites_vin,]
 # # save data
-# write.csv(clm_vin, "data/large_data/clm_vin.csv")
+# write.csv(clm_vin, "data/large_data/clm_vin.csv", row.names=F)
 # 
 # # extract hops climate data from 16 sites
 # # site names
@@ -54,7 +54,7 @@ library(reshape2)
 # # subset data
 # clm_hop <- dat[dat$name %in% sites_hop,]
 # # save data
-# write.csv(clm_hop, "data/large_data/clm_hop.csv")
+# write.csv(clm_hop, "data/large_data/clm_hop.csv", row.names=F)
 
 ################
 ################
@@ -63,7 +63,7 @@ library(reshape2)
 
 
 dat <- read.csv("data/large_data/clm_il.csv")
-# can get rid of row numbers, model
+# can get rid of row numbers, model, #### double check the column numbers below
 dat <- dat[,c(3,5:11)]
 
 se <- function(x) {
