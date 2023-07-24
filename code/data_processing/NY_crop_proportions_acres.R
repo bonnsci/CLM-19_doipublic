@@ -13,8 +13,8 @@ library(tidyverse)
 # load the NASS survey data for acres harvested
 # corn and soy available at county level
 # alfalfa and wheat only available at state level
-corn <- read.csv("data/NASS harvested acres/NASS survey NY counties corn grain and silage acres harvested 2015-21.csv.csv")
-soy <- read.csv("data/NASS harvested acres/NASS survey NY counties soybeans acres harvested 2015-21.csv.csv")
+corn <- read.csv("data/NASS harvested acres/NASS survey NY all counties corn grain and silage acres harvested 2015-21.csv.csv")
+soy <- read.csv("data/NASS harvested acres/NASS survey NY all counties soybean acres harvested 2015-21.csv.csv")
 alf <- read.csv("data/NASS harvested acres/NASS survey NY state alfalfa acres harvested 2015-21.csv.csv")
 wheat <- read.csv("data/NASS harvested acres/NASS survey NY state wheat acres harvested 2015-21.csv.csv")
 
@@ -22,7 +22,7 @@ wheat <- read.csv("data/NASS harvested acres/NASS survey NY state wheat acres ha
 
 # simplify the datasets
 corn <- corn %>%
-  select(Year, County, Commodity, Value) %>%
+  select(Year, County, Data.Item, Value) %>%
   mutate(Value=as.numeric(gsub(",", "", Value)))
 soy <- soy %>%
   select(Year, County, Commodity, Value) %>%
@@ -37,9 +37,10 @@ wheat <- wheat %>%
   mutate(Value=as.numeric(gsub(",", "", Value)))
 
 # get corn and soy state numbers
-cornagg <- aggregate(Value ~ Year + Commodity, dat=corn, FUN=sum)
+cornagg <- aggregate(Value ~ Year + Data.Item, dat=corn, FUN=sum)
 soyagg <- aggregate(Value ~ Year + Commodity, dat=soy, FUN=sum)
 
+colnames(cornagg)[2] <- "Commodity"
 dat <- rbind(cornagg, soyagg, wheat, alf)
 
 dat <- dat %>%
