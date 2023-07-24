@@ -5,13 +5,15 @@
 # load packages
 library(reshape2) # for dcast()
 library(ggplot2)
-library(dplyr)
+library (tidyverse)
+#library(dplyr) #is having conflict with 'filter' lap
 
 # to update data, run "download data.R"
 
 # load IL DNDC scenario output 
 # (corresponds to "il_adoption_scenarios_final_outputs.csv")
 scenil <- read.csv("data/scenarios/scenil.csv")
+
 ########### METADATA IN 3 ROWS per data column (column name -- unit -- description)
 # column name       unit          description
 # site_name         NA            String combination of one of the locations we simulated on. In the format of {x}_{y} where x refers to the region and y refers to the numeric id of that site. These will be of the format of h_{}, v_{}, a_{}, f_{}, IL-n_{}, IL-s_{} which represents the points for hops, vineyards, almonds, and forage, Illinois North, Illinois South respectively
@@ -34,7 +36,9 @@ scenil <- read.csv("data/scenarios/scenil.csv")
 
 # load IL unweighted simulation DNDC output 
 # (corresponds to "yearly_outputs_post-weighting.csv")
+
 unw <- read.csv("data/un-weighted_results.csv")
+
 ########### METADATA IN 3 ROWS per data column (column name -- unit -- description)
 # column name       unit          description
 # site_name         NA            String combination of one of the locations we simulated on. In the format of {x}_{y} where x refers to the region and y refers to the numeric id of that site. These will be of the format of h_{}, v_{}, a_{}, f_{}, IL-n_{}, IL-s_{} which represents the points for hops, vineyards, almonds, and forage, Illinois North, Illinois South respectively
@@ -53,3 +57,253 @@ unw <- read.csv("data/un-weighted_results.csv")
 # ghg_n2o           tonne co2e/ha Calendar year daily sum (Jan. 1 - Dec. 31) of nitrous oxide direct emissions in co2 equivalents.
 # ghg_indirect_n2o  tonne co2e/ha Calendar year daily sum (Jan. 1 - Dec. 31) of nitrous oxide indirect emissions in co2 equivalents.
 # ghg_total_n2o     tonne co2e/ha Sum of ghg_n2o and ghg_indirect_n2o in co2 equivalents 
+
+
+###current GHG emissions and C sequestration from corn-soybean agriculture in Illinois
+##state level
+# n2o tonne N/ha Calendar year daily sum (Jan. 1 - Dec. 31) of nitrous oxide direct emissions in co2 equivalents.
+# ch4 tonne C/ha Calendar year daily sum (Jan. 1 - Dec. 31) of methane emissions in co2 equivalents.
+# cseq == dsoc tonne C/ha Calendar year change in soil organic carbon stocks (Dec. 31 - Jan. 1).
+
+#insert the Net inside the bars
+
+library(tibble)
+library(ggpmisc)
+
+#data.tb <- tibble(x = "n" , y = -2.7, 
+ #                 plot = list(p +
+  #                              theme_bw(4)))
+
+
+scenil %>% filter (scenario.code == 1 & year ==2022) %>% #taking only scenario 1 and 2022 for analysis
+  select(ghg_dsoc,  ghg_n2o, ghg_total_n2o) %>%
+  gather(var, value, ghg_dsoc:ghg_total_n2o) %>%
+  group_by (var) %>% #we decided to do average between the two climates
+  summarise_all(list(mean, sd)) %>% #fn1, fn2
+  ggplot(aes(x=var, y=fn1, fill= var)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
+                position=position_dodge(0.9), width=0.2) + ylim(-2.7,1.5) +
+ scale_fill_manual(values=c("#DDAA33", "#228833", "#66CCEE")) + 
+                    #labels=c("Corn", "Soybeans", "Winter Wheat"),
+                   #name="Climate Scenario") +
+  #scale_y_continuous(breaks=seq(0,70,10)) +
+  ylab("Co2 equivalents (Tn/ha/Yr)") +
+  scale_x_discrete(labels=c("ghg_dsoc" = "SOC", "ghg_n2o" = "N2O","ghg_total_n2o" = "Total_N2O"))+
+  xlab("Greenhouse gas") +
+  #geom_plot(data = data.tb, aes(x, y, label = plot)) +
+  theme_bw()+
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank() ,
+    axis.text=element_text(size=12),
+    axis.title.x=element_text(size=12, face="bold"),
+    axis.title.y=element_text(size=12, face="bold"),
+    panel.background = element_rect(fill = 'white') ,
+    panel.border=element_rect(color="grey50", fill=NA, linewidth=0.5),
+    strip.text=element_text(size=12, face="bold"),
+    legend.text=element_text(size=11),
+    legend.title=element_text(size=12, face="bold"),
+    plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), 
+    legend.position = "none")
+  
+
+ggsave("plots/n20_dsoc_2022sn1.png", width=8, height=6)     
+
+#stacked with net balance start==mean
+
+#Calculate the balance
+scenil %>% filter (scenario.code == 1 & year ==2022) %>% #taking only scenario 1 and 2022 for analysis
+  select(ghg_dsoc, ghg_total_n2o) %>%
+  mutate (Net = ghg_dsoc + ghg_total_n2o) %>%
+  select (Net) %>%
+  #we decided to do average between the two climates
+  summarise_all(list(mean, sd)) %>% 
+  mutate (year = "2022") -> Net
+
+#stacked bar with Net balance
+scenil %>% filter (scenario.code == 1 & year ==2022) %>% #taking only scenario 1 and 2022 for analysis
+  select(ghg_dsoc, ghg_total_n2o) %>%
+  gather(var, value, ghg_dsoc:ghg_total_n2o) %>%
+  group_by (var) %>% #we decided to do average between the two climates
+  summarise_all(list(mean, sd)) %>%
+  mutate (year= "2022") %>% #fn1, fn2
+  ggplot(aes(x=year, y=fn1, fill= var)) + 
+  geom_bar(aes(x=year, y=fn1, fill= var), stat="identity", position= "stack") +
+  geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
+                width=0.2) + ylim(-2.7,1) +
+  scale_fill_manual(values=c("#DDAA33", "#228833"), 
+  labels=c("SOC","N2O"),
+  name="Greenhouse gas") +
+  geom_hline(yintercept = Net$fn1, linetype = "dashed", size = 1) +
+  annotate("text", x=Net$year, y=Net$fn1 +0.1, label= "Net Balance") +
+  #scale_y_continuous(breaks=seq(0,70,10)) +
+  ylab("Co2 equivalents (Tn/ha/Yr)") +
+  scale_x_discrete(labels=c("2022" = ""))+
+  xlab("Year:2022") +
+  theme_bw()+
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank() ,
+    axis.text=element_text(size=12),
+    axis.title.x=element_text(size=12, face="bold"),
+    axis.title.y=element_text(size=12, face="bold"),
+    panel.background = element_rect(fill = 'white') ,
+    panel.border=element_rect(color="grey50", fill=NA, linewidth=0.5),
+    strip.text=element_text(size=12, face="bold"),
+    legend.text=element_text(size=11),
+    legend.title=element_text(size=12, face="bold"),
+    plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) ->p
+    #legend.position = "none")
+  
+
+ggsave("plots/Net_2022sn1.png", width=6, height=8)  
+
+
+##by sub-scenario
+##year by year trends for all managements
+unw %>% filter (grepl('IL-', site_name)) %>%
+  filter (year %in% (2010:2022) & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+  select(management, year, ghg_dsoc, ghg_total_n2o) %>% 
+  mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
+  gather(var, value, ghg_dsoc:Net) %>%
+  ggplot(aes(as.numeric(year), value, color= management)) +
+  geom_point () +
+  facet_wrap(~var, scales = "free_y") +
+  geom_line() +
+  scale_x_continuous(breaks=seq(2010,2022,1))
+  
+ggsave("plots/trend_s1_shms.png", width=12, height=6)     
+
+  
+  
+###summary figure by management practice across years 
+  
+unw %>% filter (grepl('IL-', site_name)) %>%
+  filter (year == 2022 & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+  select(management,ghg_dsoc, ghg_total_n2o) %>%
+  mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
+  gather(var, value, ghg_dsoc:Net) %>%
+  group_by(management, var) %>%
+  summarise_all(list(mean, sd)) %>% #fn1, fn2
+  ggplot(aes(x=management, y=fn1, group=management)) + 
+  geom_bar(stat="identity", position=position_dodge(), aes(fill=management)) +
+  geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
+                position=position_dodge(0.9), width=0.2) +
+  facet_wrap(~var, scales = "free_y") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+ggsave("plots/mean_s1_shms.png", width=12, height=6)     
+
+#dropping the fertilizer from management code
+unw %>% filter (grepl('IL-', site_name)) %>%
+  filter (year == 2022 & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+  mutate( management2= str_sub(management, 1, 5)) %>%
+  select(management2,ghg_dsoc, ghg_total_n2o) %>%
+  mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
+  rename(SOC = ghg_dsoc, N2O = ghg_total_n2o) %>%
+  #mutate (management2 = sub("*-*-*-.", "", management)) #sub("(_[^_]*)_", "\\1", vec)
+  gather(var, value, SOC:Net) %>%
+  group_by(management2, var) %>%
+  summarise_all(list(mean, sd)) %>% #fn1, fn2
+  ggplot(aes(x=  reorder(management2, fn1), y=fn1, group=management2)) + 
+  #ggplot(aes(x=management2, y=fn1, group=management2)) + 
+  geom_bar(stat="identity", position=position_dodge(), aes(fill=management2)) +
+  geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
+                position=position_dodge(0.9), width=0.2) +
+  facet_wrap(var ~., scales = "free_y", ncol=1, strip.position = "right") +
+  #facet_wrap(var ~., ncol=1) +
+  ylim(-4,2) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  coord_flip() +
+  xlab("Soil Health Management Systems") +
+  #scale_x_discrete(labels=c("2022" = ""))+
+  ylab("CO2 equivalents (Tn/ha/Yr)") +
+  scale_fill_discrete(name=NULL) +
+  theme_bw()+
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank() ,
+    axis.text=element_text(size=12),
+    axis.title.x=element_text(size=12, face="bold"),
+    axis.title.y=element_text(size=12, face="bold"),
+    panel.background = element_rect(fill = 'white') ,
+    panel.border=element_rect(color="grey50", fill=NA, linewidth=0.5),
+    strip.text=element_text(size=12, face="bold"),
+    legend.text=element_text(size=11),
+    #legend.title=element_text(size=12, face="bold"),
+    plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+ggsave("plots/mean_s1_shms-noN.png", width=6, height=8)  
+
+
+#summarizing some numbers to write the results 
+unw %>% filter (grepl('IL-', site_name)) %>%
+  filter (year == 2022 & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
+  mutate( management2= str_sub(management, 1, 5)) %>%
+  select(management2,ghg_dsoc, ghg_total_n2o) %>%
+  mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
+  gather(var, value, ghg_dsoc:Net) %>%
+  group_by(management2, var) %>%
+  summarise_all(list(mean, sd)) %>%
+  #filter (var == "Net") %>%
+  filter (var == "ghg_total_n2o") %>%
+  #filter (var == "ghg_dsoc") %>%
+  
+  arrange(fn1) %>%  ## pick the system that has the max C storage capacity
+  filter(fn1 %in% range(fn1))
+  #arrange(fn2) %>%  ## pick the system that has more stable C storage capacity across years? 
+  #filter(fn2 %in% range(fn2))
+
+## diff in the effect of CC in CT vs NT or RT
+dif = -1.388 - (-1.16)
+p_dif = dif/1.16
+
+
+##Anova analysis for management effect 
+
+dta<-unw %>% filter (grepl('IL-', site_name)) %>%
+             filter (year == 2022 & climate_scenario == "rcp26") %>%
+             mutate(Net = ghg_dsoc + ghg_total_n2o)
+
+
+n2o_eff<- aov(ghg_total_n2o ~ management +  site_name, 
+                  data= dta) 
+
+summary(n2o_eff)
+TukeyHSD(n2o_eff)
+TukeyHSD(n2o_eff, conf.level=.90)$management %>% as.data.frame() %>%
+  filter (`p adj` < 0.01)
+
+
+net_eff<- aov(Net ~ management +  site_name, 
+              data= dta) 
+
+summary(net_eff)
+TukeyHSD(net_eff)
+TukeyHSD(net_eff, conf.level=.90)$management %>% as.data.frame() %>%
+  filter (`p adj` < 0.01)
+
+
+library(emmeans)
+library(multcomp)
+library(multcompView)
+
+
+model <- lm(Net ~ management, data = dta)
+
+# get (adjusted) means
+model_means <- emmeans(object = model,
+                       specs = ~ management) 
+
+# add letters to each mean
+model_means_cld <- cld(object = model_means,
+                       adjust = "Tukey",
+                       Letters = letters,
+                       alpha = 0.05)
+
+model_means_cld <- model_means_cld %>% 
+  as.data.frame() 
+
+#next add letters into plot once we have final version 
