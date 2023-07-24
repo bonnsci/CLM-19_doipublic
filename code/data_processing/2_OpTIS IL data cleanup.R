@@ -81,38 +81,38 @@ ILac <- aggregate(eval.acres ~ crop_name + county + year, dat=datw, FUN="sum") %
 ### IMPROVEMENT: add harvested corn grain and soybean acres 2015-2021 by county from NASS survey data
 ### only need to do once 
 # # prep corn and soy data
-df <- list.files(path="data/NASS harvested acres", pattern=" IL ", full.names=T)
-df <- lapply(df, function(i){
-  i <- read.csv(i)
-  i <- i %>%
-    select("Year", "County", "Commodity", "Value") %>%
-    filter(!County %in% c("OTHER COUNTIES", "OTHER (COMBINED) COUNTIES")) %>%
-    rename("year"="Year", "county"="County", "crop_name"="Commodity", "harv_ac"="Value") 
-  i$harv_ac <- as.numeric(gsub(",", "", i$harv_ac)) # remove commas from values
-  i$crop_name <- gsub("CORN", "Corn", i$crop_name)
-  i$crop_name <- gsub("SOYBEANS", "Soybeans", i$crop_name)
-  i$county <- tools::toTitleCase(tolower(i$county)) # get county names ready to merge with OpTIS spellings, which are correct
-  i$county <- ifelse(i$county %in% "De Witt", "DeWitt",
-                             ifelse(i$county %in% "De Kalb", "DeKalb",
-                                    ifelse(i$county %in% "Du Page", "DuPage",
-                                           ifelse(i$county %in% "La Salle", "LaSalle",
-                                                  ifelse(i$county %in% "Mcdonough", "McDonough",
-                                                         ifelse(i$county %in% "Mchenry", "McHenry",
-                                                                ifelse(i$county %in% "Mclean", "McLean",
-                                                                       ifelse(i$county %in% "St Clair", "St. Clair",
-                                                                              ifelse(i$county %in% "will", "Will", i$county)))))))))
-  i <- arrange(i, county)
-})
-
-acres <- bind_rows(df) # combine corn and soybean dfs into one df
-rm(df)
-
-write.csv(acres, "data/IL_harvested_cornsoy2015-2021.csv", row.names=F)
+# df <- list.files(path="data/NASS harvested acres", pattern=" IL ", full.names=T)
+# df <- lapply(df, function(i){
+#   i <- read.csv(i)
+#   i <- i %>%
+#     select("Year", "County", "Commodity", "Value") %>%
+#     filter(!County %in% c("OTHER COUNTIES", "OTHER (COMBINED) COUNTIES")) %>%
+#     rename("year"="Year", "county"="County", "crop_name"="Commodity", "harv_ac"="Value") 
+#   i$harv_ac <- as.numeric(gsub(",", "", i$harv_ac)) # remove commas from values
+#   i$crop_name <- gsub("CORN", "Corn", i$crop_name)
+#   i$crop_name <- gsub("SOYBEANS", "Soybeans", i$crop_name)
+#   i$county <- tools::toTitleCase(tolower(i$county)) # get county names ready to merge with OpTIS spellings, which are correct
+#   i$county <- ifelse(i$county %in% "De Witt", "DeWitt",
+#                              ifelse(i$county %in% "De Kalb", "DeKalb",
+#                                     ifelse(i$county %in% "Du Page", "DuPage",
+#                                            ifelse(i$county %in% "La Salle", "LaSalle",
+#                                                   ifelse(i$county %in% "Mcdonough", "McDonough",
+#                                                          ifelse(i$county %in% "Mchenry", "McHenry",
+#                                                                 ifelse(i$county %in% "Mclean", "McLean",
+#                                                                        ifelse(i$county %in% "St Clair", "St. Clair",
+#                                                                               ifelse(i$county %in% "will", "Will", i$county)))))))))
+#   i <- arrange(i, county)
+# })
+# 
+# acres <- bind_rows(df) # combine corn and soybean dfs into one df
+# rm(df)
+# 
+# write.csv(acres, "data/NASS harvested acres/IL_harvested_cornsoy2015-2021.csv", row.names=F)
 
 
 
 # read in NASS data prepped above
-acres <- read.csv("data/IL_harvested_cornsoy2015-2021.csv")
+acres <- read.csv("data/NASS harvested acres/IL_harvested_cornsoy2015-2021.csv")
 ILac <- left_join(ILac, acres)
 ILac$perc_eval <- round((100*ILac$eval.acres / ILac$harv_ac), digits=2)
 # NAs created where we have OpTIS data but not harvest data

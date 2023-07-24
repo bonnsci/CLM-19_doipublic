@@ -36,9 +36,9 @@ soils <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/
 unw <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/yearly_outputs_post_weighting.csv")
 
 # SAVE biomass, soil metadata, and un-weighted results
-write.csv(bm, "data/bm.csv", row.names=F)
+write.csv(bm, "data/biomass.csv", row.names=F)
 write.csv(soils, "data/soils.csv", row.names=F)
-write.csv(unw, "data/unw.csv", row.names=F)
+write.csv(unw, "data/un-weighted_results.csv", row.names=F)
 
 ################ THE FOLLOWING WORKS WHEN WE'RE READY TO DEAL WITH BIG FILES - HASN'T BEEN COMPLETED
 # Daily nitrogen (600 MB) - a zipped file that includes files for each simulation run. These include daily nitrogen loading and flux information for each management system.
@@ -95,7 +95,7 @@ weather <- weather %>%
   unnest_longer(dndc) %>%
   unnest(dndc)
 
-write.csv(weather, "data/large_data/clm_data_unpacked.csv")
+write.csv(weather, "data/large_data/clm_data_unpacked.csv", row.names=F)
 
 
 ##### testing code on subset to figure out how to unnest properly
