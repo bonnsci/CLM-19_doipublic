@@ -12,7 +12,7 @@ datny <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/
 write.csv(datil, "data/optis/datil.csv", row.names=F)
 write.csv(datny, "data/optis/datny.csv", row.names=F)
 
-# LOAD scenario data
+# LOAD scenario data # most recent download 8/2/23 on files dated 7/26/23 from Alex
 scenil <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/il_adoption_scenarios_final_outputs.csv")
 scena <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/almonds_adoption_scenarios_final_outputs.csv")
 sceng <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/grape_adoption_scenarios_final_outputs.csv")
@@ -26,10 +26,12 @@ write.csv(sceng, "data/scenarios/sceng.csv", row.names=F)
 write.csv(scenh, "data/scenarios/scenh.csv", row.names=F)
 write.csv(scenny, "data/scenarios/scenny.csv", row.names=F)
 
-# LOAD biomass
+rm(scenil, scena, sceng, scenh, scenny)
+
+# LOAD biomass # most recent download 8/2/23 on files dated 7/26/23 from Alex
 bm <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/max_biomass_summary.csv")
 
-# LOAD soil metadata
+# LOAD soil metadata # shouldn't change
 soils <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/simulation_points_w_soils.csv")
 
 # LOAD un-weighted DNDC results (all systems) ("post_weighting" in the file name refers to the vine and tree crops being weighted for % row that is tree/vine and % alley)
@@ -40,16 +42,57 @@ write.csv(bm, "data/biomass.csv", row.names=F)
 write.csv(soils, "data/soils.csv", row.names=F)
 write.csv(unw, "data/un-weighted_results.csv", row.names=F)
 
-################ THE FOLLOWING WORKS WHEN WE'RE READY TO DEAL WITH BIG FILES - HASN'T BEEN COMPLETED
-# Daily nitrogen (600 MB) - a zipped file that includes files for each simulation run. These include daily nitrogen loading and flux information for each management system.
-unzip("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/day_soil_n_files-AFT.zip", exdir="/tempdir")
-temp <- list.files("/tempdir", pattern="*.csv")
-setwd("/tempdir")
-dailyn <- lapply(temp, read.delim)  # this is 11.1 GB
-# next step would be to convert this to one dataframe
+############### divide simulations data up, can be stitched back together locally
+unw <- read.csv("data/un-weighted_results.csv")
+il <- unw[unw$region_name=="IL",]
+object.size(il)
+write.csv(il, "data/simulations/un-weighted_resultsIL.csv", row.names=F)
+ca <- unw[unw$region_name=="CA",]
+object.size(ca)
+write.csv(ca, "data/simulations/un-weighted_resultsCA.csv", row.names=F)
+ny <- unw[unw$region_name=="NY",]
+object.size(ny)
+write.csv(ny, "data/simulations/un-weighted_resultsNY.csv", row.names=F)
+pnw <- unw[unw$region_name=="PNW",]
+object.size(pnw)
+write.csv(pnw, "data/simulations/un-weighted_resultsPNW.csv", row.names=F)
 
-# Daily water (666 MB) -  zipped file that includes files for each simulation run. These files include daily evaporation and transpiration rates that are lost through each management system.
-unzip("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Water/day_water_files-AFT.zip", exdir="/tempdir")
+rm(ny, pnw, il, ca, unw)
+
+################ THE FOLLOWING DOWNLOADS 1-2 GB .csv's per file. will need to work on these files locally rather than through github
+
+# daily N data
+dayn_alm <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/CA_almonds_day_soil_n.csv")
+write.csv(dayn_alm, "data/large_data/daily N/CA_almonds_day_soil_n.csv", row.names=F)
+rm(dayn_alm)
+
+dayn_vin <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/CA_vineyards_day_soil_n.csv")
+write.csv(dayn_vin, "data/large_data/daily N/CA_vineyards_day_soil_n.csv", row.names=F)
+rm(dayn_vin)
+
+dayn_il <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/IL_corn_day_soil_n.csv")
+write.csv(dayn_il, "data/large_data/daily N/IL_corn_day_soil_n.csv", row.names=F)
+rm(dayn_il)
+
+dayn_ny <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/NY_forage_day_soil_n.csv")
+write.csv(dayn_ny, "data/large_data/daily N/NY_forage_day_soil_n.csv", row.names=F)
+rm(dayn_ny)
+
+dayn_pnw <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/NY_forage_day_soil_n.csv")
+write.csv(dayn_pnw, "data/large_data/daily N/PNW_hops_day_soil_n.csv", row.names=F)
+rm(dayn_pnw)
+
+
+
+# # Daily nitrogen (600 MB) - a zipped file that includes files for each simulation run. These include daily nitrogen loading and flux information for each management system.
+# unzip("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/day_soil_n_files-AFT.zip", exdir="/tempdir")
+# temp <- list.files("/tempdir", pattern="*.csv")
+# setwd("/tempdir")
+# dailyn <- lapply(temp, read.delim)  # this is 11.1 GB
+# # next step would be to convert this to one dataframe
+# 
+# # Daily water (666 MB) -  zipped file that includes files for each simulation run. These files include daily evaporation and transpiration rates that are lost through each management system.
+# unzip("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Water/day_water_files-AFT.zip", exdir="/tempdir")
 
 
 
