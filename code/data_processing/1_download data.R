@@ -42,6 +42,23 @@ write.csv(bm, "data/biomass.csv", row.names=F)
 write.csv(soils, "data/soils.csv", row.names=F)
 write.csv(unw, "data/un-weighted_results.csv", row.names=F)
 
+############### divide simulations data up, can be stitched back together locally
+unw <- read.csv("data/un-weighted_results.csv")
+il <- unw[unw$region_name=="IL",]
+object.size(il)
+write.csv(il, "data/simulations/un-weighted_resultsIL.csv", row.names=F)
+ca <- unw[unw$region_name=="CA",]
+object.size(ca)
+write.csv(ca, "data/simulations/un-weighted_resultsCA.csv", row.names=F)
+ny <- unw[unw$region_name=="NY",]
+object.size(ny)
+write.csv(ny, "data/simulations/un-weighted_resultsNY.csv", row.names=F)
+pnw <- unw[unw$region_name=="PNW",]
+object.size(pnw)
+write.csv(pnw, "data/simulations/un-weighted_resultsPNW.csv", row.names=F)
+
+rm(ny, pnw, il, ca, unw)
+
 ################ THE FOLLOWING DOWNLOADS 1-2 GB .csv's per file. will need to work on these files locally rather than through github
 
 # daily N data
@@ -56,6 +73,16 @@ rm(dayn_vin)
 dayn_il <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/IL_corn_day_soil_n.csv")
 write.csv(dayn_il, "data/large_data/daily N/IL_corn_day_soil_n.csv", row.names=F)
 rm(dayn_il)
+
+dayn_ny <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/NY_forage_day_soil_n.csv")
+write.csv(dayn_ny, "data/large_data/daily N/NY_forage_day_soil_n.csv", row.names=F)
+rm(dayn_ny)
+
+dayn_pnw <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/NY_forage_day_soil_n.csv")
+write.csv(dayn_pnw, "data/large_data/daily N/PNW_hops_day_soil_n.csv", row.names=F)
+rm(dayn_pnw)
+
+
 
 # # Daily nitrogen (600 MB) - a zipped file that includes files for each simulation run. These include daily nitrogen loading and flux information for each management system.
 # unzip("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/day_soil_n_files-AFT.zip", exdir="/tempdir")
