@@ -330,6 +330,11 @@ precip <- dat %>%
             rainyd = sum(precip>0),  # count the rows where precip >0
             intens = ssn.tot/rainyd) %>%
   ungroup()
+object.size(precip)
+
+# write.csv(precip, "data/climate data not large/precipIL.csv", row.names=F)
+
+
 
 # put data in long form for plotting
 precipl <- melt(precip, id.vars = c("name", "scenario", "year", "season"), value.name="value")
