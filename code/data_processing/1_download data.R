@@ -29,7 +29,58 @@ write.csv(scenny, "data/scenarios/scenny.csv", row.names=F)
 rm(scenil, scena, sceng, scenh, scenny)
 
 # LOAD biomass # most recent download 8/2/23 on files dated 7/26/23 from Alex
-bm <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/max_biomass_summary.csv")
+# bm <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/max_biomass_summary.csv")
+bm <- read.csv("data/biomass.csv")
+bm <- bm %>%
+  arrange(site_name, Year, crop_name)
+
+
+# FILE TOO BIG TO PUSH TO GITHUB
+# save site data to separate csvs
+# # extract IL data
+# site names
+sites_IL <- grep("IL-", unique(bm$site_name), value=T) #
+# subset data
+bmIL <- bm[bm$site_name %in% sites_IL,]
+# save data
+write.csv(bmIL, "data/biomass/biomass_IL.csv", row.names=F)
+
+# # extract NY data
+# site names
+sites_NY <- grep("f_", unique(bm$site_name), value=T) # f for forage
+# subset data
+bmNY <- bm[bm$site_name %in% sites_NY,]  # has more data because more crops
+# save data
+write.csv(bmNY, "data/biomass/biomass_NY.csv", row.names=F)
+
+# # extract almond data
+# site names
+sites_alm <- grep("a_", unique(bm$site_name), value=T) #
+# subset data
+bmalm <- bm[bm$site_name %in% sites_alm,]
+# save data
+write.csv(bmalm, "data/biomass/biomass_almond.csv", row.names=F)
+
+# # extract vineyard data
+# site names
+sites_vine <- grep("v_", unique(bm$site_name), value=T) #
+# subset data
+bmvine <- bm[bm$site_name %in% sites_vine,]
+# save data
+write.csv(bmvine, "data/biomass/biomass_vineyard.csv", row.names=F)
+
+# # extract IL data
+# site names
+sites_hops <- grep("h_", unique(bm$site_name), value=T) #
+# subset data
+bmhops <- bm[bm$site_name %in% sites_hops,]
+# save data
+write.csv(bmhops, "data/biomass/biomass_hops.csv", row.names=F)
+
+# clean up
+rm(bm, bmalm, bmhops, bmIL, bmNY, bmvine, sites_alm, sites_hops, sites_IL, sites_NY, sites_vine)
+
+
 
 # LOAD soil metadata # shouldn't change
 soils <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/simulation_points_w_soils.csv")
