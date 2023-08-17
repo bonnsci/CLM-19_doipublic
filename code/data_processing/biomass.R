@@ -1,8 +1,9 @@
 # Biomass data from Regrow DNDC simulations
 
 library(tidyverse) # has ggplot, dplyr, etc.
-
-
+library(broom) # for glance()
+# install.packages("car")
+library(car) # for qqp
 
 ################### EXTRACT DATA BY SITE (CAN SKIP UNLESS NEED TO UPDATE DATA FROM GOOGLE DRIVE)
 
@@ -25,52 +26,6 @@ library(tidyverse) # has ggplot, dplyr, etc.
 # interesting, so we need to convert kg C to kg dry biomass
 # can probably find common %C of dry grain biomass
 
-# save site data to separate csvs
-
-# # # extract IL data
-# # site names
-# sites_IL <- grep("IL-", unique(bm$site_name), value=T) # 
-# # subset data
-# bmIL <- bm[bm$site_name %in% sites_IL,]
-# # save data
-# write.csv(bmIL, "data/biomass/biomass_IL.csv", row.names=F)
-# 
-# # # extract NY data
-# # site names
-# sites_NY <- grep("f_", unique(bm$site_name), value=T) # f for forage
-# # subset data
-# bmNY <- bm[bm$site_name %in% sites_NY,]  # has more data because more crops
-# # save data
-# write.csv(bmNY, "data/biomass/biomass_NY.csv", row.names=F)
-# 
-# # # extract almond data
-# # site names
-# sites_alm <- grep("a_", unique(bm$site_name), value=T) # 
-# # subset data
-# bmalm <- bm[bm$site_name %in% sites_alm,]
-# # save data
-# write.csv(bmalm, "data/biomass/biomass_almond.csv", row.names=F)
-# 
-# # # extract vineyard data
-# # site names
-# sites_vine <- grep("v_", unique(bm$site_name), value=T) # 
-# # subset data
-# bmvine <- bm[bm$site_name %in% sites_vine,]
-# # save data
-# write.csv(bmvine, "data/biomass/biomass_vineyard.csv", row.names=F)
-# 
-# # # extract IL data
-# # site names
-# sites_hops <- grep("h_", unique(bm$site_name), value=T) # 
-# # subset data
-# bmhops <- bm[bm$site_name %in% sites_hops,]
-# # save data
-# write.csv(bmhops, "data/biomass/biomass_hops.csv", row.names=F)
-# 
-# # clean up
-# rm(bm, bmalm, bmhops, bmIL, bmNY, bmvine, sites_alm, sites_hops, sites_IL, sites_NY, sites_vine)
-
-
 
 ###############
 ###############
@@ -79,8 +34,8 @@ library(tidyverse) # has ggplot, dplyr, etc.
 
 bmil <- read.csv("data/biomass/biomass_IL.csv")
 
-# need to find literature values to convert kg C grain to kg grain.
-# or maybe not since we'll only be looking at them RELATIVE TO EACH OTHER, not absolute amounts...
+# DO NOT need to find literature values to convert kg C grain to kg grain.
+# since we'll only be looking at them RELATIVE TO EACH OTHER, not absolute amounts...
 # let's look at the C results for now
 
 min(bmil$Year) # 2013 --2013-2021 start up years, start at 2022
@@ -99,14 +54,25 @@ bmil$cc <- ifelse(grepl("-cc-", bmil$management_name), "CC", "NC")
 # # check
 # unique(bmil$cc)
 
+# add in summer precip data
+precip <- read.csv("data/climate data not large/precipIL.csv")
+
+precip.summer <- precip[precip$season == "Summer",]
+precip.summer <- precip.summer[,c(1:3, 5:7)]
+colnames(precip.summer)[1:2] <- c("site_name", "climate_scenario")
+
+bmil <- left_join(bmil, precip.summer, 
+                   relationship = "many-to-one", 
+                   by = join_by(site_name, climate_scenario, Year==year))
+
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
-# recall current data only has corn every other year and soy the opposite years
+# 
 ggplot(dat=bmil, 
   data=bmil[bmil$crop_name %in% c("corn, grain", "soybean") & bmil$Year>2021, ],  # & bmil$site_name=="IL-n_10",
   aes(x=Year, y=Grain.C.kgC.ha.)) +
-  geom_point(aes(color=till), size=0.5, alpha=0.5) +
+  geom_point(aes(color=till), size=0.2, alpha=0.2) +
   # geom_hline(data=hlinedat, aes(yintercept=y), color="black", linewidth=0.4, linetype="dashed") +
   geom_smooth(method="lm", aes(color=till), linewidth=1, se=F) +
   # scale_color_manual(values=c("#4477AA", "#228833", "#EE6677", "#AA3377")) +
@@ -147,6 +113,8 @@ ggsave("plots/biomass/IL_cornsoybean.png", width=12, height=8, dpi=300)
 # are the biomass slopes and intercepts significantly different?
 # set base levels to no cover and conventional till
 bmil$till <- relevel(factor(bmil$till), ref="CT")
+# bmil$till <- ordered(bmil$till, levels=c("CT", "RT", "NT"))
+# bmil$till <- factor(bmil$till, ordered=F)
 bmil$cc <- relevel(factor(bmil$cc), ref="NC")
 
 # center data at mean
@@ -158,11 +126,81 @@ bmil$year.sc <- center_scale(bmil$Year)
 bmil$grain.sc <- center_scale(bmil$Grain.C.kgC.ha.)
 
 
-blm1 <- lm(grain.sc ~ year.sc*climate_scenario*crop_name*cc*till,
-           data=bmil[bmil$crop_name %in% c("corn, grain", "soybean") & bmil$Year>2021, ])
-summary(blm1)
+grmean <- mean(bmil$Grain.C.kgC.ha.)
+grsd <- sd(bmil$Grain.C.kgC.ha.)
+ssntotmean <- mean(bmil$ssn.tot)
+ssntotsd <- sd(bmil$ssn.tot)
+yrmean <- mean(bmil$Year)
+yrsd <- sd(bmil$Year)
+bmil$grain.z <- (bmil$Grain.C.kgC.ha.-grmean)/grsd
+bmil$ssn.tot.z <- (bmil$ssn.tot-ssntotmean)/ssntotsd
+bmil$year.z <- (bmil$Year - yrmean)/yrsd
 
-blm2 <- lm(grain.sc ~ year.sc+ cc + till + crop_name + year.sc:cc:till, 
-           data=bmil[bmil$crop_name %in% c("corn, grain", "soybean") & bmil$Year>2021, ])
-summary(blm2)
-# base levels are CT a
+grain <- bmil[bmil$crop_name %in% c("corn, grain", "soybean") & bmil$Year>2021, ]
+qqline(grain$Grain.C.kgC.ha., distribution = )
+
+
+# check that data are normal
+qqnorm(grain$Grain.C.kgC.ha.)   #### left off here
+
+
+# most of the explanatory power of the model comes from the two crops
+blm0 <- lm(grain.z ~ year.z*crop_name, data=grain)
+summary(blm0)
+# R-squared is 0.6277, p< 2.2e-16
+glance(blm0)
+# AIC = 223463    # BIC 2.24e5  # when comparing these to other models, lower is better
+
+# add in summer precip gain 0.15 in R2
+blm0p <- lm(grain.z ~ year.z*crop_name + ssn.tot.z,  data=grain)
+summary(blm0p)
+# R-squared is 0.7756, p< 2.2e-16
+glance(blm0p)
+# AIC = 163956    # BIC 164014  
+
+# add in cover crops
+blm1p <- lm(grain.z ~ year.z*crop_name*cc + ssn.tot.z,  data=grain)
+summary(blm1p)
+# R-squared is 0.7759, p< 2.2e-16
+glance(blm1p)
+# AIC = 163836    # BIC 163933  
+
+
+# add in tillage
+blm2p <- lm(grain.z ~ year.z*crop_name*till + ssn.tot.z,  data=grain)
+summary(blm2p)
+# R-squared is 0.7769, p< 2.2e-16
+glance(blm2p)
+# AIC = 163324    # BIC 163460 
+
+
+# add in site, a random effect
+
+
+blm3p <- lmer(grain.z ~ year.z*crop_name + ssn.tot.z + (1|site_name),
+              REML=F, # only one random effect, can use maximum likelihood not restricted ML
+            data=grain)
+summary(blm3p)
+# R-squared is 0.79, p< 2.2e-16
+glance(blm3p)
+# AIC = 155646    # BIC 156004
+
+
+# add in site, a random effect
+blm3p <- lm(grain.z ~ year.z*crop_name + ssn.tot.z,  data=grain)
+summary(blm3p)
+# R-squared is 0.79, p< 2.2e-16
+glance(blm3p)
+# AIC = 155646    # BIC 156004
+
+
+
+
+
+blm_fullp <- lm(grain.z ~ year.z*crop_name*climate_scenario*till*cc + ssn.tot.z, 
+               data=bmil[bmil$crop_name %in% c("corn, grain", "soybean") & bmil$Year>2021, ])
+summary(blm_fullp)
+# R-squared is 0.7784, p< 2.2e-16
+glance(blm_fullp)
+# AIC = 162567 ### BEST AIC SO FAR   # BIC 163050  # BEST BIC SO FAR
+
