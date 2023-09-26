@@ -17,5 +17,7 @@ We selected 2022, and one climate scenario. Before 2022 is the spin up period fo
 Fertilizer management was average across same CC, NT, RT and NC
 We calculated the pure effect per management practices by comparing each systems. For example nt-cc; nt-nc. The differences between the two was average with the results of the other systems to address which system if NT or CC has a bigger effect. 
 
+The simulations are c-s rotation as a whole reported by year per scenario. We have the two crop phases in the scenil. 
+
 # Explore current GHG and SHMs per soil type
 Link the soil csv with the current SHMs 

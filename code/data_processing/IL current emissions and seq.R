@@ -37,7 +37,7 @@ scenil <- read.csv("data/scenarios/scenil.csv")
 # load IL unweighted simulation DNDC output 
 # (corresponds to "yearly_outputs_post-weighting.csv")
 
-unw <- read.csv("data/un-weighted_results.csv")
+unw <- read.csv("data/simulations/un-weighted_resultsIL.csv")
 
 ########### METADATA IN 3 ROWS per data column (column name -- unit -- description)
 # column name       unit          description
@@ -153,7 +153,7 @@ scenil %>% filter (scenario.code == 1 & year ==2022) %>% #taking only scenario 1
     strip.text=element_text(size=12, face="bold"),
     legend.text=element_text(size=11),
     legend.title=element_text(size=12, face="bold"),
-    plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) ->p
+    plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) -> p
     #legend.position = "none")
   
 
@@ -164,12 +164,12 @@ ggsave("plots/Net_2022sn1.png", width=6, height=8)
 ##year by year trends for all managements
 unw %>% filter (grepl('IL-', site_name)) %>%
   filter (year %in% (2010:2022) & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
-  select(management, year, ghg_dsoc, ghg_total_n2o) %>% 
+  select(crop_name, management, year, ghg_dsoc, ghg_total_n2o) %>% 
   mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
   gather(var, value, ghg_dsoc:Net) %>%
   ggplot(aes(as.numeric(year), value, color= management)) +
   geom_point () +
-  facet_wrap(~var, scales = "free_y") +
+  facet_grid(crop_name ~var, scales = "free_y") +
   geom_line() +
   scale_x_continuous(breaks=seq(2010,2022,1))
   
@@ -181,16 +181,16 @@ ggsave("plots/trend_s1_shms.png", width=12, height=6)
   
 unw %>% filter (grepl('IL-', site_name)) %>%
   filter (year == 2022 & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
-  select(management,ghg_dsoc, ghg_total_n2o) %>%
+  select(crop_name, management,ghg_dsoc, ghg_total_n2o) %>%
   mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
   gather(var, value, ghg_dsoc:Net) %>%
-  group_by(management, var) %>%
+  group_by(crop_name, management, var) %>%
   summarise_all(list(mean, sd)) %>% #fn1, fn2
   ggplot(aes(x=management, y=fn1, group=management)) + 
   geom_bar(stat="identity", position=position_dodge(), aes(fill=management)) +
   geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
                 position=position_dodge(0.9), width=0.2) +
-  facet_wrap(~var, scales = "free_y") +
+  facet_grid(crop_name ~var, scales = "free_y") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
@@ -200,19 +200,19 @@ ggsave("plots/mean_s1_shms.png", width=12, height=6)
 unw %>% filter (grepl('IL-', site_name)) %>%
   filter (year == 2022 & climate_scenario == "rcp26") %>%  #taking only scenario 1, rcp26 and years 2010-2022 for analysis
   mutate( management2= str_sub(management, 1, 5)) %>%
-  select(management2,ghg_dsoc, ghg_total_n2o) %>%
+  select(crop_name, management2,ghg_dsoc, ghg_total_n2o) %>%
   mutate(Net = ghg_dsoc + ghg_total_n2o) %>%
   rename(SOC = ghg_dsoc, N2O = ghg_total_n2o) %>%
   #mutate (management2 = sub("*-*-*-.", "", management)) #sub("(_[^_]*)_", "\\1", vec)
   gather(var, value, SOC:Net) %>%
-  group_by(management2, var) %>%
+  group_by(crop_name, management2, var) %>%
   summarise_all(list(mean, sd)) %>% #fn1, fn2
   ggplot(aes(x=  reorder(management2, fn1), y=fn1, group=management2)) + 
   #ggplot(aes(x=management2, y=fn1, group=management2)) + 
   geom_bar(stat="identity", position=position_dodge(), aes(fill=management2)) +
   geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
                 position=position_dodge(0.9), width=0.2) +
-  facet_wrap(var ~., scales = "free_y", ncol=1, strip.position = "right") +
+  facet_grid(var ~ crop_name, scales = "free_y") + #ncol=2, strip.position = "right"
   #facet_wrap(var ~., ncol=1) +
   ylim(-4,2) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
@@ -223,6 +223,7 @@ unw %>% filter (grepl('IL-', site_name)) %>%
   scale_fill_discrete(name=NULL) +
   theme_bw()+
   theme(
+    legend.position= "none",
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank() ,
     axis.text=element_text(size=12),
@@ -268,7 +269,7 @@ dta<-unw %>% filter (grepl('IL-', site_name)) %>%
              mutate(Net = ghg_dsoc + ghg_total_n2o)
 
 
-n2o_eff<- aov(ghg_total_n2o ~ management +  site_name, 
+n2o_eff<- aov(ghg_total_n2o ~ management +  site_name + crop_name, 
                   data= dta) 
 
 summary(n2o_eff)
