@@ -1,9 +1,15 @@
 # Biomass data from Regrow DNDC simulations
+# this script adds some dummy variables to the data
+# summarizes corn grain biomass C data by mean, se, cv
+# makes bar charts by decade and summarizing across all years
+# runs ANOVA to look for significant differences in mean and cv between till*cc*N management across all years
 
 library(tidyverse) # has ggplot, dplyr, etc.
 library(broom) # for glance()
 # install.packages("car")
 library(car) # for qqp
+# install.packages("multcompView") 
+library(multcompView) # for tukey HSD letters
 
 ################### EXTRACT DATA BY SITE (CAN SKIP UNLESS NEED TO UPDATE DATA FROM GOOGLE DRIVE)
 
@@ -32,6 +38,10 @@ library(car) # for qqp
 ###############
 ############### START HERE
 
+#######################   
+#######################   (1) set up the data
+#######################   
+
 bmil <- read.csv("data/biomass/biomass_IL.csv")
 
 # DO NOT need to find literature values to convert kg C grain to kg grain.
@@ -54,63 +64,381 @@ bmil$cc <- ifelse(grepl("-cc-", bmil$management_name), "CC", "NC")
 # # check
 # unique(bmil$cc)
 
-# add in summer precip data
-precip <- read.csv("data/climate data not large/precipIL.csv")
+# dummy for N treatment
+bmil$nfert <- ifelse(grepl("-cn", bmil$management_name), "High N", 
+                     ifelse(grepl("-fn", bmil$management_name), "Fall N","Recommended N"))
+# # check
+# unique(bmil$nfert)
 
-precip.summer <- precip[precip$season == "Summer",]
-precip.summer <- precip.summer[,c(1:3, 5:7)]
-colnames(precip.summer)[1:2] <- c("site_name", "climate_scenario")
+# dummy for decade
+bmil$decade <- ifelse(bmil$Year <2021, "2010s",
+                      ifelse(bmil$Year>=2021 & bmil$Year <2031, "2020s",
+                        ifelse(bmil$Year>=2031 & bmil$Year <2041, "2030s",
+                          ifelse(bmil$Year>=2041 & bmil$Year <2051, "2040s",
+                            ifelse(bmil$Year>=2051 & bmil$Year <2061, "2050s",
+                              ifelse(bmil$Year>=2061 & bmil$Year <2071, "2060s", "2070s"))))))
+# unique(bmil$decade)
 
-bmil <- left_join(bmil, precip.summer, 
-                   relationship = "many-to-one", 
-                   by = join_by(site_name, climate_scenario, Year==year))
 
+# # add in summer precip data -- only needed if doing regression analysis, not pursued at this time
+# precip <- read.csv("data/climate data not large/precipIL.csv")
+# 
+# precip.summer <- precip[precip$season == "Summer",]
+# precip.summer <- precip.summer[,c(1:3, 5:7)]
+# colnames(precip.summer)[1:2] <- c("site_name", "climate_scenario")
+# 
+# bmil <- left_join(bmil, precip.summer, 
+#                    relationship = "many-to-one", 
+#                    by = join_by(site_name, climate_scenario, Year==year))
+
+
+# unique(bmil$management_name)
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
-# 
-ggplot(dat=bmil, 
-  data=bmil[bmil$crop_name %in% c("corn, grain", "soybean") & bmil$Year>2021, ],  # & bmil$site_name=="IL-n_10",
-  aes(x=Year, y=Grain.C.kgC.ha.)) +
-  geom_point(aes(color=till), size=0.2, alpha=0.2) +
-  # geom_hline(data=hlinedat, aes(yintercept=y), color="black", linewidth=0.4, linetype="dashed") +
-  geom_smooth(method="lm", aes(color=till), linewidth=1, se=F) +
-  # scale_color_manual(values=c("#4477AA", "#228833", "#EE6677", "#AA3377")) +
-  facet_grid(rows=vars(factor(crop_name, levels=c("corn, grain", "soybean"))), 
-             cols=vars(factor(climate_scenario, levels=c("rcp26", "rcp60")), factor(cc, levels=c("CC", "NC"))), 
-             scales="free_y",
+se <- function(x) sd(x) / sqrt(length(x))
+cv <- function(x) sd(x) / mean(x)
+
+# is the grain C biomass significantly different with High N vs Recommended N?
+# let's look at biomass by decade
+biomass_summary <- bmil %>%
+  group_by(climate_scenario,crop_name, cc, till, nfert, decade) %>%
+  summarize(biomass_mean = mean(Grain.C.kgC.ha.), biomass_se = se(Grain.C.kgC.ha.))
+
+windows(xpinch=200, ypinch=200, width=5, height=5)
+ggplot(data=biomass_summary[#biomass_summary$till=="NT" & # just look at NT for simplicity sake for now
+  biomass_summary$climate_scenario == "rcp60" &                            
+  biomass_summary$crop_name %in% c("corn, grain"),], #exclude rye, soybeans
+                             # biomass_summary$nfert %in% c("High N", "Recommended N"),],  # exclude fall N for now
+       aes(x=decade, y=biomass_mean, fill=nfert)) +
+  geom_bar(stat="identity", position=position_dodge(), color="#332288") +
+  geom_errorbar(width=0.3, aes(ymin=biomass_mean - biomass_se, ymax=biomass_mean + biomass_se),  
+                               position=position_dodge(0.9),
+                                color="#332288") +
+  facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
+             cols=vars(factor(cc, levels=c("CC", "NC"))), 
              labeller = as_labeller(
                c(CC="Has Cover Crop", NC="No Cover Crop",
-                 rcp26 = "RCP 2.6",rcp60= "RCP 6.0",
-                 "corn, grain" = "Corn for grain", soybean= "Soybean"))) +
-             # switch="y") +
-  labs(y="Grain kg C per ha") +
+                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+  xlab("Decade") +
+  ylab("Corn grain (kg/ha)") +
+  scale_fill_manual(values=c("#CC6677","#99DDFF", "#44AA99" ), name="N management") +
   theme(
     panel.grid.minor=element_blank(), 
-    panel.grid.major=element_blank()  ,
-    axis.text.x=element_text(size=10, angle=-40, vjust=-0.3),
-    axis.text.y=element_text(size=10),
-    # axis.title.x=element_text(size=14, face="bold"),
-    # axis.title.y=element_text(size=14, face="bold"),
-    panel.background = element_rect(fill = 'gray95') ,
-    strip.background = element_blank(),  
-    strip.placement = "outside",
-    # panel.border=element_rect(color="grey50", fill=NA, size=0.5),
-    strip.text=element_text(size=12) # ,
-    # legend.text=element_text(size=11),
-    # legend.title=element_text(size=10) # ,
-    # plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
-    # legend.key=element_rect(fill="white"),
-    # legend.key.size = unit(0.4, "cm")
-  )	 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/biomass/IL_cornsoybean.png", width=12, height=8, dpi=300)
+ggsave("plots/biomass/IL_corn_biomass_bars.png", width=12, height=8, dpi=300)
 
 
 
 
 
-# are the biomass slopes and intercepts significantly different?
+
+#######################   
+#######################   (2) is mean corn grain C different among till*cc*Nfert groups across all years?
+#######################   
+
+corndat <- bmil[bmil$crop_name=="corn, grain" & bmil$climate_scenario=="rcp60",]
+
+Neffect <- aov(Grain.C.kgC.ha.~till*cc*nfert, data=corndat)
+summary(Neffect)
+Tukout <- TukeyHSD(Neffect)
+# put interaction output into a dataframe we can sort
+Tukout <- as.data.frame(Tukout[7]) %>%
+  rownames_to_column(., "term") %>%
+  arrange(term)
+
+
+# assumptions - following https://statsandr.com/blog/anova-in-r
+
+# Independence - the observations (grain.c.kgc.ha. observations) are independent, one does
+# not depend on the other, they're not dependent on some other variable like, 
+# from one individual came multiple observations.
+
+# Normality - not required with large enough sample size >30.  But we can test anyway. 
+# the residuals (observed - mean for that group) should be normally distributed.
+qqnorm(corndat$Grain.C.kgC.ha.)
+qqline(corndat$Grain.C.kgC.ha.)
+hist(corndat$Grain.C.kgC.ha.-mean(corndat$Grain.C.kgC.ha.))
+# look ok
+
+# Equality of variances 
+ggplot(data=corndat, aes(x=management_name, y=Grain.C.kgC.ha.)) + 
+  geom_boxplot() +
+  theme(axis.text.x=element_text(angle=45, vjust=1, hjust=1))
+# looks ok, some possible outliers in nt-cc-fn
+leveneTest(Grain.C.kgC.ha. ~ cc*till*nfert, data=corndat)
+# > leveneTest(Grain.C.kgC.ha. ~ management_name, data=corndat)
+# Levene's Test for Homogeneity of Variance (center = median)
+#          Df F value    Pr(>F)    
+# group    17  24.503 < 2.2e-16 ***   # we REJECT the null hyp (no sig. diff. between variances of the samples)
+#       34542                      
+# ---
+# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# HOWEVER: it seems that our large sample size (>35k data points) might be affecting this test
+# See this from https://www.theanalysisfactor.com/the-problem-with-tests-for-statistical-assumptions/
+# It relies too much on p-values, and therefore, sample sizes. If the sample size is large, 
+# Levene’s will have a smaller p-value than if the sample size is small, given the same variances.
+# So it’s very likely that you’re ***overstating a problem*** with the assumption in large samples and understating 
+# it in small samples. You can’t ignore the actual size difference in the variances when making this decision. 
+# So sure, look at the p-value, but also look at the actual variances and how much bigger some are than others. 
+# (In other words, actually look at the effect size, not just the p-value).
+# The ANOVA is generally considered robust to violations of this assumption when sample sizes 
+# across groups are equal. So even if Levene’s is significant, moderately different variances may not be a 
+# problem in balanced data sets. Keppel (1992) suggests that a good rule of thumb is that if sample sizes are equal, 
+# robustness should hold until the largest variance is more than 9 times the smallest variance.
+# This robustness goes away the more unbalanced the samples are. So you need to use judgment here,
+# taking into account both the imbalance and the actual difference in variances.
+# *** emphasis added
+
+# outliers
+summary(corndat$Grain.C.kgC.ha.)
+# > summary(corndat$Grain.C.kgC.ha.)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 139.9  1945.6  2875.9  2915.8  3924.3  5794.6 
+
+# outliers via histograms
+hist(corndat$Grain.C.kgC.ha., breaks=sqrt(nrow(corndat)))
+
+ggplot(data=corndat, aes(x=Grain.C.kgC.ha.)) +
+         geom_histogram() +
+         facet_grid(rows=vars(nfert), cols=vars(till, cc))
+
+#outliers via boxplots
+boxplot(Grain.C.kgC.ha.~management_name, data=corndat) # some outliers plotted for nt-cc-fn, 
+# but not far from interquartile range for nt-cc-fn, and not outside IQR for many other groups
+
+
+# outliers via z-scores
+corndat$z_grainC <- scale(corndat$Grain.C.kgC.ha.)
+hist(corndat$z_grainC)
+summary(corndat$z_grainC)
+# Min.   :-2.31494  
+# 1st Qu.:-0.80908  
+# Median :-0.03325  
+# Mean   : 0.00000  
+# 3rd Qu.: 0.84105  
+# Max.   : 2.40069  
+# < -2 or >2 is considered rare
+# < -3 or >3 is extremely rare
+# < -3.29 or > -3.29 is used to detect outliers, where one out of 1000 observations will be outside
+# this range if normal distribution.
+# interquartile range is > -2 and <2. 
+# min. and max do not reach 3 or 3.29.
+
+## outlier summary: boxplots and z-score suggest no extreme outliers. No justification for removing.
+
+# re-run ANOVA with the above knowledge (assumptions met)
+
+corndat$till <- factor(corndat$till)
+corndat$cc <- factor(corndat$cc)
+corndat$nfert <- factor(corndat$nfert)
+
+Neffect <- aov(Grain.C.kgC.ha.~till*cc*nfert, data=corndat)
+summary(Neffect)
+# Df    Sum Sq   Mean Sq F value   Pr(>F)    
+# till              2 1.637e+08 8.184e+07  61.284  < 2e-16 ***
+#   cc                1 5.557e+07 5.557e+07  41.617 1.13e-10 ***
+#   nfert             2 2.557e+09 1.279e+09 957.461  < 2e-16 ***
+#   till:cc           2 1.742e+07 8.710e+06   6.522  0.00147 ** 
+#   till:nfert        4 1.113e+08 2.781e+07  20.829  < 2e-16 ***
+#   cc:nfert          2 6.444e+08 3.222e+08 241.278  < 2e-16 ***
+#   till:cc:nfert     4 1.750e+07 4.375e+06   3.276  0.01079 *  
+#   Residuals     34542 4.613e+10 1.335e+06                     
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Tukout <- TukeyHSD(Neffect)
+
+# compact letter display
+cld <- multcompLetters4(Neffect, Tukout)
+
+# table with letters and 3rd quantile
+cornsum <- group_by(corndat, cc, till, nfert) %>%
+  summarize(mean=mean(Grain.C.kgC.ha.), 
+            se=se(Grain.C.kgC.ha.)) %>%
+  arrange(desc(mean))
+
+cld <- as.data.frame.list(cld$`till:cc:nfert`)
+cornsum$cld <- cld$Letters
+
+cornsum
+
+# use these letters on this plot:
+
+windows(xpinch=200, ypinch=200, width=5, height=5)
+
+ggplot(data=cornsum,aes(x=nfert, y=mean, fill=nfert)) +
+  geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
+  geom_errorbar(width=0.3, aes(ymin=mean-se, ymax=mean + se),  
+                position=position_dodge(0.9),
+                color="#332288") +
+  facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
+             cols=vars(factor(cc, levels=c("CC", "NC"))), 
+             labeller = as_labeller(
+               c(CC="Has Cover Crop", NC="No Cover Crop",
+                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+  xlab("N management") +
+  ylab("Mean corn grain (kg C/ha) 2022-2072") +
+  ylim(0,3500)+
+  geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5) +
+  scale_fill_manual(values=c("#CC6677","#99DDFF", "#44AA99" )) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'))
+
+ggsave("plots/biomass/IL_corn_biomass_Neffect.png", width=6, height=8, dpi=300)
+
+
+
+
+
+#######################   
+#######################   (3) is variability in corn grain C different among till*cc*Nfert groups across all years?
+#######################   
+
+# calculate CV for each site
+corncv<- group_by(corndat, site_name, till, cc, nfert) %>%
+  summarize(cv=cv(Grain.C.kgC.ha.)) %>%
+  arrange(desc(cv))
+
+
+Neffect <- aov(cv~till*cc*nfert, data=corncv)
+summary(Neffect)
+Tukout <- TukeyHSD(Neffect)
+
+
+# assumptions - following https://statsandr.com/blog/anova-in-r
+
+# Independence - the observations (grain.c.kgc.ha. observations) are independent, one does
+# not depend on the other, they're not dependent on some other variable like, 
+# from one individual came multiple observations.
+
+# Normality - not required with large enough sample size >30.  But we can test anyway. 
+# the residuals (observed - mean for that group) should be normally distributed.
+qqnorm(corncv$cv) # looks really good
+qqline(corncv$cv)
+hist(corncv$cv-mean(corncv$cv)) # looks ok
+
+# Equality of variances - assumption not met
+ggplot(data=corncv, aes(x=nfert, y=cv)) + 
+  geom_boxplot() +
+  facet_grid(rows=vars(till), cols=vars(cc)) 
+# looks ok, some possible outliers in nt-nc-fn on the low end, and rt-cc-fn, also on low end
+leveneTest(cv ~ cc*till*nfert, data=corncv) 
+# > leveneTest(Grain.C.kgC.ha. ~ management_name, data=corndat)
+# Levene's Test for Homogeneity of Variance (center = median)
+#        Df F value Pr(>F)
+# group  17  1.4426  0.111  # Accept null hypothesis that variances do not differ
+#       558 
+
+# outliers
+summary(corncv$cv)
+# > summary(corndat$Grain.C.kgC.ha.)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 139.9  1945.6  2875.9  2915.8  3924.3  5794.6 
+
+# outliers via histograms
+hist(corncv$cv, breaks=sqrt(nrow(corncv)))
+
+ggplot(data=corncv, aes(x=cv)) +
+  geom_histogram() +
+  facet_grid(rows=vars(nfert), cols=vars(till, cc))
+
+#outliers via boxplots
+boxplot(cv~till+cc+nfert, data=corncv) # no outliers plotted 
+
+# outliers via z-scores
+corncv$z_cv <- scale(corncv$cv)
+hist(corncv$z_cv)
+summary(corncv$z_cv)
+# V1          
+# Min.   :-2.92849  
+# 1st Qu.:-0.67960  
+# Median :-0.06132  
+# Mean   : 0.00000  
+# 3rd Qu.: 0.79708  
+# Max.   : 1.96883  
+# < -2 or >2 is considered rare
+# < -3 or >3 is extremely rare
+# < -3.29 or > -3.29 is used to detect outliers, where one out of 1000 observations will be outside
+# this range if normal distribution.
+# interquartile range is > -2 and <2. 
+# max is in the safe zone
+# min is getting close to extremely rare.
+
+## outlier summary: boxplots, levenes test, and z-score suggest no extreme outliers. No justification for removing.
+
+cvtest <- aov(cv~till*cc*nfert, data=corncv)
+summary(cvtest)
+# Df Sum Sq Mean Sq F value   Pr(>F)
+# till            2 0.0756 0.03780  18.959 1.08e-08 ***
+#   cc              1 0.0577 0.05772  28.950 1.09e-07 ***
+#   nfert           2 0.0722 0.03608  18.098 2.42e-08 ***
+#   till:cc         2 0.0010 0.00049   0.245    0.782    
+# till:nfert      4 0.0150 0.00375   1.880    0.112    
+# cc:nfert        2 0.0457 0.02284  11.454 1.33e-05 ***
+#   till:cc:nfert   4 0.0036 0.00090   0.454    0.770    
+# Residuals     558 1.1125 0.00199                     
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Tukoutcv <- TukeyHSD(cvtest)
+
+# compact letter display
+cldcv <- multcompLetters4(cvtest, Tukoutcv)
+
+# table with letters and 3rd quantile
+corncvsum <- group_by(corncv, cc, till, nfert) %>%
+  summarize(mean=mean(cv), 
+            se=se(cv)) %>%
+  arrange(desc(mean))
+
+cldcv <- as.data.frame.list(cldcv$`till:cc:nfert`)
+corncvsum$cld <- cldcv$Letters
+
+corncvsum
+
+# use these letters on this plot:
+
+windows(xpinch=200, ypinch=200, width=5, height=5)
+
+ggplot(data=corncvsum,aes(x=nfert, y=mean, fill=nfert)) +
+  geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
+  geom_errorbar(width=0.3, aes(ymin=mean-se, ymax=mean + se),  
+                position=position_dodge(0.9),
+                color="#332288") +
+  facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
+             cols=vars(factor(cc, levels=c("CC", "NC"))), 
+             labeller = as_labeller(
+               c(CC="Has Cover Crop", NC="No Cover Crop",
+                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+  xlab("N management") +
+  ylab("CV for corn grain (kg C/ha) 2022-2072") +
+  ylim(0,0.45)+
+  geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5) +
+  scale_fill_manual(values=c("#CC6677","#99DDFF", "#44AA99" )) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'))
+
+ggsave("plots/biomass/IL_corn_biomass_cv.png", width=6, height=8, dpi=300)
+
+
+
+
+
+
+
+
+
+############ linear models / regressions to look at biomass change over time (not complete as of 10/4/2023)
+############ what drives biomass over time, not a main research question, i.e., seems redundant with
+############ just looking at how the model is built to predict biomass...
+
 # set base levels to no cover and conventional till
 bmil$till <- relevel(factor(bmil$till), ref="CT")
 # bmil$till <- ordered(bmil$till, levels=c("CT", "RT", "NT"))
@@ -137,11 +465,12 @@ bmil$ssn.tot.z <- (bmil$ssn.tot-ssntotmean)/ssntotsd
 bmil$year.z <- (bmil$Year - yrmean)/yrsd
 
 grain <- bmil[bmil$crop_name %in% c("corn, grain", "soybean") & bmil$Year>2021, ]
-qqline(grain$Grain.C.kgC.ha., distribution = )
+
 
 
 # check that data are normal
-qqnorm(grain$Grain.C.kgC.ha.)   #### left off here
+qqnorm(grain$Grain.C.kgC.ha.)  
+qqline(grain$Grain.C.kgC.ha., distribution = qnorm)
 
 
 # most of the explanatory power of the model comes from the two crops
