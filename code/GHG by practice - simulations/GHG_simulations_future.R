@@ -2,8 +2,8 @@
 # i.e., look for effects of till, cc, and Nfert on N2O emissions 2022-2072.
 
 # packages
-library(tidyverse) # has ggplot, dplyr, etc.
-library(reshape2) # for dcast / melt
+library(tidyverse) # has ggplot, dplyr, reshape2, etc.
+# library(reshape2) # for dcast / melt
 library(MASS) # for boxcox
 
 # load data
