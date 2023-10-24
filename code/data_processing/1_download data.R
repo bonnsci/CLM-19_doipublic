@@ -2,6 +2,8 @@
 
 library(readr)  # for unzip
 library(dplyr)  # for bind_rows
+# install.packages("beepr")
+library(beepr)
 
 
 # LOAD OpTIS data 
@@ -116,35 +118,55 @@ rm(ny, pnw, il, ca, unw)
 dayn_alm <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/CA_almonds_day_soil_n.csv")
 write.csv(dayn_alm, "data/large_data/daily N/CA_almonds_day_soil_n.csv", row.names=F)
 rm(dayn_alm)
+beep(sound=5)
 
 dayn_vin <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/CA_vineyards_day_soil_n.csv")
 write.csv(dayn_vin, "data/large_data/daily N/CA_vineyards_day_soil_n.csv", row.names=F)
 rm(dayn_vin)
+beep(sound=5)
 
 dayn_il <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/IL_corn_day_soil_n.csv")
 write.csv(dayn_il, "data/large_data/daily N/IL_corn_day_soil_n.csv", row.names=F)
 rm(dayn_il)
+beep(sound=5)
 
 dayn_ny <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/NY_forage_day_soil_n.csv")
 write.csv(dayn_ny, "data/large_data/daily N/NY_forage_day_soil_n.csv", row.names=F)
 rm(dayn_ny)
+beep(sound=5)
 
 dayn_pnw <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/NY_forage_day_soil_n.csv")
 write.csv(dayn_pnw, "data/large_data/daily N/PNW_hops_day_soil_n.csv", row.names=F)
 rm(dayn_pnw)
+beep(sound=5)
 
 
 
-# # Daily nitrogen (600 MB) - a zipped file that includes files for each simulation run. These include daily nitrogen loading and flux information for each management system.
-# unzip("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/day_soil_n_files-AFT.zip", exdir="/tempdir")
-# temp <- list.files("/tempdir", pattern="*.csv")
-# setwd("/tempdir")
-# dailyn <- lapply(temp, read.delim)  # this is 11.1 GB
-# # next step would be to convert this to one dataframe
-# 
-# # Daily water (666 MB) -  zipped file that includes files for each simulation run. These files include daily evaporation and transpiration rates that are lost through each management system.
-# unzip("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Water/day_water_files-AFT.zip", exdir="/tempdir")
+# daily water data
+dayw_alm <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Water/CA_almonds_day_water.csv")
+write.csv(dayw_alm, "data/large_data/daily water, sediments/CA_almonds_day_water.csv", row.names=F)
+rm(dayw_alm)
+beep(sound=5)
 
+dayw_vin <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Water/CA_vineyards_day_water.csv")
+write.csv(dayw_vin, "data/large_data/daily water, sediments/CA_vineyards_day_water.csv", row.names=F)
+rm(dayw_vin)
+beep(sound=5)
+
+dayw_il <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Water/IL_corn_day_water.csv")
+write.csv(dayw_il, "data/large_data/daily water, sediments/IL_corn_day_water.csv", row.names=F)
+rm(dayw_il)
+beep(sound=5)
+
+dayw_ny <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Water/NY_forage_day_water.csv")
+write.csv(dayw_ny, "data/large_data/daily water, sediments/NY_forage_day_water.csv", row.names=F)
+rm(dayw_ny)
+beep(sound=5)
+
+dayw_pnw <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Water/PNW_hops_day_water.csv")
+write.csv(dayw_pnw, "data/large_data/daily water, sediments/PNW_hops_day_water.csv", row.names=F)
+rm(dayw_pnw)
+beep(sound=5)
 
 
 ###################################### WEATHER DATA
