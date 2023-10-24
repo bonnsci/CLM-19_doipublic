@@ -1,5 +1,6 @@
 
 library(tidyverse) # has ggplot, dplyr, etc.
+<<<<<<< HEAD
 library(reshape2)
 
 se <- function(x) sd(x) / sqrt(length(x))
@@ -23,6 +24,23 @@ se <- function(x) sd(x) / sqrt(length(x))
 # write.csv(ndatyr, "data/water, nitrate, sediments/nitrate_IL_annualtotals.csv", row.names=F)
 
 ndatyr <- read.csv("data/water, nitrate, sediments/nitrate_IL_annualtotals.csv")
+=======
+
+se <- function(x) sd(x) / sqrt(length(x))
+
+ndat <- read.csv("data/large_data/daily N/IL_corn_day_soil_n.csv")
+# N UNITS are in kg N / ha per day
+
+# sum data by year
+ndatyr <- ndat %>%
+  group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
+  summarize(N2O.yr = sum(N2O.flux), NO3.yr = sum(NO3.leach))
+
+# clean up
+rm(ndat)
+
+colnames(ndatyr)[c(3,5)] <- c("management", "year")
+>>>>>>> ce293666f91aa2cc5e4b3361a969e70c3ccf4966
 
 
 ndatyr <- ndatyr[ndatyr$year>2021 & ndatyr$year<2073 & ndatyr$climate_scenario=="rcp60",]
@@ -112,7 +130,11 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 
 
 ggplot(data=ntotlong[!ntotlong$variable=="Ntot",], aes(x=nfert, y=mean, fill=variable)) +
+<<<<<<< HEAD
   geom_bar(stat="identity", position=position_dodge(), color="#332288") +
+=======
+  geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
+>>>>>>> ce293666f91aa2cc5e4b3361a969e70c3ccf4966
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.9)) +
   facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
              cols=vars(factor(cc, levels=c("CC", "NC"))), 
@@ -129,7 +151,11 @@ ggplot(data=ntotlong[!ntotlong$variable=="Ntot",], aes(x=nfert, y=mean, fill=var
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
+<<<<<<< HEAD
 ggsave("plots/water, nitrate, sediments/IL_N losses 50 yr total bars.png", width=7, height=7, dpi=300)
+=======
+ggsave("plots/water, nitrate, sediments/N losses 50 yr total bars.png", width=5, height=7, dpi=300)
+>>>>>>> ce293666f91aa2cc5e4b3361a969e70c3ccf4966
 
 
 
@@ -154,7 +180,11 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 
 
 ggplot(data=npyrlong[!npyrlong$variable=="Ntot",], aes(x=nfert, y=mean, fill=variable)) +
+<<<<<<< HEAD
   geom_bar(stat="identity", position=position_dodge(), color="#332288") +
+=======
+  geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
+>>>>>>> ce293666f91aa2cc5e4b3361a969e70c3ccf4966
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.9)) +
   facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
              cols=vars(factor(cc, levels=c("CC", "NC"))), 
@@ -171,4 +201,8 @@ ggplot(data=npyrlong[!npyrlong$variable=="Ntot",], aes(x=nfert, y=mean, fill=var
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
+<<<<<<< HEAD
 ggsave("plots/water, nitrate, sediments/IL_N losses mean annual bars.png", width=6, height=7, dpi=300)
+=======
+ggsave("plots/water, nitrate, sediments/N losses mean annual bars.png", width=5, height=7, dpi=300)
+>>>>>>> ce293666f91aa2cc5e4b3361a969e70c3ccf4966
