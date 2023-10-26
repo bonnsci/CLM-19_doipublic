@@ -231,44 +231,59 @@ ggplot(data=wpyrlong[!wpyrlong$variable %in% c("sed", "et"),], aes(x=till, y=mea
 ggsave("plots/water, nitrate, sediments/IL_water losses mean annual bars.png", width=6, height=3, dpi=300)
 
 
-# noticing that the different treatments seem to have different water balances, but getting same precip input.
-# What do these results look like within one year (rather than average or total over many years)
-
-wdatyr.wbal <- wdatyr %>%
-  group_by(site_name, year, till, cc, nfert, crop_system_name) %>%
-  summarize(sum.etlr = trans.yr + evap.yr + leach.yr + run.yr)
-
-
-
-
-# average across sites, N treatments
-wdatyr.mean <- wdatyr %>%
-  group_by(year, till, cc) %>%
-  summarize(trans.yrm = mean(trans.yr),
-            evap.yrm = mean(evap.yr),
-            leach.yrm = mean(leach.yr),
-            run.yrm = mean(run.yr),
-            sed.yrm = mean(sed.yr),
-            et.yrm = mean(et.yr))
-
-
-
-wdatyrlong <- melt(wdatyr.mean, id=c("year", "till", "cc"))
-
-ggplot(data=wdatyrlong[wdatyrlong$year==2025 & !(wdatyrlong$variable %in% c("sed.yrm", "et.yrm")),], 
-       aes(x=till, y=value, fill=variable)) +
-  geom_bar(stat="identity", position=position_dodge(), color="#332288", width=0.8) +
-  #geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.8), color="#332288") +
-  facet_grid(cols=vars(factor(cc, levels=c("CC", "NC"))), 
-             #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
-             labeller = as_labeller(
-               c(CC="Has Cover Crop", NC="No Cover Crop"))) +
+ggplot(data=wpyrlong[wpyrlong$variable %in% c("sed"),], aes(x=till, y=mean)) +
+  geom_bar(stat="identity", position=position_dodge(), color="#332288", width=0.8, fill="gray70") +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.8),color="#332288") +
+  facet_grid( #rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
+    cols=vars(factor(cc, levels=c("CC", "NC"))), 
+    #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
+    labeller = as_labeller(
+      c(CC="Has Cover Crop", NC="No Cover Crop"))) +
   # "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
   #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
-  scale_fill_manual(values=c("#CC6677","#99DDFF", "#44AA99", "#AA4499")) +  # "#999933"
-  xlab("tillage") +
-  ylab("total mm 2025") +
+  xlab("Tillage") +
+  ylab("Mean annual sediment yield\nkg/ha 2022 to 2072") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
+
+ggsave("plots/water, nitrate, sediments/IL_sediments mean annual bars.png", width=4, height=2.5, dpi=300)
+
+
+# noticing that the different treatments seem to have different water balances, but getting same precip input.
+# What do these results look like within one year (rather than average or total over many years)
+
+# wdatyr.wbal <- wdatyr %>%
+#   group_by(site_name, year, till, cc, nfert, crop_system_name) %>%
+#   summarize(sum.etlr = trans.yr + evap.yr + leach.yr + run.yr)
+# 
+# # average across sites, N treatments
+# wdatyr.mean <- wdatyr %>%
+#   group_by(year, till, cc) %>%
+#   summarize(trans.yrm = mean(trans.yr),
+#             evap.yrm = mean(evap.yr),
+#             leach.yrm = mean(leach.yr),
+#             run.yrm = mean(run.yr),
+#             sed.yrm = mean(sed.yr),
+#             et.yrm = mean(et.yr))
+
+# wdatyrlong <- melt(wdatyr.mean, id=c("year", "till", "cc"))
+# 
+# ggplot(data=wdatyrlong[wdatyrlong$year==2025 & !(wdatyrlong$variable %in% c("sed.yrm", "et.yrm")),], 
+#        aes(x=till, y=value, fill=variable)) +
+#   geom_bar(stat="identity", position=position_dodge(), color="#332288", width=0.8) +
+#   #geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.8), color="#332288") +
+#   facet_grid(cols=vars(factor(cc, levels=c("CC", "NC"))), 
+#              #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
+#              labeller = as_labeller(
+#                c(CC="Has Cover Crop", NC="No Cover Crop"))) +
+#   # "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+#   #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
+#   scale_fill_manual(values=c("#CC6677","#99DDFF", "#44AA99", "#AA4499")) +  # "#999933"
+#   xlab("tillage") +
+#   ylab("total mm 2025") +
+#   theme(
+#     panel.grid.minor=element_blank(), 
+#     panel.grid.major=element_blank(),
+#     panel.background = element_rect(fill = 'gray95'))
