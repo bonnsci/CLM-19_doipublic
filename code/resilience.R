@@ -12,6 +12,10 @@ library(tidyverse)
 library(MASS)  # for boxcox
 # install.packages("ggh4x") 
 library(ggh4x) # for strip_themed() and facet_grid2() in ggplot
+# install.packages("AICcmodavg")
+library(AICcmodavg) # for aictab()
+library(multcompView) # for tukey HSD letters
+
 
 
 # pull in data
@@ -245,36 +249,95 @@ rm(lsd)
 
 # are the areas under the curves different?
 
-corndf <- lecdf[lecdf$crop_name=="corn, grain" & !is.na(lecdf$spcat12mo),]
 
-cornaov <- aov(grmed~till*cc*nfert*spcat12mo, data=corndf)
-summary(cornaov)
-# Df Sum Sq Mean Sq  F value   Pr(>F)    
-# till                        2    0.7    0.36    9.070 0.000116 ***
-# cc                          1    3.4    3.43   85.803  < 2e-16 ***
-# nfert                       2  100.8   50.39 1259.084  < 2e-16 ***
-# spcat12mo                  10  288.6   28.86  721.153  < 2e-16 ***
-# till:cc                     2    0.1    0.03    0.736 0.478825    
-# till:nfert                  4    5.2    1.31   32.685  < 2e-16 ***
-# cc:nfert                    2   20.6   10.28  256.911  < 2e-16 ***
-# till:spcat12mo             20    2.1    0.10    2.575 0.000138 ***
-# cc:spcat12mo               10    0.7    0.07    1.636 0.089931 .  
-# nfert:spcat12mo            20   28.1    1.40   35.053  < 2e-16 ***
-# till:cc:nfert               4    1.5    0.36    9.076 2.57e-07 ***
-# till:cc:spcat12mo          20    0.5    0.02    0.565 0.938112    
-# till:nfert:spcat12mo       40    0.4    0.01    0.248 1.000000    
-# cc:nfert:spcat12mo         20    1.2    0.06    1.493 0.072330 .  
-# till:cc:nfert:spcat12mo    40    0.1    0.00    0.076 1.000000    
-# Residuals               12474  499.2    0.04                      
+################## models: are the areas under the curves different?
+
+se <- function(x) sd(x) / sqrt(length(x))
+cv <- function(x) sd(x) / mean(x)
+
+
+lecdf$spcat12mo <- factor(lecdf$spcat12mo,
+                           levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought", "Abnormally Dry",
+                                    "Normal", "Abnormally Wet", "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+                           ordered=F)
+
+
+cornsoyaov_add <- aov(grmed~crop_name+ till + cc + nfert + spcat12mo, data=lecdf)
+summary(cornsoyaov_add)
+# Df Sum Sq Mean Sq F value   Pr(>F)    
+# crop_name       1   88.0   88.00 2828.32  < 2e-16 ***
+#   till            2    4.1    2.04   65.43  < 2e-16 ***
+#   cc              1    1.5    1.50   48.23 3.88e-12 ***
+#   nfert           2   49.6   24.81  797.26  < 2e-16 ***
+#   spcat12mo      10  629.4   62.94 2022.76  < 2e-16 ***
+#   Residuals   25327  788.0    0.03                     
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 2304 observations deleted due to missingness
+Tukout <- TukeyHSD(cornaov_add)
+cornsoyaov <- aov(grmed~crop_name+ till*cc*nfert*spcat12mo, data=lecdf)
+summary(cornsoyaov)
+cornsoyaov2 <- aov(grmed~crop_name*till*cc*nfert*spcat12mo, data=lecdf)
+summary(cornsoyaov2)
 
-Tukout <- TukeyHSD(cornaov)
+# Same models as linear models so we can get R2 and do model comparison with AIC etc.
 
-# put interaction output into a dataframe we can sort
-Tukout <- as.data.frame(Tukout[5]) %>%  # 5 is the list item for the interaction that looks significant from the summary above
-  rownames_to_column(., "term") %>%
-  arrange(term)
+cornsoylm_add <- lm(grmed~crop_name + till + cc + nfert + spcat12mo, data=lecdf)
+summary(cornsoylm_add) # Adjusted R-squared:  0.4947 
+# broom::glance(cornsoylm_add) # AIC-16004, BIC-15857
+cornsoylm_add1 <- lm(grmed~crop_name + till*cc*nfert*spcat12mo, data=lecdf)
+summary(cornsoylm_add1)  # adjusted R2 = 0.5119
+# broom::glance(cornsoylm_add1) # AIC-16702, BIC-15074
+cornsoylm_add2 <- lm(grmed~crop_name + nfert + till*cc*spcat12mo, data=lecdf)
+summary(cornsoylm_add2) # Adjusted R-squared:  0.4962
+# broom::glance(cornsoylm_add2) # AIC-16028, BIC-15458
+cornsoylm_add3 <- lm(grmed~crop_name + till + nfert*cc*spcat12mo, data=lecdf)  ######## best
+summary(cornsoylm_add3) # Adjusted R-squared:  0.5099 
+# broom::glance(cornsoylm_add3) # AIC-16723, BIC-16153
+cornsoylm_add4 <- lm(grmed~crop_name + cc + nfert*till*spcat12mo, data=lecdf)
+summary(cornsoylm_add4) # Adjusted R-squared:  0.5058
+# broom::glance(cornsoylm_add4) # AIC-16481, BIC-15651
+cornsoylm_add5 <- lm(grmed~crop_name + till + nfert + cc*spcat12mo, data=lecdf)
+summary(cornsoylm_add5) # Adjusted R-squared:  0.4949
+# broom::glance(cornsoylm_add5) # AIC-16002, BIC-15775
+cornsoylm_add6 <- lm(grmed~crop_name + till + cc + nfert*spcat12mo, data=lecdf)
+summary(cornsoylm_add6) # Adjusted R-squared:  0.5034
+# broom::glance(cornsoylm_add6) # AIC-16424, BIC-16115
+
+
+
+models <- list(cornsoylm_add, cornsoylm_add1, cornsoylm_add2, cornsoylm_add3, 
+               cornsoylm_add4, cornsoylm_add5, cornsoylm_add6)
+model.names <- c("cornsoylm_add", "cornsoylm_add1", "cornsoylm_add2", "cornsoylm_add3", 
+                 "cornsoylm_add4", "cornsoylm_add5", "cornsoylm_add6")
+aictab(cand.set = models, modnames = model.names)
+# Model selection based on AICc:
+#   
+#   K      AICc Delta_AICc AICcWt Cum.Wt      LL
+# cornsoylm_add3  70 -16722.48       0.00      1      1 8431.44
+# cornsoylm_add1 200 -16698.40      24.08      0      1 8550.80
+# cornsoylm_add4 102 -16480.17     242.31      0      1 8342.50
+# cornsoylm_add6  38 -16423.77     298.71      0      1 8249.95
+# cornsoylm_add2  70 -16027.84     694.64      0      1 8084.12
+# cornsoylm_add   18 -16003.73     718.75      0      1 8019.88
+# cornsoylm_add5  28 -16002.37     720.11      0      1 8029.22
+
+# equivalent AOV
+cornsoyaov_add3 <- aov(grmed~crop_name + till + nfert*cc*spcat12mo, data=lecdf)
+Tukout_add3 <- TukeyHSD(cornsoyaov_add3)
+
+# compact letter display
+cld_add3 <- multcompLetters4(cornsoyaov_add3, Tukout_add3)
+
+# table with letters and 3rd quantile
+lecdf_sum<- group_by(lecdf, cc, spcat12mo) %>%
+ drop_na(spcat12mo) %>%
+  summarize(mean=mean(grmed), 
+            se=se(grmed)) %>%
+  arrange(desc(mean))
+
+cld_lecdf <- as.data.frame.list(cld_add3$`cc:spcat12mo`)
+lecdf_sum$cld <- cld_lecdf$Letters
 
 
 # assumptions - following https://statsandr.com/blog/anova-in-r
@@ -356,3 +419,11 @@ summary(corndf$grmedz)
 
 ########### left off here
 
+
+cornaov_full <- aov(grmed~till*cc*nfert*spcat12mo, data=corndf)
+summary(cornaov_full)
+
+# put interaction output into a dataframe we can sort
+Tukout_full <- as.data.frame(Tukout_full[5]) %>%  # 5 is the list item for the interaction that looks significant from the summary above
+  rownames_to_column(., "term") %>%
+  arrange(term)
