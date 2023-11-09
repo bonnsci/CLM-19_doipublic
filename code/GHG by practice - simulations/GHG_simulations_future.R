@@ -61,6 +61,35 @@ ghgdat %>%
   summarize(n())
 # cumulative N2O emissions, soc change, net effect by 2030, 2040, 2050, 2060, and 2070
 
+
+
+sumghg <- ghgdat %>%
+  group_by(till, cc, nfert, site_name) %>%  # so we have variability among sites
+  summarize(net = sum(ghg),  # per decade what's the total ghg emissions (not cumulative)
+            ghgdsoc = sum(ghg_dsoc),
+            ghgn2o = sum(ghg_total_n2o))
+
+# are the different treatment combos significantly different N2O
+
+effect <- aov(net~till*cc*nfert, data=sumghg)
+summary(effect)
+Tukout <- TukeyHSD(effect)
+# compact letter display
+cld <- multcompView::multcompLetters4(effect, Tukout)
+
+# table with letters 
+sum_allsites <- group_by(ghgdat, till, cc, nfert) %>%
+  summarize(net.mean=mean(ghg),
+            net.se=se(ghg)) %>%
+  arrange(desc(net.mean))
+  
+
+cld <- as.data.frame.list(cld$`till:cc:nfert`)
+ndatsumcorn$cld <- cld.sqrt$Letters
+
+
+se <- function(x) sd(x) / sqrt(length(x))
+
 # # test dataframe to make sure we are summing the way we want:
 # test <- data.frame(year=rep(c(2023, 2024, 2040), 4),
 #                    till = c(rep("NT", 6), rep("CT", 6)),
@@ -73,32 +102,14 @@ ghgdat %>%
 # # looks correct!
 
 cumghg <- ghgdat %>%
-  group_by(till, cc, nfert, site_name) %>%  # so we have variability among sites
-  summarize(ghg_20 = sum(ghg[decade=="2020s"]),  # per decade what's the total ghg emissions (not cumulative)
-            ghg_30 = sum(ghg[decade=="2030s"]),
-            ghg_40 = sum(ghg[decade=="2040s"]),
-            ghg_50 = sum(ghg[decade=="2050s"]),
-            ghg_60 = sum(ghg[decade=="2060s"]),
-            ghg_tot = sum(ghg),
-            dsoc_20 = sum(ghg_dsoc[decade=="2020s"]),
-            dsoc_30 = sum(ghg_dsoc[decade=="2030s"]),
-            dsoc_40 = sum(ghg_dsoc[decade=="2040s"]),
-            dsoc_50 = sum(ghg_dsoc[decade=="2050s"]),
-            dsoc_60 = sum(ghg_dsoc[decade=="2060s"]),
-            dsoc_tot = sum(ghg_dsoc),
-            n2o_20 = sum(ghg_total_n2o[decade=="2020s"]),
-            n2o_30 = sum(ghg_total_n2o[decade=="2030s"]),
-            n2o_40 = sum(ghg_total_n2o[decade=="2040s"]),
-            n2o_50 = sum(ghg_total_n2o[decade=="2050s"]),
-            n2o_60 = sum(ghg_total_n2o[decade=="2060s"]),
-            n2o_tot = sum(ghg_total_n2o)
-            )
+  group_by(till, cc, nfert, site_name, decade) %>%  # so we have variability among sites
+  summarize(net = sum(ghg),  # per decade what's the total ghg emissions (not cumulative)
+            ghgdsoc = sum(ghg_dsoc),
+            ghgn2o = sum(ghg_total_n2o))
 
 # now make the data in long form
-cumghgl <- melt(data=cumghg, id=c("site_name", "till", "cc", "nfert"))
+cumghgl <- melt(data=cumghg, id=c("site_name", "till", "cc", "nfert", "decade"))
 # $value is in units of cumulative tco2e/ha
-
-se <- function(x) sd(x) / sqrt(length(x))
 
 sum_cumghgl <- cumghgl %>%
   group_by(cc, till, nfert, variable) %>%
@@ -107,23 +118,24 @@ sum_cumghgl <- cumghgl %>%
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
 ggplot(data=sum_cumghgl[sum_cumghgl$variable %in% c("n2o_20", "n2o_30", "n2o_40", "n2o_50", "n2o_60"),],
-  aes(x=variable, y=mean, fill=variable)) +
-  geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
+  aes(x=nfert, y=mean, fill=variable)) +
+  geom_bar(stat="identity", position=position_dodge(), color="gray20") +
   geom_errorbar(width=0.3, aes(ymin= mean-se, ymax=mean+se),  
                 position=position_dodge(0.9),
-                color="#332288") +
+                color="gray20") +
   facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
-             cols=vars(factor(cc, levels=c("CC", "NC")), 
-                       factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
+             cols=vars(factor(cc, levels=c("CC", "NC"))), 
+                       #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
              labeller = as_labeller(
                c(CC="Has Cover Crop", NC="No Cover Crop",
-                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till",
-                 "Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) +
-  scale_x_discrete(breaks=c("n2o_20", "n2o_30", "n2o_40", "n2o_50", "n2o_60"),
-                   labels=c("2020s", "2030s", "2040s", "2050s", "2060s")) +
-  xlab("Decade") +
-  ylab("Sum of N2O emissions (CO2e/ha) per decade") +
-  scale_fill_manual(values=c("#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026")) + #, name="N management") +
+                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+                 #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) +
+  xlab("N management") +
+  ylab(expression('Total N'*[2]*'O emissions (CO'[2]*'e ha'^-1*') per decade')) +
+  scale_fill_manual(values=c("#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"), 
+                    breaks=c("n2o_20", "n2o_30", "n2o_40", "n2o_50", "n2o_60", "n2o_70"),
+                    labels=c("2020s", "2030s", "2040s", "2050s", "2060s", "2070s"),
+                    name="Decade")+ #, name="N management") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
