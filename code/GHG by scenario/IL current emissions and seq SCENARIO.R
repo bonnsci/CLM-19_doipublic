@@ -17,7 +17,7 @@ scenil <- read.csv("data/scenarios/scenil.csv")
 ########### METADATA IN 3 ROWS per data column (column name -- unit -- description)
 # column name       unit          description
 # site_name         NA            String combination of one of the locations we simulated on. In the format of {x}_{y} where x refers to the region and y refers to the numeric id of that site. These will be of the format of h_{}, v_{}, a_{}, f_{}, IL-n_{}, IL-s_{} which represents the points for hops, vineyards, almonds, and forage, Illinois North, Illinois South respectively
-# croP              NA            Name of the cropping system. Full list of unique names are: almonds, hops, grape, alfalfa, corn, corn-grain, corn-silage and soybean
+# crop [see note below]     NA            Name of the cropping system. Full list of unique names are: almonds, hops, grape, alfalfa, corn, corn-grain, corn-silage and soybean
 # scenario code     integer       Scenario number that can be found in section 2.
 # climate_scenario  NA            Either ‘rcp26’ or ‘rcp60’ that were defined in section 1.2
 # year              integer       Calendar year in which results are for.
@@ -33,10 +33,19 @@ scenil <- read.csv("data/scenarios/scenil.csv")
 # ghg_indirect_n2o  tonne co2e/ha Calendar year daily sum (Jan. 1 - Dec. 31) of nitrous oxide indirect emissions in co2 equivalents.
 # ghg_total_n2o     tonne co2e/ha Sum of ghg_n2o and ghg_indirect_n2o in co2 equivalents 
 
+# note on crop: For systems with multiple crops (not hops, almonds, or grapes), 
+# scenario outputs are the average of the crop types within a rotation. In other words, 
+# each crop was run each year and results were averaged across the crop types for that year. 
+# For example, IL corn (corn-soybeans) and NY soy (corn-soybeans) there were two scenarios 
+# (one growing corn, one growing soy) averaged in a year. The NY alfalfa rotation was 
+# averaged across the three separate crops (alfalfa, corn, triticale) each year in scenario output.
+# So even though unique(scenil$crop) gives "corn, grain" it actually is
+# the average of corn-soy.
+
 
 # load IL unweighted simulation DNDC output 
 # (corresponds to "yearly_outputs_post-weighting.csv")
-
+# not sure we need this here?
 unw <- read.csv("data/simulations/un-weighted_resultsIL.csv")
 
 
@@ -175,36 +184,49 @@ decdat <- scenil %>%
 # pop out window for plots
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
+
+
+
 ggplot() +
-  geom_bar(data=decdat[decdat$scenario.code %in% c(1,4,6) & 
-                         decdat$variable %in% c("ghg_dsoc", "ghg_tn2o"),], 
-           aes(x=decade, y=mean, fill= variable), 
+  geom_bar(data=decdat[decdat$variable %in% c("ghg_dsoc", "ghg_tn2o"),],# decdat$scenario.code %in% c(1,4,6, 7, 8) &            aes(x=decade, y=mean, fill= variable), 
+           aes(x=decade, y=mean, fill= variable),
            stat="identity", position= "stack") +
-  scale_fill_manual(values=c("#99ddff", "#ee8866"), name = "Source/Sink", 
-                    labels=c("Change in SOC", expression('Total N'[2]*'O emissions'))) + #, labels=c("ghg_dsoc", "ghg_tn2o")) +
+  scale_fill_manual(values=c("#ee8866","#99ddff"), 
+                    breaks=c("ghg_tn2o", "ghg_dsoc"), 
+                    name = "Source/Sink", 
+                    labels=c(expression('Total N'[2]*'O emissions', "Change in SOC"))) + #, labels=c("ghg_dsoc", "ghg_tn2o")) +
   geom_hline(yintercept=0, color="#009988", linewidth=0.5) +
-  geom_point(data=decdat[decdat$scenario.code %in% c(1,4,6) & 
-                           decdat$variable %in% c("ghg_net"),], 
+  geom_point(data=decdat[decdat$variable %in% c("ghg_net"),], # decdat$scenario.code %in% c(1,4,6, 7,8) & 
              aes(x=decade, y=mean),
              size = 0.5, color="gray30") +
-  geom_errorbar(data=decdat[decdat$scenario.code %in% c(1,4,6),], 
+  geom_errorbar(data=decdat, #[decdat$scenario.code %in% c(1,4,6,7,8),], 
                 aes(x=decade, y=mean, ymin=mean-se, ymax=mean+se, color=variable),
                 width = 0.3, show.legend=F) +
   labs(x="Decade", 
        y= expression('Mean annual emissions (tonnes CO'[2]*'e ha'^'-1'*')')) +
   scale_color_manual(values=c("#004488", "#882255", "gray30"), breaks=c("ghg_dsoc", "ghg_tn2o", "ghg_net")) +
-  facet_grid(rows=vars(scenario.code)) +
+  facet_grid(cols=vars(scenario.code), 
+             labeller = as_labeller(
+               c("1" = "(1) BAU adopt +\nrecommended N rate", 
+                 "2" = "(2) BAU CC, 3x CT adopt +\nrecommended N rate",
+                 "3" = "(3) 3x CC, BAU CT adopt +\nrecommended N rate",
+                 "4" = "(4) 3xBAU adoption +\nrecommended N rate", 
+                 "5" = "(5) CC 25% by 2030, BAU CT +\nadopt recommended N rate",
+                 "6" = "(6) CC 25%, CT 90% by 2030 +\nrecommended N rate", 
+                 "7" = "(7) 3xBAU adoption +\nhigh N rate",
+                 "8" = "(8) 3xBAU adoption +\nrecommended N rate, fall applied"))) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'),
-    legend.text.align=0)
+    legend.text.align=0,
+    axis.text.x=element_text(angle=-30, hjust=0))
 
 
-ggsave("plots/ghgs/IL_net balance by decade scenarios 1,4,6.png", width=6, height=7, dpi=300)
+ggsave("plots/ghgs/IL_net balance by decade scenarios 1-8.png", width=16, height=5, dpi=300)
 
 
-
+# why does Fall N have lower net emissions? --need to investigate simulation data...
 
 
 
