@@ -542,32 +542,32 @@ ndatsumcorn$cc <- factor(ndatsumcorn$cc, levels=c("NC", "CC"), ordered=T)
 
 
 ggplot() +
-  geom_bar(data=ndeccroplong[ndeccroplong$variable=="NO3" & ndeccroplong$crop == "corn",], 
+  geom_bar(data=ndeccroplong[ndeccroplong$variable=="NO3" & ndeccroplong$crop == "corn" & ndeccroplong$till %in% c("CT", "NT"),], 
            aes(x=nfert, y=mean, fill=decade),
            stat="identity", position=position_dodge(), 
            color="gray20") +
-  geom_errorbar(data=ndeccroplong[ndeccroplong$variable=="NO3" & ndeccroplong$crop == "corn",],
+  geom_errorbar(data=ndeccroplong[ndeccroplong$variable=="NO3" & ndeccroplong$crop == "corn" & ndeccroplong$till %in% c("CT", "NT"),],
                 aes(x=nfert, y=mean, ymin=mean-se, ymax=mean+se, group=decade), 
                 width=0.3, position=position_dodge(0.9), color="gray20") +
   scale_fill_manual(values=pal6, name="Decade") +
-  geom_bar(data=ndatsumcorn, aes(x=nfert, y=mean), stat="identity", color=NA, fill=NA) +
-  geom_text(data=ndatsumcorn, aes(x=nfert, label=cld, y=mean^2 + 2*mean), vjust=-0.5, 
+  geom_bar(data=ndatsumcorn[ndatsumcorn$till %in% c("CT", "NT"),], aes(x=nfert, y=mean), stat="identity", color=NA, fill=NA) +
+  geom_text(data=ndatsumcorn[ndatsumcorn$till %in% c("CT", "NT"),], aes(x=nfert, label=cld, y=mean^2 + 2*mean), vjust=-0.5, 
             color="gray20", size=4, fontface="bold") +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))), 
+  facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),  #"RT", 
              cols=vars(factor(cc, levels=c("NC", "CC"))), 
              #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
              labeller = as_labeller(
                c(CC="Has Cover Crop", NC="No Cover Crop",
-                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+                 "CT" = "Conventional Till", "NT" = "No Till"))) + # , "RT"="Reduced Till"))) +
   #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
 
   xlab("N management") +
-  ylab("Corn mean annual NO3-N loss (kg N/ha) 2022 to 2072") +
+  ylab(expression('Corn mean annual NO'[3]*''^-''*'-N loss (kg N ha'^-1*') 2022 to 2072')) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/water, nitrate, sediments/IL_N losses corn mean annual bars with letters.png", width=7, height=5.5, dpi=300)
+ggsave("plots/water, nitrate, sediments/IL_N losses corn mean annual bars with letters.png", width=6, height=4, dpi=300)
 
 

@@ -348,20 +348,22 @@ hlinedat <- data.frame(scenario=c(rep("rcp26", 4), rep("rcp60", 4)),
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
 ggplot(data=precipl[precipl$year>2020 & 
-                      precipl$year<2073,], # & 
+                      precipl$year<2073 &
+                      precipl$scenario=="rcp60",], # & 
                       # precipl$name %in% c("IL-s_1"),], # &
                       # precipl$season %in% "Summer",], 
        aes(x=year, y=value, group =season)) +
   geom_point(aes(color=season), size=0.5, alpha=0.3, show.legend=F) +
-  geom_hline(data=hlinedat, aes(yintercept=y), color="black", linewidth=0.4, linetype="dashed") +
-  geom_smooth(method="lm", color="blue", linewidth=0.7) +
+  # geom_hline(data=hlinedat, aes(yintercept=y), color="black", linewidth=0.4, linetype="dashed") +
+  # geom_smooth(method="lm", color="blue", linewidth=0.7) +
   scale_color_manual(values=c("#4477AA", "#228833", "#EE6677", "#AA3377")) +
   facet_grid(rows=vars(factor(variable, levels=c("ssn.tot", "rainyd", "intens"))), 
-             cols=vars(scenario,factor(season, levels=c("Winter", "Spring", "Summer", "Fall"))), 
+             # cols=vars(scenario,factor(season, levels=c("Winter", "Spring", "Summer", "Fall"))), 
+             cols=vars(factor(season, levels=c("Winter", "Spring", "Summer", "Fall"))), 
              scales="free_y",
              labeller = as_labeller(
                c(ssn.tot = "Total Precip (mm)", rainyd = "No. Wet Days", intens = "Precip. Intensity (mm/day)",
-                 rcp26 = "RCP 2.6",rcp60= "RCP 6.0",
+                 # rcp26 = "RCP 2.6",rcp60= "RCP 6.0",
                  Winter = "Winter",Spring = "Spring",Summer = "Summer",Fall = "Fall")),
              switch="y") +
   labs(y=NULL) +
@@ -385,6 +387,7 @@ ggplot(data=precipl[precipl$year>2020 &
   )	 
 
 ggsave("plots/climate/IL_precip_ssn.png")
+ggsave("plots/climate/IL_precip_ssn_RCP60.png", width=7, height=5, dpi=300)
 
 
 # let's mean-center the year
@@ -394,8 +397,17 @@ center_scale <- function(x) {
 
 precip$year.sc <- center_scale(precip$year)
 
-plm1 <- lm(ssn.tot~ year.sc + scenario + factor(season, ordered=F) + year.sc:scenario:factor(season, ordered =F), dat=precip)
+precip$season <- factor(precip$season, ordered=F)
+
+plm1 <- lm(intens ~ year*season, data=precip[precip$scenario=="rcp60",])
 summary(plm1)
+
+plm2 <- lm(ssn.tot~  year.sc*season, data=precip[precip$scenario=="rcp60",])
+summary(plm2)
+
+plm3 <- lm(rainyd~  year.sc*season, data=precip[precip$scenario=="rcp60",])
+summary(plm3)
+
 # DO I really need to show if something is changing significantly? Might be too detailed
 # For reports, AGU talk etc.
 # For now, have data ready to be manipulated as needed. Will come back.

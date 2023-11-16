@@ -46,6 +46,11 @@ means_crop_1821 <- datil%>%
               group_by(crop_name, variable) %>%
               summarize(Mean = mean(value), se=se(value))
 
+means_1821 <- datil%>%
+  filter(year>2017) %>%
+  group_by(variable) %>%
+  summarize(Mean = mean(value), se=se(value))
+
 # what are the state average adoption rates across all years and crops
 means_global <- datil%>%
                 group_by(variable) %>%
@@ -82,7 +87,7 @@ ggplot(data=means_cropyear, aes(x=year, y=Mean, group=variable)) +
         axis.title.x=element_text(size=14, face="bold"),
         axis.title.y=element_text(size=14, face="bold"),
         panel.background = element_rect(fill = 'white') ,
-        panel.border=element_rect(color="grey50", fill=NA, size=0.5),
+        panel.border=element_rect(color="grey50", fill=NA, linewidth=0.5),
         strip.text=element_text(size=12, face="bold"),
         legend.text=element_text(size=11),
         legend.title=element_text(size=12, face="bold"),
@@ -107,48 +112,52 @@ summary(lm(value~year*variable + crop_name, data=datil)) # no improvement with c
 summary(lm(value~year*variable + county, data=datil)) # no improvement with county
 
 # rate of change - cover crops
-summary(lm(value~year, data=datil[datil$variable %in% "perc_cc",])) # R2 only 0.05, p is sig., slope=0.926
+# summary(lm(value~year, data=datil[datil$variable %in% "perc_cc",])) # R2 only 0.05, p is sig., slope=0.926
 summary(lm(value~year + county, data=datil[datil$variable %in% "perc_cc",])) # improves R2 to 0.5, slope=0.942
 # slope means that cc adoption is increasing by 0.9% per year. trend is significant (i.e. not zero)
 # which looks about right given the plot above.
 # at this rate we will reach 50% adoption in year ___?
 # according to means_global IL cover crop adoption is at 6.5% (+/- 0.19).
-# increasing by 0.94% per year
-(50-6.5)/0.94  # 46 years. 
-2023+46 # 2069
+# according to means_1821 cover crop adoption is at 7.9 (+/- 0.30)
+# increasing by 0.99% per year
+(50-7.9)/0.99  # 43 years to get to 50%.
+2023+43 # 2066
 
 # rate of change - no till
-summary(lm(value~year, data=datil[datil$variable %in% "perc_nt",])) # R2 only 0.02, p is sig., slope=-1.53
+# summary(lm(value~year, data=datil[datil$variable %in% "perc_nt",])) # R2 only 0.02, p is sig., slope=-1.53
 summary(lm(value~year + county, data=datil[datil$variable %in% "perc_nt",])) # improves R2 to 0.5, slope=-1.53
 # slope means that nt adoption is DECREASING on average by 1.5% per year.  trend is significant (i.e. not zero)
 # which looks about right given the plot above.
 # at this rate we will reach 50% adoption in year ___?
 # according to means_global IL no till adoption is at 43.5% (+/- 0.53).
-# decreasing by 1.53% per year
-43.5/1.53  # in 28 years no no-till 
-2023+28 # 2051
+# according to means_1821 no till adoption is at 41.3% (+/- 0.70)
+# decreasing by 1.45% per year
+43.5/1.45  # in 30 years no no-till 
+2023+30 # 2053
 
 # rate of change - reduced till
-summary(lm(value~year, data=datil[datil$variable %in% "perc_rt",])) # R2 only 0.02, p is sig., slope=1.21
+# summary(lm(value~year, data=datil[datil$variable %in% "perc_rt",])) # R2 only 0.02, p is sig., slope=1.21
 summary(lm(value~year + county, data=datil[datil$variable %in% "perc_rt",])) # improves R2 to 0.27, slope=1.21
 # slope means that rt adoption is increasing on average by 1.2% per year.  trend is significant (i.e. not zero)
 # which looks about right given the plot above.
 # at this rate we will reach 50% adoption in year ___?
 # according to means_global IL rt adoption is at 39.9% (+/- 0.41).
-# increasing by 1.21% per year
-(50-39.9)/1.21  # 8 years. 
+# according to means_1821 rt adoption is at 41.3 (+/- 0.55)
+# increasing by 1.14% per year
+(50-41.3)/1.14  # 8 years to get to 50% adoption 
 2023+8 # 2031
 
 # rate of change - conventional till
-summary(lm(value~year, data=datil[datil$variable %in% "perc_ct",])) # R2 only 0.01, p is sig., slope=0.80
+# summary(lm(value~year, data=datil[datil$variable %in% "perc_ct",])) # R2 only 0.01, p is sig., slope=0.80
 summary(lm(value~year + county, data=datil[datil$variable %in% "perc_ct",])) # improves R2 to 0.36, slope=0.80
 # slope means that ct adoption is increasing on average by 0.8% per year.  trend is significant (i.e. not zero)
 # which looks about right given the plot above.
 # at this rate we will reach 50% adoption in year ___?
-# according to means_global IL cover crop adoption is at 15.3% (+/-0.36).
-# increasing by 0.80% per year
-(50-15.3)/0.80  # 43 years. 
-2023+43 # 2066
+# according to means_global IL conventional till adoption is at 15.3% (+/-0.36).
+# According to means_1821 conventional till adoption is at 17.0% (+/- 0.50)
+# increasing by 0.78% per year
+(50-17)/0.78  # 42 years to get to 50% adoption
+2023+42 # 2065
 
 
 
