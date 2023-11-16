@@ -3,8 +3,10 @@
 
 # packages
 library(tidyverse) # has ggplot, dplyr, reshape2, etc.
-# library(reshape2) # for dcast / melt
+library(reshape2) # for dcast / melt
 library(MASS) # for boxcox
+
+se <- function(x) sd(x) / sqrt(length(x))
 
 # load data
 ghgdat <- read.csv("data/simulations/un-weighted_resultsIL.csv")
@@ -53,6 +55,17 @@ ghgdat$decade <- ifelse(ghgdat$year <2031, "2020s",
                                     ifelse(ghgdat$year>=2041 & ghgdat$year <2051, "2040s",
                                            ifelse(ghgdat$year>=2051 & ghgdat$year <2061, "2050s",
                                                   ifelse(ghgdat$year>=2061 & ghgdat$year <2071, "2060s", "2070s")))))
+
+
+# label data for the crop they are
+ghgdat$crop <- ifelse(ghgdat$crop=="corn-soy" & ghgdat$year%%2 ==0, "soy",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
+                      ifelse(ghgdat$crop=="corn-soy" & !ghgdat$year%%2 ==0, "corn",
+                             ifelse(ghgdat$crop=="soy-corn" & ghgdat$year%%2 ==0, "corn",
+                                    ifelse(ghgdat$crop=="soy-corn" & !ghgdat$year%%2 ==0, "soy", "X"))))
+
+# check no Xs
+# unique(ghgdat$crop)
+
 # unique(ghgdat$decade)
 
 
@@ -85,69 +98,211 @@ sum_allsites <- group_by(ghgdat, till, cc, nfert) %>%
   
 
 cld <- as.data.frame.list(cld$`till:cc:nfert`)
-ndatsumcorn$cld <- cld.sqrt$Letters
+sum_allsites$cld <- cld$Letters
 
 
-se <- function(x) sd(x) / sqrt(length(x))
+# mean annual n2o emissions by decade
 
-# # test dataframe to make sure we are summing the way we want:
-# test <- data.frame(year=rep(c(2023, 2024, 2040), 4),
-#                    till = c(rep("NT", 6), rep("CT", 6)),
-#                    cc = rep(c(rep("CC", 3), rep("NC", 3)), 2),
-#                    ghg = c(1,4,2,5,3,2,1,4,5,1,3,4))
-# 
-# cumghg <- test %>%
-#   group_by(till, cc) %>%
-#   summarize(net_30 = sum(ghg[year<2031]))
-# # looks correct!
+ghganndec <- ghgdat %>%
+  group_by(till, cc, nfert, decade, crop) %>%  # so we have variability among sites
+  summarize(net.mean=mean(ghg),
+            net.se=se(ghg),
+            ghgdsoc.mean = mean(ghg_dsoc),
+            ghgdsoc.se=se(ghg_dsoc),
+            ghgn2o.mean = mean(ghg_total_n2o),
+            ghgn2o.se = se(ghg_total_n2o)
+            ) %>%
+  melt(id=c("till", "cc", "nfert", "decade", "crop")) %>%
+  rename(var1=variable) %>%
+  mutate(mean.se = ifelse(grepl(pattern="mean", x=var1), "mean", "se"),
+         var2 = ifelse(mean.se=="mean", gsub(pattern = ".mean", replacement="", x=var1), 
+                       gsub(pattern = ".se", replacement="", x=var1))) %>%
+  dplyr::select(-var1) %>%
+  dcast(till + cc + nfert + decade + crop +var2 ~mean.se)
 
-cumghg <- ghgdat %>%
-  group_by(till, cc, nfert, site_name, decade) %>%  # so we have variability among sites
-  summarize(net = sum(ghg),  # per decade what's the total ghg emissions (not cumulative)
-            ghgdsoc = sum(ghg_dsoc),
-            ghgn2o = sum(ghg_total_n2o))
 
-# now make the data in long form
-cumghgl <- melt(data=cumghg, id=c("site_name", "till", "cc", "nfert", "decade"))
 # $value is in units of cumulative tco2e/ha
 
-sum_cumghgl <- cumghgl %>%
-  group_by(cc, till, nfert, variable) %>%
-  summarize(mean = mean(value), se = se(value))   # mean and se across sites.
+
+
+# corn
+effect <- aov(ghg_total_n2o ~till*cc*nfert, data=ghgdat[ghgdat$crop=="corn" & ghgdat$till %in% c("NT", "CT"),])
+
+summary(effect)
+# > summary(effect)
+# Df Sum Sq Mean Sq F value   Pr(>F)    
+# till              2   2206  1103.1 4633.12  < 2e-16 ***
+#   cc                1     52    52.4  220.20  < 2e-16 ***
+#   nfert             2   2655  1327.4 5575.24  < 2e-16 ***
+#   till:cc           2     95    47.7  200.33  < 2e-16 ***
+#   till:nfert        4    392    97.9  411.25  < 2e-16 ***
+#   cc:nfert          2     54    26.9  113.01  < 2e-16 ***
+#   till:cc:nfert     4     16     3.9   16.33 2.26e-13 ***
+#   Residuals     29646   7058     0.2                     
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+Tukout <- TukeyHSD(effect)
+# # put interaction output into a dataframe we can sort
+# Tukout <- as.data.frame(Tukout[7]) %>%  # [7] is the 3-way interaction term
+#   rownames_to_column(., "term") %>%
+#   arrange(term)
+
+
+# compact letter display
+cld<- multcompView::multcompLetters4(effect, Tukout)
+
+# table with letters 
+ghgcornsum <- filter(ghgdat, crop=="corn", till %in% c("NT", "CT")) %>%
+  group_by(cc, till, nfert) %>%
+  summarize(mean=mean(ghg_total_n2o), 
+            se=se(ghg_total_n2o)) %>%
+  arrange(desc(mean))
+
+cld<- as.data.frame.list(cld$`till:cc:nfert`)
+ghgcornsum$cld <- cld$Letters
+
+
+
+
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
-
-ggplot(data=sum_cumghgl[sum_cumghgl$variable %in% c("n2o_20", "n2o_30", "n2o_40", "n2o_50", "n2o_60"),],
-  aes(x=nfert, y=mean, fill=variable)) +
-  geom_bar(stat="identity", position=position_dodge(), color="gray20") +
-  geom_errorbar(width=0.3, aes(ymin= mean-se, ymax=mean+se),  
+       
+ggplot() +
+  geom_bar(data=ghganndec[ghganndec$crop == "corn" & ghganndec$var=="ghgn2o" & ghganndec$till %in% c("CT", "NT"),], aes(x=nfert, y=mean, fill=decade),
+           stat="identity", position=position_dodge(), color="gray20") +
+  geom_errorbar(data=ghganndec[ghganndec$crop == "corn" & ghganndec$var=="ghgn2o" & ghganndec$till %in% c("CT", "NT"),], 
+                width=0.3, aes(x=nfert, ymin= mean-se, ymax=mean+se, group=decade),  
                 position=position_dodge(0.9),
                 color="gray20") +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
-             cols=vars(factor(cc, levels=c("CC", "NC"))), 
+  geom_bar(data=ghgcornsum, aes(x=nfert, y=mean), stat="identity", color=NA, fill=NA) +
+  geom_text(data=ghgcornsum, aes(x=nfert, label=cld, y=ifelse(mean<1.5, mean + 0.2*mean, ifelse(mean>2.3, mean+0.25*mean, mean+0.5*mean))), vjust=-0.5, 
+             color="gray20", size=4, fontface="bold") +
+  facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),  #, "RT"
+             cols=vars(factor(cc, levels=c("NC", "CC"))), 
                        #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
              labeller = as_labeller(
-               c(CC="Has Cover Crop", NC="No Cover Crop",
-                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+               c("NC"="No Cover Crop", "CC"="Has Cover Crop", 
+                 "CT" = "Conventional Till", "NT" = "No Till")))+  #, "RT"="Reduced Till"))) +
                  #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) +
   xlab("N management") +
-  ylab(expression('Total N'*[2]*'O emissions (CO'[2]*'e ha'^-1*') per decade')) +
-  scale_fill_manual(values=c("#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"), 
-                    breaks=c("n2o_20", "n2o_30", "n2o_40", "n2o_50", "n2o_60", "n2o_70"),
-                    labels=c("2020s", "2030s", "2040s", "2050s", "2060s", "2070s"),
+  ylab(expression('Mean annual N'[2]*'O emissions (CO'[2]*'e ha'^-1*')')) +
+  scale_fill_manual(values=c("#eaeccc", "#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"),
                     name="Decade")+ #, name="N management") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/ghgs/IL_n2o em by decade.png", width=12, height=8, dpi=300)
+ggsave("plots/ghgs/IL_n2o annual em by decadeRCP60_with letters.png", width=6, height=4, dpi=300)
+
+
+
+# plot of 2022 "current" by practice - mean across crops
+# if you want crop specific it looks like this:
+# ghgdatl <- ghgdat[,c(1:2,5:12)] %>%
+#   group_by(crop_name, year, till, cc, nfert, decade) %>%
+#   summarize(net.mean=mean(ghg),  # mean and se across sites
+#             net.se=se(ghg),
+#             ghgdsoc.mean = mean(ghg_dsoc),
+#             ghgdsoc.se=se(ghg_dsoc),
+#             ghgn2o.mean = mean(ghg_total_n2o),
+#             ghgn2o.se = se(ghg_total_n2o)
+#   ) %>%
+#   melt(id=c("year",  "crop_name", "till", "cc", "nfert", "decade")) %>%
+#   rename(var1=variable) %>%
+#   mutate(mean.se = ifelse(grepl(pattern="mean", x=var1), "mean", "se"),
+#          var2 = ifelse(mean.se=="mean", gsub(pattern = ".mean", replacement="", x=var1), 
+#                        gsub(pattern = ".se", replacement="", x=var1))) %>%
+#   dplyr::select(-var1) %>%
+#   dcast(year + crop_name + till + cc + nfert + decade +var2 ~mean.se)
+
+# mean across crops
+ghgdatl_cropmean <- ghgdat[,c(1:2,5:12)] %>%
+  group_by(year, till, cc, nfert, decade) %>%
+  summarize(net.mean=mean(ghg),  # mean and se across sites
+            net.se=se(ghg),
+            ghgdsoc.mean = mean(ghg_dsoc),
+            ghgdsoc.se=se(ghg_dsoc),
+            ghgn2o.mean = mean(ghg_total_n2o),
+            ghgn2o.se = se(ghg_total_n2o)
+  ) %>%
+  melt(id=c("year",  "till", "cc", "nfert", "decade")) %>%
+  rename(var1=variable) %>%
+  mutate(mean.se = ifelse(grepl(pattern="mean", x=var1), "mean", "se"),
+         var2 = ifelse(mean.se=="mean", gsub(pattern = ".mean", replacement="", x=var1), 
+                       gsub(pattern = ".se", replacement="", x=var1))) %>%
+  dplyr::select(-var1) %>%  # select is used by other packages too and doesn't work here without dplyr::
+  dcast(year + till + cc + nfert + decade +var2 ~mean.se)
+
+# make the plot "current" / 2022 by practice
+
+
+ggplot(data=ghgdatl_cropmean[ghgdatl_cropmean$till %in% c("CT", "NT") & 
+                               ghgdatl_cropmean$year == 2022 & 
+                               ghgdatl_cropmean$var2 %in% c("ghgdsoc", "ghgn2o"),],
+       aes(x=nfert, y=mean)) +
+  geom_bar(aes(fill= var2), stat="identity", position= "stack") +
+  scale_fill_manual(values=c("#ee8866","#99ddff"), 
+                    breaks=c("ghgn2o", "ghgdsoc"), 
+                    name = "Source/Sink", 
+                    labels=c(expression('Total N'[2]*'O emissions', "Change in SOC"))) + #, labels=c("ghg_dsoc", "ghg_tn2o")) +
+  geom_hline(yintercept=0, color="#009988", linewidth=0.5) +
+  geom_point(data=ghgdatl_cropmean[ghgdatl_cropmean$var2 == "net" &
+                                     ghgdatl_cropmean$till %in% c("CT", "NT") & 
+                                     ghgdatl_cropmean$year == 2022 ,], # 
+             aes(x=nfert, y=mean),
+             size = 0.5, color="gray30") +
+  geom_errorbar(data=ghgdatl_cropmean[ghgdatl_cropmean$till %in% c("CT", "NT") & 
+                                        ghgdatl_cropmean$year == 2022,], 
+                aes(x=nfert, y=mean, ymin=mean-se, ymax=mean+se, color=var2),
+                width = 0.2, show.legend=F) +
+  labs(x="N management", 
+       y=expression('2022 mean annual emissions (tonnes CO'[2]*'e ha'^'-1'*')')) +
+  scale_color_manual(values=c("#004488", "#882255", "gray30"), breaks=c("ghgdsoc", "ghgn2o", "net")) +
+  facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),   # set the order of facets here. setting the factor to ordered doesn't affect it here
+             cols=vars(factor(cc, levels=c("NC", "CC"))), 
+             #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
+             labeller = as_labeller(
+               c("NC"="No Cover Crop","CC"="Has Cover Crop", 
+                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+  #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'),
+    legend.text.align=0,
+    axis.text.x=element_text(angle=-20, hjust=0))
+
+ggsave("plots/ghgs/IL_n2o annual em simulations 2022.png", width=6, height=4, dpi=300)
+
+
+# are the net effects in the bars above significantly different?
+
+# need mean of data across corn-soy
+ghgdat_cropmean <- ghgdat[,c(1:2,5:12)] %>%
+  group_by(site_name, year, till, cc, nfert, decade) %>%
+  summarize(net.mean=mean(ghg),  # mean and se across sites
+            ghgdsoc.mean = mean(ghg_dsoc),
+            ghgn2o.mean = mean(ghg_total_n2o))
+
+netlm <- lm(net.mean~till*cc*nfert, data=ghgdat_cropmean[ghgdat_cropmean$year==2022,])
+summary(netlm)
+
+
+
+
+
+
+
+
 
 
 
 # are the group means significantly different?
 
-n2odat <- cumghgl[cumghgl$variable=="n2o_tot",c(1:4,6)]
+n2odat <- ghganndecl[ghganndecl$variable=="n2o_tot",c(1:4,6)]
 
 Neffect <- aov(value~till*cc*nfert, data=n2odat)
 summary(Neffect)
@@ -284,7 +439,7 @@ cornsum
 
 
 
-ggplot(data=sum_cumghgl[sum_cumghgl$variable %in% c("n2o_tot"),],
+ggplot(data=sum_ghganndecl[sum_ghganndecl$variable %in% c("n2o_tot"),],
        aes(x=nfert, y=mean, fill=nfert)) +
   geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
   geom_errorbar(width=0.3, aes(ymin= mean-se, ymax=mean+se),  

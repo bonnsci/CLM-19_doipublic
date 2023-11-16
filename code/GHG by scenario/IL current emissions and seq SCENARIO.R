@@ -42,30 +42,12 @@ scenil <- read.csv("data/scenarios/scenil.csv")
 # So even though unique(scenil$crop) gives "corn, grain" it actually is
 # the average of corn-soy.
 
-
-# load IL unweighted simulation DNDC output 
-# (corresponds to "yearly_outputs_post-weighting.csv")
-# not sure we need this here?
-unw <- read.csv("data/simulations/un-weighted_resultsIL.csv")
-
-
-###current GHG emissions and C sequestration from corn-soybean agriculture in Illinois
-##state level
-# n2o tonne N/ha Calendar year daily sum (Jan. 1 - Dec. 31) of nitrous oxide direct emissions in co2 equivalents.
-# ch4 tonne C/ha Calendar year daily sum (Jan. 1 - Dec. 31) of methane emissions in co2 equivalents.
-# cseq == dsoc tonne C/ha Calendar year change in soil organic carbon stocks (Dec. 31 - Jan. 1).
-
-#insert the Net inside the bars
-
-library(tibble)
-library(ggpmisc)
+# 
+# 
+# library(tibble)
+# library(ggpmisc)
 
 se <- function(x) sd(x) / sqrt(length(x))
-
-#data.tb <- tibble(x = "n" , y = -2.7, 
- #                 plot = list(p +
-  #                              theme_bw(4)))
-
 
 
 # ID for decade
@@ -78,89 +60,62 @@ scenil$decade <- ifelse(scenil$year <2031, "2020s",
 
 
 
-# not needed? 
-# scenil %>% filter (scenario.code == 1 & year ==2022 & climate_scenario=="rcp60") %>% #taking only scenario 1 and 2022 for analysis
-#   select(ghg_dsoc,  ghg_total_n2o) %>%  # ghg_n2o, 
-#   gather(var, value, ghg_dsoc:ghg_total_n2o) %>%
-#   group_by (var) %>% #we decided to do average between the two climates
-#   summarise_all(list(mean, sd)) %>% #fn1, fn2
-#   ggplot(aes(x=var, y=fn1, fill= var)) + 
-#   geom_bar(stat="identity", position=position_dodge()) +
-#   geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
-#                 position=position_dodge(0.9), width=0.2) + ylim(-2.7,1.5) +
-#  scale_fill_manual(values=c("#DDAA33", "#228833")) +   # , "#66CCEE"
-#                     #labels=c("Corn", "Soybeans", "Winter Wheat"),
-#                    #name="Climate Scenario") +
-#   #scale_y_continuous(breaks=seq(0,70,10)) +
-#   ylab("Co2 equivalents (Tn/ha/Yr)") +
-#   scale_x_discrete(labels=c("ghg_dsoc" = "SOC", "ghg_n2o" = "N2O","ghg_total_n2o" = "Total_N2O"))+
-#   xlab("Greenhouse gas") +
-#   #geom_plot(data = data.tb, aes(x, y, label = plot)) +
-#   theme_bw()+
-#   theme(
-#     panel.grid.minor=element_blank(), 
-#     panel.grid.major=element_blank() ,
-#     axis.text=element_text(size=12),
-#     axis.title.x=element_text(size=12, face="bold"),
-#     axis.title.y=element_text(size=12, face="bold"),
-#     panel.background = element_rect(fill = 'white') ,
-#     panel.border=element_rect(color="grey50", fill=NA, linewidth=0.5),
-#     strip.text=element_text(size=12, face="bold"),
-#     legend.text=element_text(size=11),
-#     legend.title=element_text(size=12, face="bold"),
-#     plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), 
-#     legend.position = "none")
-#   
-# 
-# ggsave("plots/n20_dsoc_2022sn1.png", width=8, height=6)     
+scenil <- scenil[scenil$climate_scenario=="rcp60",]
 
-#stacked with net balance start==mean
+#stacked bar with Net balance for 2022
+scenil_2022 <- scenil %>% filter (scenario.code %in% c(1,7,8) & year ==2022 & climate_scenario=="rcp60") %>% #taking only scenario 1 and 2022 for analysis
+  dplyr::select(ghg, ghg_dsoc, ghg_total_n2o, scenario.code) %>%
+  gather(var, value, ghg:ghg_total_n2o) %>%
+  group_by (var, scenario.code) %>% 
+  summarise_all(list(mean, se)) %>%
+  rename(mean = fn1, se = fn2) %>%
+  mutate (year= "2022")  #fn1, fn2
 
-#Calculate the balance
-scenil %>% filter (scenario.code == 1 & year ==2022 & climate_scenario=="rcp60") %>% #taking only scenario 1 and 2022 and rcp 6.0 for analysis
-  select(ghg_dsoc, ghg_total_n2o) %>%
-  mutate (Net = ghg_dsoc + ghg_total_n2o) %>%
-  select (Net) %>%
-  summarise_all(list(mean, sd)) %>% 
-  mutate (year = "2022") -> Net
 
-#stacked bar with Net balance
-scenil %>% filter (scenario.code == 1 & year ==2022 & climate_scenario=="rcp60") %>% #taking only scenario 1 and 2022 for analysis
-  select(ghg_dsoc, ghg_total_n2o) %>%
-  gather(var, value, ghg_dsoc:ghg_total_n2o) %>%
-  group_by (var) %>% 
-  summarise_all(list(mean, sd)) %>%
-  mutate (year= "2022") %>% #fn1, fn2
-  ggplot(aes(x=year, y=fn1, fill= var)) + 
-  geom_bar(aes(x=year, y=fn1, fill= var), stat="identity", position= "stack") +
-  geom_errorbar(aes(ymin=fn1-fn2, ymax=fn1+fn2), linewidth=0.8, color="#000000",
-                width=0.2) + ylim(-2.7,1) +
-  scale_fill_manual(values=c("#DDAA33", "#228833"), 
-  labels=c("SOC","N2O"),
-  name="Greenhouse gas") +
-  geom_hline(yintercept = Net$fn1, linetype = "dashed", linewidth = 1) +
-  annotate("text", x=Net$year, y=Net$fn1 +0.1, label= "Net Balance") +
+scenil_2022$scenario.code <- factor(scenil_2022$scenario.code, levels=c("8", "7", "1"), ordered=T)
+
+
+ggplot(data=scenil_2022[scenil_2022$var %in% c("ghg_dsoc", "ghg_total_n2o"),],
+       aes(x=scenario.code, y=mean)) + 
+  geom_bar(aes(fill=var), stat="identity", position= "stack") +
+  ylim(-2,1) +
+  scale_fill_manual(values=c("#ee8866","#99ddff"), 
+                    breaks=c("ghg_total_n2o", "ghg_dsoc"), 
+                    name = "Source/Sink", 
+                    labels=c(expression('Total N'[2]*'O emissions', "Change in SOC"))) +
+  geom_point(data=scenil_2022[scenil_2022$var == "ghg",],
+             aes(x=scenario.code, y=mean), size=1, color= "#004488", show.legend=F) +
+  geom_errorbar(data=scenil_2022, aes(x=scenario.code, y=mean, ymin=mean-se, ymax=mean+se), 
+                linewidth=0.8,
+                width=0.2,
+                color = "#004488") + 
+  geom_hline(yintercept=0, color="#009988", linewidth=0.5) +
+  #annotate("text", x=Net$year, y=Net$mean +0.1, label= "Net Balance", aes(group=scenario.code)) +
   #scale_y_continuous(breaks=seq(0,70,10)) +
-  ylab("Co2 equivalents (Tn/ha/Yr)") +
-  scale_x_discrete(labels=c("2022" = ""))+
-  xlab("Year:2022") +
+  labs(x="Scenario", 
+      y=expression('2022 mean annual emissions (tonnes CO'[2]*'e ha'^'-1'*')')) +
+  scale_color_manual(values=c("#004488", "#882255", "gray30"), breaks=c("ghgdsoc", "ghgn2o", "net")) +
+  scale_x_discrete(labels=c("8" = "Fall N", "7" = "High N", "1" = "Recommended N"))+
   theme_bw()+
+  # facet_grid(cols=vars(scenario.code)) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank() ,
     axis.text=element_text(size=12),
     axis.title.x=element_text(size=12, face="bold"),
-    axis.title.y=element_text(size=12, face="bold"),
+    axis.title.y=element_text(size=12, face="bold", lineheight=0.2),
     panel.background = element_rect(fill = 'white') ,
     panel.border=element_rect(color="grey50", fill=NA, linewidth=0.5),
     strip.text=element_text(size=12, face="bold"),
     legend.text=element_text(size=11),
     legend.title=element_text(size=12, face="bold"),
-    plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) -> p
+    plot.margin = unit(c(1,0.5,0.5,1), "cm"),
+    axis.text.x=element_text(angle=-20, hjust=0),
+    legend.text.align=0,) #-> p
     #legend.position = "none")
   
 
-ggsave("plots/Net_2022sn1.png", width=6, height=8)  
+ggsave("plots/ghgs/IL_Net_2022_scenarios 1,7,8_RCP60.png", width=6, height=4.5)  
 
 
 # stacked dsoc, total n2O with net
@@ -223,10 +178,56 @@ ggplot() +
     axis.text.x=element_text(angle=-30, hjust=0))
 
 
-ggsave("plots/ghgs/IL_net balance by decade scenarios 1-8.png", width=16, height=5, dpi=300)
+ggsave("plots/ghgs/IL_net balance by decade scenarios 1-8 RCP60.png", width=16, height=5, dpi=300)
 
 
 # why does Fall N have lower net emissions? --need to investigate simulation data...
+
+# are the net ghg points in the above plot significantly different?
+# specifically are the 2020s different from each other? 
+# Are the 2070s significantly different?
+
+# use corn -soy means
+scenil_cropmeans <- group_by(scenil, site_name, scenario.code, year) %>%
+  summarize(mean.net = mean(ghg),
+            mean.dsoc = mean(ghg_dsoc),
+            mean.n2o = mean(ghg_total_n2o))
+
+# the 2020s are not sig. diff.
+lm20 <- lm(mean.net~factor(scenario.code), data=scenil_cropmeans[scenil_cropmeans$year<2031 & scenil_cropmeans$scenario.code <5,])
+summary(lm20)
+
+# the 2070s
+lm70 <- lm(mean.net~factor(scenario.code), data=scenil_cropmeans[scenil_cropmeans$year>2070 & scenil_cropmeans$scenario.code <5,])
+summary(lm70)
+
+aov70 <- aov(mean.net~factor(scenario.code), data=scenil_cropmeans[scenil_cropmeans$year>2070 & scenil_cropmeans$scenario.code <5,])
+summary(aov70)
+
+Tukout <- TukeyHSD(aov70)
+
+cld <- multcompView::multcompLetters4(aov70,Tukout)
+
+# table with letters 
+decdat70s <- filter(decdat, decade=="2070s", scenario.code <5, variable=="ghg_net") %>%
+  arrange(desc(mean))
+
+cld <- as.data.frame.list(cld$`factor(scenario.code`)
+decdat70s$cld <- cld$Letters
+
+
+# what is the difference between 2070s and 2020s for each scenario?
+
+decdat2070 <- filter(decdat, decade %in% c("2020s", "2070s"), variable=="ghg_net", scenario.code <5) %>%
+  dplyr::select(scenario.code, mean, decade) %>%
+  dcast(., scenario.code~ decade, value.var="mean") %>%
+  rename(t20s = "2020s", t70s = "2070s") %>%
+  mutate(diff70m20 = t70s - t20s,
+         factor20 = diff70m20/t20s)
+
+
+
+
 
 
 
