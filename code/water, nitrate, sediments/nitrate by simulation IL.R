@@ -550,8 +550,10 @@ ggplot() +
                 aes(x=nfert, y=mean, ymin=mean-se, ymax=mean+se, group=decade), 
                 width=0.3, position=position_dodge(0.9), color="gray20") +
   scale_fill_manual(values=pal6, name="Decade") +
-  geom_bar(data=ndatsumcorn[ndatsumcorn$till %in% c("CT", "NT"),], aes(x=nfert, y=mean), stat="identity", color=NA, fill=NA) +
-  geom_text(data=ndatsumcorn[ndatsumcorn$till %in% c("CT", "NT"),], aes(x=nfert, label=cld, y=mean^2 + 2*mean), vjust=-0.5, 
+  geom_bar(data=ndatsumcorn[ndatsumcorn$till %in% c("CT", "NT"),], aes(x=nfert, y=mean), 
+           stat="identity", color=NA, fill=NA) +
+  geom_text(data=ndatsumcorn[ndatsumcorn$till %in% c("CT", "NT"),], 
+            aes(x=nfert, label=cld, y=mean^2 + 2*mean), vjust=-0.5, 
             color="gray20", size=4, fontface="bold") +
   facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),  #"RT", 
              cols=vars(factor(cc, levels=c("NC", "CC"))), 
