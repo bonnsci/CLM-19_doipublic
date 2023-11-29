@@ -143,33 +143,37 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 
 
 ggplot() +
-  geom_bar(data=decdat[decdat$variable %in% c("ghg_dsoc", "ghg_tn2o"),],# decdat$scenario.code %in% c(1,4,6, 7, 8) &            aes(x=decade, y=mean, fill= variable), 
+  geom_bar(data=decdat[decdat$variable %in% c("ghg_dsoc", "ghg_tn2o") & decdat$scenario.code <5 ,], # &            aes(x=decade, y=mean, fill= variable), 
            aes(x=decade, y=mean, fill= variable),
-           stat="identity", position= "stack") +
+           stat="identity", position= "stack", alpha=0.5) +
   scale_fill_manual(values=c("#ee8866","#99ddff"), 
                     breaks=c("ghg_tn2o", "ghg_dsoc"), 
                     name = "Source/Sink", 
                     labels=c(expression('Total N'[2]*'O emissions', "Change in SOC"))) + #, labels=c("ghg_dsoc", "ghg_tn2o")) +
   geom_hline(yintercept=0, color="#009988", linewidth=0.5) +
-  geom_point(data=decdat[decdat$variable %in% c("ghg_net"),], # decdat$scenario.code %in% c(1,4,6, 7,8) & 
-             aes(x=decade, y=mean),
-             size = 0.5, color="gray30") +
-  geom_errorbar(data=decdat, #[decdat$scenario.code %in% c(1,4,6,7,8),], 
-                aes(x=decade, y=mean, ymin=mean-se, ymax=mean+se, color=variable),
+  geom_line(data=decdat[decdat$variable %in% c("ghg_net") & decdat$scenario.code <5 ,], # decdat$scenario.code %in% c(1,4,6, 7,8) & 
+            aes(x=decade, y=mean, group=1),
+            linewidth = 1, color="#004488", alpha=0.3) +
+  geom_errorbar(data=decdat[decdat$scenario.code <5,], #[decdat$scenario.code %in% c(1,4,6,7,8),], 
+                aes(x=decade, y=mean, ymin=mean-se, ymax=mean+se), color="#004488",# variable),
                 width = 0.3, show.legend=F) +
+  geom_point(data=decdat[decdat$variable %in% c("ghg_net") & decdat$scenario.code <5 ,], # decdat$scenario.code %in% c(1,4,6, 7,8) & 
+             aes(x=decade, y=mean),
+             size = 0.8, color="#004488") +
+  scale_y_continuous(breaks=seq(-1.5, 1.5, 0.5)) +
   labs(x="Decade", 
        y= expression('Mean annual emissions (tonnes CO'[2]*'e ha'^'-1'*')')) +
-  scale_color_manual(values=c("#004488", "#882255", "gray30"), breaks=c("ghg_dsoc", "ghg_tn2o", "ghg_net")) +
+  #scale_color_manual(values=c("#004488", "#882255", "gray30"), breaks=c("ghg_dsoc", "ghg_tn2o", "ghg_net")) +
   facet_grid(cols=vars(scenario.code), 
              labeller = as_labeller(
                c("1" = "(1) BAU adopt +\nrecommended N rate", 
                  "2" = "(2) BAU CC, 3x CT adopt +\nrecommended N rate",
                  "3" = "(3) 3x CC, BAU CT adopt +\nrecommended N rate",
-                 "4" = "(4) 3xBAU adoption +\nrecommended N rate", 
-                 "5" = "(5) CC 25% by 2030, BAU CT +\nadopt recommended N rate",
-                 "6" = "(6) CC 25%, CT 90% by 2030 +\nrecommended N rate", 
-                 "7" = "(7) 3xBAU adoption +\nhigh N rate",
-                 "8" = "(8) 3xBAU adoption +\nrecommended N rate, fall applied"))) +
+                 "4" = "(4) 3xBAU adoption +\nrecommended N rate"))) + #, 
+                 # "5" = "(5) CC 25% by 2030, BAU CT +\nadopt recommended N rate",
+                 # "6" = "(6) CC 25%, CT 90% by 2030 +\nrecommended N rate", 
+                 # "7" = "(7) 3xBAU adoption +\nhigh N rate",
+                 # "8" = "(8) 3xBAU adoption +\nrecommended N rate, fall applied"))) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
@@ -177,8 +181,8 @@ ggplot() +
     legend.text.align=0,
     axis.text.x=element_text(angle=-30, hjust=0))
 
-
-ggsave("plots/ghgs/IL_net balance by decade scenarios 1-8 RCP60.png", width=16, height=5, dpi=300)
+ggsave("plots/ghgs/IL_net balance by decade scenarios 1-4 RCP60.png", width=10, height=5, dpi=300)
+# ggsave("plots/ghgs/IL_net balance by decade scenarios 1-8 RCP60.png", width=16, height=5, dpi=300)
 
 
 # why does Fall N have lower net emissions? --need to investigate simulation data...

@@ -263,33 +263,44 @@ cornsum <- group_by(corndat, cc, till, nfert) %>%
 cld <- as.data.frame.list(cld$`till:cc:nfert`)
 cornsum$cld <- cld$Letters
 
-cornsum
+# cornsum
 
 # use these letters on this plot:
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
-ggplot(data=cornsum,aes(x=nfert, y=mean, fill=nfert)) +
+cornsum$nfert 
+
+ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=mean, fill=nfert)) +
   geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
   geom_errorbar(width=0.3, aes(ymin=mean-se, ymax=mean + se),  
                 position=position_dodge(0.9),
                 color="#332288") +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
-             cols=vars(factor(cc, levels=c("CC", "NC"))), 
+  facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),  #"RT"))), 
+             cols=vars(factor(cc, levels=c("NC", "CC"))), 
              labeller = as_labeller(
-               c(CC="Has Cover Crop", NC="No Cover Crop",
-                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+               c(NC="No Cover Crop", CC="Has Cover Crop", 
+                 "CT" = "Conventional Till", "NT" = "No Till"))) + #, "RT"="Reduced Till"))) +
   xlab("N management") +
-  ylab("Mean corn grain (kg C/ha) 2022-2072") +
-  ylim(0,3500)+
-  geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5) +
+  ylab(expression(bold('2022-2072 mean corn grain biomass (kg C ha'^-1*')'))) + 
+  scale_x_discrete(breaks=c("Fall N", "High N", "Recommended N"),
+                   labels = c("Fall N", "High N", "Recomm. N")) +
+  ylim(0,3800)+
+  geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5,
+            color="gray20", size=4, fontface="bold") +
   scale_fill_manual(values=c("#CC6677","#99DDFF", "#44AA99" )) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
-    panel.background = element_rect(fill = 'gray95'))
+    panel.background = element_rect(fill = 'gray95'),
+    axis.text.x=element_text(angle=-10, hjust=0, size=11),
+    axis.text.y=element_text(size=11),
+    plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=13, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+# # strip.background=element_rect(fill="lightblue", color="black", size=1) 
 
-ggsave("plots/biomass/IL_corn_biomass_Neffect.png", width=6, height=8, dpi=300)
+ggsave("plots/biomass/IL_corn_biomass_Neffect.png", width=5, height=5, dpi=300)
 
 
 
@@ -405,27 +416,37 @@ corncvsum
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
-ggplot(data=corncvsum,aes(x=nfert, y=mean, fill=nfert)) +
-  geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
+ggplot(data=corncvsum[corncvsum$till %in% c("CT", "NT"),],
+       aes(x=nfert, y=mean, fill=nfert)) +
+  geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F, alpha=0.7) +
   geom_errorbar(width=0.3, aes(ymin=mean-se, ymax=mean + se),  
                 position=position_dodge(0.9),
                 color="#332288") +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
-             cols=vars(factor(cc, levels=c("CC", "NC"))), 
+  facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),  # "RT"))), 
+             cols=vars(factor(cc, levels=c("NC", "CC"))), 
              labeller = as_labeller(
-               c(CC="Has Cover Crop", NC="No Cover Crop",
-                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+               c(NC="No Cover Crop", CC="Has Cover Crop", 
+                 "CT" = "Conventional Till", "NT" = "No Till"))) + #, "RT"="Reduced Till"))) +
   xlab("N management") +
-  ylab("CV for corn grain (kg C/ha) 2022-2072") +
+  ylab(expression(bold('2022-2072 CV corn grain biomass'))) + 
+  scale_x_discrete(breaks=c("Fall N", "High N", "Recommended N"),
+                   labels = c("Fall N", "High N", "Recomm. N")) +
   ylim(0,0.45)+
-  geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5) +
+  geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5,
+            color="gray20", size=4, fontface="bold") +
   scale_fill_manual(values=c("#CC6677","#99DDFF", "#44AA99" )) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
-    panel.background = element_rect(fill = 'gray95'))
+    panel.background = element_rect(fill = 'gray95'),
+    axis.text.x=element_text(angle=-10, hjust=0, size=11),
+    axis.text.y=element_text(size=11),
+    plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=13, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+# # strip.background=element_rect(fill="lightblue", color="black", size=1) 
 
-ggsave("plots/biomass/IL_corn_biomass_cv.png", width=6, height=8, dpi=300)
+ggsave("plots/biomass/IL_corn_biomass_cv.png", width=5, height=5, dpi=300)
 
 
 
