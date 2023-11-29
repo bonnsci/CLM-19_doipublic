@@ -57,6 +57,8 @@ wdatyr$decade <- ifelse(wdatyr$year <2031, "2020s",
 
 wdatyr$et.yr <- wdatyr$evap.yr + wdatyr$trans.yr
 
+# write.csv(wdatyr, "data/water, nitrate, sediments/wdatyr.csv", row.names=F)
+
 # first sum by site and crop name across all years, then calculate mean across crop types per site, 
 # Then mean and se across sites by treatments/management combinations
 
@@ -283,16 +285,18 @@ wdat_nositesed$cld <- cldsed$Letters
 
 
 ggplot(data=wpyrlong[wpyrlong$variable %in% c("sed"),], aes(x=till, y=mean)) +
-  geom_bar(stat="identity", position=position_dodge(), color="#332288", width=0.8, fill="gray70") +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.8),color="#332288") +
+  geom_bar(stat="identity", position=position_dodge(), color="sienna4", width=0.8, fill="burlywood3") +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.8),color="sienna4", linewidth=1) +
   facet_grid( #rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
-    cols=vars(factor(cc, levels=c("CC", "NC"))), 
+    cols=vars(factor(cc, levels=c("NC", "CC"))), 
     #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
     labeller = as_labeller(
-      c(CC="Has Cover Crop", NC="No Cover Crop"))) +
+      c(NC="No Cover Crop", CC="Has Cover Crop"))) +
   # "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
   #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
   scale_y_continuous(breaks=seq(0,300, 50), limits=c(0,300)) +
+  scale_x_discrete(breaks = c("CT", "RT", "NT"),
+                   labels = c("Conv.", "Reduced", "No")) +
   geom_bar(data=wdat_nositesed, 
            aes(x=till, y=mean), stat="identity", 
            position=position_dodge(), color=NA, fill=NA) +
@@ -300,13 +304,19 @@ ggplot(data=wpyrlong[wpyrlong$variable %in% c("sed"),], aes(x=till, y=mean)) +
             aes(x=till, label=cld, y=mean), vjust=-2,
             position=position_dodge(0.9), color="gray20", size=4, fontface="bold") +
   xlab("Tillage") +
-  ylab("Mean annual sediment yield\nkg/ha 2022 to 2072") +
+  ylab(expression(bold('2022-72 mean annual sediment yield (kg ha'^-1*')'))) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
-    panel.background = element_rect(fill = 'gray95'))
+    panel.background = element_rect(fill = 'gray95'),
+    axis.text.x=element_text(size=11),  #angle=-10, hjust=0, 
+    axis.text.y=element_text(size=11),
+    plot.margin = unit(c(1,0.5,1,0.5), "cm"),
+    axis.title=element_text(size=13, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+# # strip.background=element_rect(fill="lightblue", color="black", size=1) 
 
-ggsave("plots/water, nitrate, sediments/IL_sediments mean annual barsRCP60_withletters.png", width=4, height=2.5, dpi=300)
+ggsave("plots/water, nitrate, sediments/IL_sediments mean annual barsRCP60_withletters.png", width=5, height=4.5, dpi=300)
 
 
 
