@@ -32,7 +32,7 @@ dat <- dat %>%
   mutate(date_ = as.Date(doy-1, origin=paste0(year, "-01-01")),  # subtract 1 b/c R uses a 0 base index
          month = strftime(date_, "%m"),
          day = strftime(date_, "%d")) 
-beepr::beep(sound=8)
+# beepr::beep(sound=8)
 
 # SPEI works on monthly data
 
@@ -163,38 +163,43 @@ speidat <- left_join(spei1dat, spei12dat, relationship="one-to-one")
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
 spei1sitemean <- spei1dat %>%
-  group_by(rcp, ns, dat) %>%
-  summarize(mean.fit = mean(fit),
-            sd.fit = sd(fit))
+  group_by(rcp, ns, dat) %>%   # dat=date
+  summarize(mean.fit = mean(fit.1mo),
+            sd.fit = sd(fit.1mo))
 
 spei12sitemean <- spei12dat %>%
   group_by(rcp, ns, dat) %>%
-  summarize(mean.fit = mean(fit),
-            sd.fit = sd(fit))
+  summarize(mean.fit = mean(fit.12mo),
+            sd.fit = sd(fit.12mo))
 
 
 # Drought classifications using SPEI
 # https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx
 
-cats <- data.frame(ymax=c(-2.0, -1.6, -1.3, -0.8, 1.30, 1.60, 2.0, 3.0),
-                   ymin=c(-3.5, -2.0, -1.6, -1.3,  0.8, 1.3, 1.6, 2.0),
-                   xmin=rep(min(spei12sitemean$dat), 8),
-                   xmax=rep(max(spei12sitemean$dat), 8),
-                   cat=factor(x=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought",
-                                  "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
-                                levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought",
-                                         "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+cats <- data.frame(ymax=c(-2.0, -1.6, -1.3, -0.8, -0.5,  0.5, 0.8, 1.30, 1.60, 2.0, 3.0),
+                   ymin=c(-3.5, -2.0, -1.6, -1.3, -0.8, -0.5, 0.5, 0.80, 1.30, 1.6, 2.0),
+                   xmin=rep(min(spei12sitemean$dat), 11),
+                   xmax=rep(max(spei12sitemean$dat), 11),
+                   cat=factor(x=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought", "Abnormally Dry",
+                                  "Normal", "Abnormally Wet", "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+                              levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought", "Abnormally Dry",
+                                       "Normal", "Abnormally Wet", "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+                   
+                   # cat=factor(x=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought",
+                   #                "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+                   #              levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought",
+                   #                       "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
                          ordered=T),
-                   labx = rep(2073, 8))
+                   labx = rep(2073, 11))
 cats$laby = cats$ymax-0.1
 
-pal8 <- c("#dd3d2d","#f67e4b","#FDb366","#FEDa8B", "#C2e4ef", "#98cae1","#6ea6cd", "#4a7bb7")
-
+# pal8 <- c("#dd3d2d","#f67e4b","#FDb366","#FEDa8B", "#C2e4ef", "#98cae1","#6ea6cd", "#4a7bb7")
+pal11 <- c("#a50026", "#dd3d2d","#f67e4b","#FDb366","#FEDa8B", "#eaeccc", "#C2e4ef", "#98cae1","#6ea6cd", "#4a7bb7", "#364b9a")
 
 ggplot() +
   geom_rect(data=cats,aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, fill=cat),
             alpha=0.5) +
-  scale_fill_manual(values=pal8, name = "Extreme wet/dry\ncategory") +
+  scale_fill_manual(values=pal11, name = "Extreme wet/dry\ncategory") +
   # geom_text(data=cats, aes(x=labx, y=laby, label=cat), hjust=0) + 
   coord_cartesian(xlim=c(2022, 2072), ylim=c(-3.5, 3), expand=F) +
   geom_vline(xintercept=seq(2030,2070,10), color="gray50", alpha=0.4, linewidth=0.5) +
@@ -218,7 +223,7 @@ ggplot() +
              labeller = as_labeller(
                c(rcp26="RCP2.6", rcp60="RCP 6.0",
                  North="North IL", South="South IL"))) +
-  labs(x="Month", y="Standard Precipitation-\nEvapotranspiration Index") +
+  labs(x="Year", y="Monthly 12-mo Standard Precipitation-\nEvapotranspiration Index") +
   guides(fill=guide_legend(reverse=TRUE)) +
   theme(
     panel.grid.minor=element_blank(), 
@@ -227,12 +232,157 @@ ggplot() +
 
   )	 
 
-ggsave("plots/climate/IL_SPEI_12-month.png", width=8, height=3, dpi=300)
+ggsave("plots/climate/IL_SPEI_12-month.png", width=8, height=4, dpi=300)
   
 
 
+################ SUMMER SPEI RCP 6.0 ONLY, 7 instead of 11 spei categories, AND all-IL together for AGU
+spei60 <- speidat[speidat$rcp=="rcp60",]
+
+# biomass is once per year, spei is monthly, could get annual (or water year) average
+# spei or look at July SPEI (or other month or average of months). Let's start
+# with july Spei
+
+pal7 <- c("#a50026", "#f67e4b","#FEDa8B", "#eaeccc", "#C2e4ef","#6ea6cd",  "#364b9a")
+
+spei60 <- spei60 %>%
+  separate_wider_delim(dat, delim=" ", 
+                       names=c("month", "year"),  # split the ID into two columns
+                       cols_remove=F)
+
+spei60$season <- ifelse(spei60$month %in% c("Dec", "Jan", "Feb"), "Winter",
+                      ifelse(spei60$month %in% c("Mar", "Apr", "May"), "Spring",
+                             ifelse(spei60$month %in% c("Jun", "Jul", "Aug"), "Summer", "Fall")))
+
+spei60.2 <- group_by(spei60, season, site, year) %>%
+  summarize(fit.12mo.ssnavg = mean(fit.12mo))
+
+spei60 <- left_join(spei60, spei60.2)
+rm(spei60.2)
+
+spei60sitemean <- spei60 %>%
+  group_by(season, year) %>%
+  summarize(meanssn.fit = mean(fit.12mo.ssnavg),
+            sdssn.fit = sd(fit.12mo.ssnavg))
+
+spei60sitemean$year <- as.numeric(spei60sitemean$year)
 
 
+cats2 <- data.frame(ymax=c(-2.0, -1.3, -0.5,  0.5, 1.30, 2.0, 3.0),
+                   ymin=c(-3.5, -2.0, -1.3,  -0.5, 0.5 , 1.30, 2.0),
+                   xmin=rep(min(spei12sitemean$dat), 7),
+                   xmax=rep(max(spei12sitemean$dat), 7),
+                   cat=factor(x=c("Exceptional Drought","Severe/Extreme Drought","Abnormally Dry/Moderate Drought", 
+                                  "Normal", "Abnormally Dry/Moderately Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
+                              levels=c("Exceptional Drought","Severe/Extreme Drought","Abnormally Dry/Moderate Drought", 
+                                       "Normal", "Abnormally Dry/Moderately Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
+                              
+                              # cat=factor(x=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought",
+                              #                "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+                              #              levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought",
+                              #                       "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+                              ordered=T),
+                   labx = rep(2073, 7))
+cats2$laby <- cats2$ymax-0.1
+
+windows(xpinch=200, ypinch=200, width=5, height=5)
+
+
+
+ggplot() +
+  geom_rect(data=cats,aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, fill=cat),
+            alpha=0.35) +
+  scale_fill_manual(values=pal11, name = "SPEI category") +
+  # geom_text(data=cats, aes(x=labx, y=laby, label=cat), hjust=0) + 
+  coord_cartesian(xlim=c(2022, 2072), ylim=c(-3.5, 3), expand=F) +
+  geom_vline(xintercept=seq(2030,2070,10), color="gray50", alpha=0.4, linewidth=0.5) +
+  geom_hline(yintercept=0, linewidth=0.5, color="gray50", alpha=0.4) +
+  # geom_line(data=spei12sitemean, aes(x=dat, y=mean.fit), 
+  #          color="#004488", alpha=0.8) +
+  
+  # geom_line(data=spei12sitemean, aes(x=dat, y=mean.fit+sd.fit), 
+  #           color="gray50", alpha=0.8) +
+  # geom_line(data=spei12sitemean, aes(x=dat, y=mean.fit+sd.fit), 
+  #           color="gray50", alpha=0.8) +
+  
+  geom_ribbon(data=spei60sitemean[spei60sitemean$season == "Summer",], 
+              aes(x=year, ymax=meanssn.fit+sdssn.fit, ymin=meanssn.fit-sdssn.fit),
+              fill="gray15", alpha=0.9, linetype=0) +
+  scale_x_continuous(breaks=seq(2030,2070,10), labels=seq(2030,2070,10)) +
+  
+  # geom_errorbar(data=spei12sitemean,
+  #               aes(x=dat, y=mean.fit, ymax = mean.fit+sd.fit, ymin = mean.fit - sd.fit), 
+  #               linewidth=0, alpha=0.7, color="#DDAA33") +
+  # facet_grid(cols=vars(season), #, rows=vars(ns), 
+  #             labeller = as_labeller(
+  #               c("Winter" = "Winter", "Spring" = "Spring", "Summer" = "Summer", "Fall" = "Fall")))+
+  #              c(rcp26="RCP2.6", rcp60="RCP 6.0",
+  #                North="North IL", South="South IL"))) +
+  labs(x="Year", y="Mean Standardized Precip-\nEvapotranspiration Index") +
+  guides(fill=guide_legend(reverse=TRUE)) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'white'),
+    axis.text.x=element_text(angle=-10, hjust=0.5, vjust=0.5, size=11),
+    axis.text.y=element_text(size=11),
+    #plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=13, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+
+
+ggsave("plots/climate/IL_SPEI11cats_seasonal averages_SUMMER ONLY.png", width=10, height=4, dpi=300)
+
+
+
+
+
+
+
+
+ggplot() +
+  geom_rect(data=cats,aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, fill=cat),
+            alpha=0.35) +
+  scale_fill_manual(values=pal7, name = "SPEI category") +
+  # geom_text(data=cats, aes(x=labx, y=laby, label=cat), hjust=0) + 
+  coord_cartesian(xlim=c(2022, 2072), ylim=c(-3.5, 3), expand=F) +
+  geom_vline(xintercept=seq(2030,2070,10), color="gray50", alpha=0.4, linewidth=0.5) +
+  geom_hline(yintercept=0, linewidth=0.5, color="gray50", alpha=0.4) +
+  # geom_line(data=spei12sitemean, aes(x=dat, y=mean.fit), 
+  #          color="#004488", alpha=0.8) +
+  
+  # geom_line(data=spei12sitemean, aes(x=dat, y=mean.fit+sd.fit), 
+  #           color="gray50", alpha=0.8) +
+  # geom_line(data=spei12sitemean, aes(x=dat, y=mean.fit+sd.fit), 
+  #           color="gray50", alpha=0.8) +
+  
+  geom_ribbon(data=spei60sitemean[spei60sitemean$season == "Summer",], 
+              aes(x=year, ymax=meanssn.fit+sdssn.fit, ymin=meanssn.fit-sdssn.fit),
+              fill="gray15", alpha=0.9, linetype=0) +
+  scale_x_continuous(breaks=seq(2030,2070,10), labels=seq(2030,2070,10)) +
+  
+  # geom_errorbar(data=spei12sitemean,
+  #               aes(x=dat, y=mean.fit, ymax = mean.fit+sd.fit, ymin = mean.fit - sd.fit), 
+  #               linewidth=0, alpha=0.7, color="#DDAA33") +
+  # facet_grid(cols=vars(season), #, rows=vars(ns), 
+  #             labeller = as_labeller(
+  #               c("Winter" = "Winter", "Spring" = "Spring", "Summer" = "Summer", "Fall" = "Fall")))+
+  #              c(rcp26="RCP2.6", rcp60="RCP 6.0",
+  #                North="North IL", South="South IL"))) +
+  labs(x="Year", y="Mean Standardized Precip-\nEvapotranspiration Index") +
+  guides(fill=guide_legend(reverse=TRUE)) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'white'),
+    axis.text.x=element_text(angle=-10, hjust=0.5, vjust=0.5, size=11),
+    axis.text.y=element_text(size=11),
+    #plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=13, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+
+
+ggsave("plots/climate/IL_SPEI7cats_seasonal averages_SUMMER ONLY.png", width=11, height=3, dpi=300)
 
 
 

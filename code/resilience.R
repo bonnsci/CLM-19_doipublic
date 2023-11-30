@@ -88,58 +88,88 @@ spei$spcat12mo <- ifelse(spei$fit.12mo >= -0.4999999 & spei$fit.12mo <=0.4999999
 unique(spei$spcat12mo)
 # NA values expected because first 11 months fit.12mo = NA. 
 
+
 spei$spcat12mo <- factor(spei$spcat12mo,
                            levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought", "Abnormally Dry",
                                     "Normal", "Abnormally Wet", "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
                            ordered=T)
 
 
-
-spei$spcat12mo2 <- ifelse(spei$fit.12mo >= -0.4999999 & spei$fit.12mo <=0.49999999, "Normal",
-                            # drought conditions
-                            ifelse(spei$fit.12mo >= -1.2999999 & spei$fit.12mo <= -0.50, "Abnorm Dry/Mod Drt",  
-                                   # ifelse(spei$fit.12mo >= -1.2999999 & spei$fit.12mo <= -0.80, "Moderate Drought",
-                                   ifelse(spei$fit.12mo >= -1.9999999 & spei$fit.12mo <= -1.30, "Severe/Extreme Drought",
-                                          # ifelse(spei$fit.12mo >= -1.9999999 & spei$fit.12mo <= -1.60, "Extreme Drought",
-                                          ifelse(spei$fit.12mo <= -2.0, "Exceptional Drought",
-                                                 # wet conditions                           
-                                                 ifelse(spei$fit.12mo <= 1.2999999 & spei$fit.12mo >= 0.50, "Abnorm/Mod Wet",    
-                                                        # ifelse(spei$fit.12mo <= 1.2999999 & spei$fit.12mo >= 0.80, "Moderately Wet",
-                                                        ifelse(spei$fit.12mo <= 1.999999 & spei$fit.12mo >= 1.30, "Severe/Extreme Wet",
-                                                               # ifelse(spei$fit.12mo <= 1.999999 & spei$fit.12mo >= 1.60, "Extremely Wet",
-                                                               ifelse(spei$fit.12mo >= 2.0, "Exceptionally Wet", "X")))))))
-
-# Test
-unique(spei$spcat12mo2)
-# NA values expected because first 11 months fit.12mo = NA. 
-
-spei$spcat12mo2 <- factor(spei$spcat12mo2,
-                            levels=c("Exceptional Drought","Severe/Extreme Drought","Abnorm Dry/Mod Drt", 
-                                     "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
-                            ordered=T)
-
-spei$spcat12ssn2 <- ifelse(spei$fit.12mo.ssnavg >= -0.4999999 & spei$fit.12mo.ssnavg <=0.49999999, "Normal",
-                          # drought conditions
-                          ifelse(spei$fit.12mo.ssnavg >= -1.2999999 & spei$fit.12mo.ssnavg <= -0.50, "Abnorm Dry/Mod Drt",  
-                                 # ifelse(spei$fit.12mo.ssnavg >= -1.2999999 & spei$fit.12mo.ssnavg <= -0.80, "Moderate Drought",
-                                 ifelse(spei$fit.12mo.ssnavg >= -1.9999999 & spei$fit.12mo.ssnavg <= -1.30, "Severe/Extreme Drought",
-                                        # ifelse(spei$fit.12mo.ssnavg >= -1.9999999 & spei$fit.12mo.ssnavg <= -1.60, "Extreme Drought",
-                                        ifelse(spei$fit.12mo.ssnavg <= -2.0, "Exceptional Drought",
-                                               # wet conditions                           
-                                               ifelse(spei$fit.12mo.ssnavg <= 1.2999999 & spei$fit.12mo.ssnavg >= 0.50, "Abnorm/Mod Wet",    
-                                                      # ifelse(spei$fit.12mo.ssnavg <= 1.2999999 & spei$fit.12mo.ssnavg >= 0.80, "Moderately Wet",
-                                                      ifelse(spei$fit.12mo.ssnavg <= 1.999999 & spei$fit.12mo.ssnavg >= 1.30, "Severe/Extreme Wet",
-                                                             # ifelse(spei$fit.12mo.ssnavg <= 1.999999 & spei$fit.12mo.ssnavg >= 1.60, "Extremely Wet",
-                                                             ifelse(spei$fit.12mo.ssnavg >= 2.0, "Exceptionally Wet", "X")))))))
+# SPEI category for seasonal average
+spei$spcat12mossn <- ifelse(spei$fit.12mo.ssnavg >= -0.4999999 & spei$fit.12mo.ssnavg <=0.49999999, "Normal",
+                         # drought conditions
+                         ifelse(spei$fit.12mo.ssnavg >= -0.7999999 & spei$fit.12mo.ssnavg <= -0.50, "Abnormally Dry",  
+                                ifelse(spei$fit.12mo.ssnavg >= -1.2999999 & spei$fit.12mo.ssnavg <= -0.80, "Moderate Drought",
+                                       ifelse(spei$fit.12mo.ssnavg >= -1.59999999 & spei$fit.12mo.ssnavg <= -1.30, "Severe Drought",
+                                              ifelse(spei$fit.12mo.ssnavg >= -1.9999999 & spei$fit.12mo.ssnavg <= -1.60, "Extreme Drought",
+                                                     ifelse(spei$fit.12mo.ssnavg <= -2.0, "Exceptional Drought",
+                                                            # wet conditions                           
+                                                            ifelse(spei$fit.12mo.ssnavg <= 0.7999999 & spei$fit.12mo.ssnavg >= 0.50, "Abnormally Wet",    
+                                                                   ifelse(spei$fit.12mo.ssnavg <= 1.2999999 & spei$fit.12mo.ssnavg >= 0.80, "Moderately Wet",
+                                                                          ifelse(spei$fit.12mo.ssnavg <= 1.5999999 & spei$fit.12mo.ssnavg >= 1.30, "Severely Wet",
+                                                                                 ifelse(spei$fit.12mo.ssnavg <= 1.999999 & spei$fit.12mo.ssnavg >= 1.60, "Extremely Wet",
+                                                                                        ifelse(spei$fit.12mo.ssnavg >= 2.0, "Exceptionally Wet", "X")))))))))))
 
 # Test
-unique(spei$spcat12ssn2)
+unique(spei$spcat12mossn)
 # NA values expected because first 11 months fit.12mo = NA. 
 
-spei$spcat12ssn2 <- factor(spei$spcat12ssn2,
-                          levels=c("Exceptional Drought","Severe/Extreme Drought","Abnorm Dry/Mod Drt", 
-                                   "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
-                          ordered=T)
+
+spei$spcat12mossn <- factor(spei$spcat12mossn,
+                         levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought", "Abnormally Dry",
+                                  "Normal", "Abnormally Wet", "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+                         ordered=T)
+
+
+
+# # condense 11 to 7 categories
+# spei$spcat12mo2 <- ifelse(spei$fit.12mo >= -0.4999999 & spei$fit.12mo <=0.49999999, "Normal",
+#                             # drought conditions
+#                             ifelse(spei$fit.12mo >= -1.2999999 & spei$fit.12mo <= -0.50, "Abnorm Dry/Mod Drt",  
+#                                    # ifelse(spei$fit.12mo >= -1.2999999 & spei$fit.12mo <= -0.80, "Moderate Drought",
+#                                    ifelse(spei$fit.12mo >= -1.9999999 & spei$fit.12mo <= -1.30, "Severe/Extreme Drought",
+#                                           # ifelse(spei$fit.12mo >= -1.9999999 & spei$fit.12mo <= -1.60, "Extreme Drought",
+#                                           ifelse(spei$fit.12mo <= -2.0, "Exceptional Drought",
+#                                                  # wet conditions                           
+#                                                  ifelse(spei$fit.12mo <= 1.2999999 & spei$fit.12mo >= 0.50, "Abnorm/Mod Wet",    
+#                                                         # ifelse(spei$fit.12mo <= 1.2999999 & spei$fit.12mo >= 0.80, "Moderately Wet",
+#                                                         ifelse(spei$fit.12mo <= 1.999999 & spei$fit.12mo >= 1.30, "Severe/Extreme Wet",
+#                                                                # ifelse(spei$fit.12mo <= 1.999999 & spei$fit.12mo >= 1.60, "Extremely Wet",
+#                                                                ifelse(spei$fit.12mo >= 2.0, "Exceptionally Wet", "X")))))))
+# 
+# # Test
+# unique(spei$spcat12mo2)
+# # NA values expected because first 11 months fit.12mo = NA. 
+# 
+# spei$spcat12mo2 <- factor(spei$spcat12mo2,
+#                             levels=c("Exceptional Drought","Severe/Extreme Drought","Abnorm Dry/Mod Drt", 
+#                                      "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
+#                             ordered=T)
+# 
+# 
+# # categories for seasonal average into the 7 SPEI categories
+# spei$spcat12ssn2 <- ifelse(spei$fit.12mo.ssnavg >= -0.4999999 & spei$fit.12mo.ssnavg <=0.49999999, "Normal",
+#                           # drought conditions
+#                           ifelse(spei$fit.12mo.ssnavg >= -1.2999999 & spei$fit.12mo.ssnavg <= -0.50, "Abnorm Dry/Mod Drt",  
+#                                  # ifelse(spei$fit.12mo.ssnavg >= -1.2999999 & spei$fit.12mo.ssnavg <= -0.80, "Moderate Drought",
+#                                  ifelse(spei$fit.12mo.ssnavg >= -1.9999999 & spei$fit.12mo.ssnavg <= -1.30, "Severe/Extreme Drought",
+#                                         # ifelse(spei$fit.12mo.ssnavg >= -1.9999999 & spei$fit.12mo.ssnavg <= -1.60, "Extreme Drought",
+#                                         ifelse(spei$fit.12mo.ssnavg <= -2.0, "Exceptional Drought",
+#                                                # wet conditions                           
+#                                                ifelse(spei$fit.12mo.ssnavg <= 1.2999999 & spei$fit.12mo.ssnavg >= 0.50, "Abnorm/Mod Wet",    
+#                                                       # ifelse(spei$fit.12mo.ssnavg <= 1.2999999 & spei$fit.12mo.ssnavg >= 0.80, "Moderately Wet",
+#                                                       ifelse(spei$fit.12mo.ssnavg <= 1.999999 & spei$fit.12mo.ssnavg >= 1.30, "Severe/Extreme Wet",
+#                                                              # ifelse(spei$fit.12mo.ssnavg <= 1.999999 & spei$fit.12mo.ssnavg >= 1.60, "Extremely Wet",
+#                                                              ifelse(spei$fit.12mo.ssnavg >= 2.0, "Exceptionally Wet", "X")))))))
+# 
+# # Test
+# unique(spei$spcat12ssn2)
+# # NA values expected because first 11 months fit.12mo = NA. 
+# 
+# spei$spcat12ssn2 <- factor(spei$spcat12ssn2,
+#                           levels=c("Exceptional Drought","Severe/Extreme Drought","Abnorm Dry/Mod Drt", 
+#                                    "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
+#                           ordered=T)
 
 
 
@@ -186,10 +216,10 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 
 # looks like corn grain c less resilient to extreme weather when: fall N, in the South. nothing obviously apparent between tillage or cover treatments
 
-ggplot(data=speibm[speibm$crop_name %in% c("corn, grain"),], 
-       aes(x=fit.12mo, y=grainc)) +  #  x=abs(fit.1mo), x=fit.12mo
-  geom_point(size=0.1, alpha=0.5) +
-  facet_grid(rows=vars(cc, nfert), cols=vars(month))
+# ggplot(data=speibm[speibm$crop_name %in% c("corn, grain"),], 
+#        aes(x=fit.12mo, y=grainc)) +  #  x=abs(fit.1mo), x=fit.12mo
+#   geom_point(size=0.1, alpha=0.5) +
+#   facet_grid(rows=vars(cc, nfert), cols=vars(month))
 
 
 
@@ -213,21 +243,21 @@ ggplot(data=speibm[speibm$crop_name %in% c("corn, grain"),],
 
 speibm$graincMg <- speibm$grainc/1000  # doing this makes the % frequency more like 10% rather than 0.01%
 
-norm30corn <- speibm[speibm$year>2022 & speibm$year<2030 & 
-                       speibm$spcat12mo =="Normal" &
+norm30cornssn <- speibm[speibm$year>2022 & speibm$year<2030 & 
+                       speibm$spcat12mossn =="Normal" &
                        speibm$crop_name == "corn, grain",]
 
-norm30grainc_corn75p <- quantile(norm30corn$graincMg, prob=0.75)
-norm30grainc_corn90p <- quantile(norm30corn$graincMg, prob=0.90)
-norm30grainc_cornmed <- median(norm30corn$graincMg)
+# norm30grainc_corn75p <- quantile(norm30corn$graincMg, prob=0.75)
+# norm30grainc_corn90p <- quantile(norm30corn$graincMg, prob=0.90)
+norm30grainc_cornmedssn <- median(norm30corn$graincMg)
 
-norm30soy<- speibm[speibm$year>2022 & speibm$year<2030 & 
-                       speibm$spcat12mo =="Normal" &
-                       speibm$crop_name == "soybean",]
-
-norm30grainc_soy75p <- quantile(norm30soy$graincMg, prob=0.75)
-norm30grainc_soy90p <- quantile(norm30soy$graincMg, prob=0.90)
-norm30grainc_soymed <- median(norm30soy$graincMg)
+# norm30soy<- speibm[speibm$year>2022 & speibm$year<2030 & 
+#                        speibm$spcat12mo =="Normal" &
+#                        speibm$crop_name == "soybean",]
+# 
+# norm30grainc_soy75p <- quantile(norm30soy$graincMg, prob=0.75)
+# norm30grainc_soy90p <- quantile(norm30soy$graincMg, prob=0.90)
+# norm30grainc_soymed <- median(norm30soy$graincMg)
 
 
 
@@ -246,67 +276,111 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 # set facet background color per spcat
 pal11 <- c("#a50026", "#dd3d2d","#f67e4b","#FDb366","#FEDa8B", "#eaeccc", "#C2e4ef", "#98cae1","#6ea6cd", "#4a7bb7", "#364b9a")
 pal7 <- c("#a50026", "#f67e4b","#FEDa8B", "#eaeccc", "#C2e4ef","#6ea6cd",  "#364b9a")
+pal5 <- c( "#f67e4b","#FEDa8B", "#eaeccc", "#C2e4ef","#6ea6cd")
 
+
+# how many seasons in each SPEI category do we have?
+ntest <- speibm[speibm$crop_name=="corn, grain" & speibm$season == "Summer" &
+                       !is.na(speibm$spcat12mossn) &  # for now just compare extremes: CT+NC and NT+CC
+                       speibm$management_name %in% c("ct-nc-cn") & speibm$site=="IL-n_1",]  # need to look at just one rep otherwise counts artificially inflated
+ntestn <- aggregate(season~spcat12mossn, dat=ntest, FUN="length")
+# ntestn
+# 1 Exceptional Drought      3  # ignore
+# 2     Extreme Drought      3  # ignore
+# SEVERE DROUGHT   0            # NOT SHOWN IN OUTPUT, ignore
+# 3    Moderate Drought     24
+# 4      Abnormally Dry     21
+# 5              Normal     45
+# 6      Abnormally Wet     21
+# 7      Moderately Wet     18
+# 8        Severely Wet      9  # ignore
+# 9       Extremely Wet      6  # ignore
+# EXCEPTIONAL WET   0           # NOT SHOWN IN OUTPUT, ignore
+
+
+
+# cut out SPEI categories with <10 observations
 
 ggplot(data=speibm[speibm$crop_name=="corn, grain" & speibm$season == "Summer" &
-                     !is.na(speibm$spcat12ssn2) &  # for now just compare extremes: CT+NC and NT+CC
-                     speibm$management_name %in% c("ct-nc-cn", "ct-nc-sn","nt-cc-cn", "nt-cc-sn"),],
+                     !is.na(speibm$spcat12mossn) &  # for now just compare extremes: CT+NC and NT+CC :
+                     speibm$management_name %in% c("ct-nc-cn", "ct-nc-sn","nt-cc-cn", "nt-cc-sn") &
+                     !speibm$spcat12mossn %in% c("Exceptional Drought", "Extreme Drought", "Severe Drought",
+                                              "Exceptionally Wet", "Extremely Wet", "Severely Wet"),],
        aes(x=graincMg)) +
   # geom_histogram() + # histogram (counts)
-  geom_density(aes(y=after_stat(density), # sets the y-axis units
-                   group=interaction(spcat12ssn2, cc, till)),
+  geom_density(aes(y=after_stat(density)), # sets the y-axis units
+                   #group=interaction(spcat12ssn2, cc, till)),
                trim=T) +   # make sure calculating the density per facet, not whole dataset at once
+
+  #### FUTURE try to FILL AREA UNDER POLYGON > median - but NOT NECESSARY
+  
   # labs(x="Corn grain biomass C (kg/ha)", y="Frequency (count) 2022 to 2072") +
   labs(x="Corn grain biomass C (Mg/ha)", y="Frequency (%) 2022 to 2072") +
   scale_y_continuous(labels=scales::percent_format()) +
-  geom_vline(xintercept=norm30grainc_cornmed, color="#BBcc33") +  # 4000 chosen arbitrarily - is there something more meaningful?
+  geom_vline(xintercept=norm30grainc_cornmedssn, color="#BBcc33", linewidth=1.2) +  # 4000 chosen arbitrarily - is there something more meaningful?
   # geom_vline(xintercept=norm30grainc_corn90p, color="#44bb99") + 
-  facet_grid2(rows=vars(spcat12mo), cols=vars(cc, till), scales="free_y", 
+  facet_grid2(cols=vars(spcat12mossn), rows=vars(factor(cc, levels=c("NC", "CC")), 
+                                              factor(till, levels=c("CT", "NT"))), 
+              # scales="free_y", 
              labeller = as_labeller(
                # c("Exceptional Drought"= "D4","Extreme Drought" = "D3","Severe Drought" = "D2","Moderate Drought" = "D1", "Abnormally Dry" = "D0",
                #   "Normal" = "Normal", "Abnormally Wet" = "W0", "Moderately Wet" = "W1", "Severely Wet" = "W2", "Extremely Wet" = "W3", "Exceptionally Wet" = "W4")))
-              c("Exceptional Drought"= "Exceptional\nDrought","Extreme Drought" = "Extreme\nDrought",
-                "Severe Drought" = "Severe\nDrought","Moderate Drought" = "Moderate\nDrought", 
-                "Abnormally Dry" = "Abnormally\nDry", "Normal" = "Normal", 
-                "Abnormally Wet" = "Abnormally\nWet", "Moderately Wet" = "Moderately\nWet", 
-                "Severely Wet" = "Severely\nWet", "Extremely Wet" = "Extremely\nWet", 
-                "Exceptionally Wet" = "Exceptionally\nWet",
-                "CC" = "With cover crops", "NC"= "Without cover crops",
-                "NT" = "No-till", "CT" = "Conventional till")),
-              strip = strip_themed(background_y = elem_list_rect(fill = pal11),  # cool stuff from ggh4x package!
-                                   text_y = elem_list_text(color=c("white", rep("black", 9), "white")))) +
+              # c("Exceptional Drought"= "Exceptional\nDrought","Extreme Drought" = "Extreme\nDrought",
+              #   "Severe Drought" = "Severe\nDrought","Moderate Drought" = "Moderate\nDrought",
+              #   "Abnormally Dry" = "Abnormally\nDry", "Normal" = "Normal",
+              #   "Abnormally Wet" = "Abnormally\nWet", "Moderately Wet" = "Moderately\nWet",
+              #   "Severely Wet" = "Severely\nWet", "Extremely Wet" = "Extremely\nWet",
+              #   "Exceptionally Wet" = "Exceptionally\nWet",
+                c("Moderate Drought" = "Moderate\nDrought",
+                  "Abnormally Dry" = "Abnormally\nDry", "Normal" = "Normal",
+                  "Abnormally Wet" = "Abnormally\nWet", "Moderately Wet" = "Moderately\nWet",
+                "NC"= "No cover crops","CT" = "Conventional till","CC" = "Has cover crops", 
+                 "NT" = "No-till")),
+              strip = strip_themed(background_x = elem_list_rect(fill = pal5))) +  #,  # cool stuff from ggh4x package!
+                                   # text_x = elem_list_text(color=c("white", rep("black", 9), "white")))) +
   theme(
     panel.grid.minor=element_blank(), 
-    panel.grid.major=element_blank(),  #,
-    panel.background = element_rect(fill = 'gray96')
-  )	 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray97'),
+    axis.text=element_text(size=12, face="bold"),
+    # plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=13, face="bold"),
+    strip.text=element_text(face="bold", size=13))
 
 # ggsave("plots/resilience/IL_corngrainc_bydrought_hist.png", width=4, height=10, dpi=300)
-ggsave("plots/resilience/IL_corngrainc_bydrought_density Summer.png", width=4, height=10, dpi=300)
+ggsave("plots/resilience/IL_corngrainc_bydrought_density Summer.png", width=10, height=4, dpi=300)
 
 
 
 
 # Quantify areas under curves by site, SPEI, and treatments
 
-lsd <- speibm[speibm$crop_name %in% c("corn, grain", "soybean") & speibm$season =="Summer",] %>%
-  group_split(site, crop_name, spcat12ssn2, till, cc, nfert) # by site, so that we can compare means and variability of treatments across sites
+lsd <- speibm[speibm$crop_name %in% c("corn, grain") & speibm$season =="Summer" &   # , "soybean"
+                !speibm$spcat12mossn %in% c("Exceptional Drought", "Extreme Drought", "Severe Drought",
+                                         "Exceptionally Wet", "Extremely Wet", "Severely Wet"),] %>%
+  group_split(site, spcat12mossn, till, cc, nfert) # crop_name,    by site, so that we can compare means and variability of treatments across sites
+
+
+
 
 # ecdf = empirical cumulative distribution function
 lecdf <- lapply(lsd, function(i){
   d_fun <- ecdf(i$graincMg)
-  cropmed <- ifelse(i$crop_name[1] == "corn, grain", norm30grainc_cornmed, norm30grainc_soymed)
-  crop90p <- ifelse(i$crop_name[1] == "corn, grain", norm30grainc_corn90p, norm30grainc_soy90p)
+  cropmed <- norm30grainc_cornmedssn
+#  cropmed <- ifelse(i$crop_name[1] == "corn, grain", norm30grainc_cornmedssn)
+#  crop90p <- ifelse(i$crop_name[1] == "corn, grain", norm30grainc_corn90p, norm30grainc_soy90p)
   grmed <- 1 - d_fun(cropmed) # 1- gives the area under the curve to the RIGHT of the value
-  gr90p <- 1 - d_fun(crop90p)
-  out <- i[1, c("site", "crop_name", "till", "cc", "nfert", "spcat12ssn2")]
+#  gr90p <- 1 - d_fun(crop90p)
+  out <- i[1, c("site", "till", "cc", "nfert", "spcat12mossn")]
   out$grmed <- grmed
-  out$gr90p <- gr90p
+  # out$gr90p <- gr90p
   out
 })
 
 lecdf <- lecdf %>%
   bind_rows(lecdf)
+
+# unique(lecdf$spcat12mossn)
 
 rm(lsd)
 
@@ -329,43 +403,46 @@ cv <- function(x) sd(x) / mean(x)
 #                                      "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
 #                             ordered=T)
 
-lecdf$spcat12ssn2 <- factor(lecdf$spcat12ssn2,
-                           levels=c("Exceptional Drought","Severe/Extreme Drought","Abnorm Dry/Mod Drt", 
-                                    "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
+lecdf$spcat12mossn <- factor(lecdf$spcat12mossn,
+                           levels=c("Moderate Drought", 
+                                    "Abnormally Dry", "Normal" ,
+                                    "Abnormally Wet" , "Moderately Wet"),
                            ordered=T)
+
+
 
 ##### letters for nt-cc, ct-nc x spei plot
 
-lecdf_simp <-  filter(lecdf, crop_name == "corn, grain") %>%
-  filter((cc=="CC" & till=="NT") | (cc == "NC" & till =="CT") )
+lecdf_simp <-  #filter(lecdf, crop_name == "corn, grain") %>%
+  filter(lecdf, (cc=="CC" & till=="NT") | (cc == "NC" & till =="CT") )
 
-cornaov_simp <- aov(grmed~cc*nfert*spcat12ssn2,   # since we only have CC+NT vs NC+CT we've made till and cc redundant
+cornaov_simp <- aov(grmed~cc*nfert*spcat12mossn,   # since we only have CC+NT vs NC+CT we've made till and cc redundant
                     data=lecdf_simp)
 
 summary(cornaov_simp)
-#                         Df Sum Sq Mean Sq F value   Pr(>F)    
-# cc                      1   0.24    0.24   5.267   0.0218 *  
-# nfert                   2  28.88   14.44 320.501  < 2e-16 ***
-# spcat12ssn2             6 216.87   36.15 802.311  < 2e-16 ***
-# cc:nfert                2   9.31    4.66 103.346  < 2e-16 ***
-# cc:spcat12ssn2          6   3.73    0.62  13.781 1.81e-15 ***
-# nfert:spcat12ssn2      12  17.33    1.44  32.049  < 2e-16 ***
-# cc:nfert:spcat12ssn2   12   2.58    0.22   4.779 8.54e-08 ***
-# Residuals            2526 113.80    0.05                     
+#                           Df Sum Sq Mean Sq F value   Pr(>F)    
+#   cc                       1   0.07   0.072   1.444 0.229670    
+#   nfert                    2  18.79   9.395 188.012  < 2e-16 ***
+#   spcat12mossn             4  38.05   9.512 190.347  < 2e-16 ***
+#   cc:nfert                 2   9.82   4.911  98.282  < 2e-16 ***
+#   cc:spcat12mossn          4   1.31   0.327   6.541 3.16e-05 ***
+#   nfert:spcat12mossn       8   1.38   0.173   3.464 0.000567 ***
+#   cc:nfert:spcat12mossn    8   0.39   0.049   0.974 0.454632    
+# Residuals             1890  94.45   0.050                     
 # ---
-# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 384 observations deleted due to missingness
 
 Tukout_simp <- TukeyHSD(cornaov_simp)
 cld_simp <- multcompLetters4(cornaov_simp, Tukout_simp)
 # table with letters and 3rd quantile
-lecdf_sum<- group_by(lecdf, cc, nfert, spcat12ssn2) %>%  # filter(lecdf, till %in% c("CT", "NT")) %>%
-  drop_na(spcat12ssn2) %>%
+lecdf_sum<- group_by(lecdf, cc, nfert, spcat12mossn) %>%  # filter(lecdf, till %in% c("CT", "NT")) %>%
+  drop_na(spcat12mossn) %>%
   summarize(mean=mean(grmed), 
             se=se(grmed)) %>%
   arrange(desc(mean))
 
-cld_lecdf <- as.data.frame.list(cld_simp$`cc:nfert:spcat12ssn2`)
+cld_lecdf <- as.data.frame.list(cld_simp$`cc:nfert:spcat12mossn`)
 lecdf_sum$cld <- cld_lecdf$Letters
 # Add till back in, remember redundant with CC
 lecdf_sum$till <- ifelse(lecdf_sum$cc == "CC", "NT", "CT")
@@ -464,28 +541,35 @@ lecdf_sum$till <- ifelse(lecdf_sum$cc == "CC", "NT", "CT")
 ####################################  cc x nfert x spei plot
 ggplot(data=lecdf_sum, aes(x=nfert, y=mean)) +
   geom_bar(stat="identity", fill="gray60") +
-  geom_errorbar(aes(x=nfert, ymin=mean-se, ymax=mean+se), width=0.2, size=0.8, color="gray20") +
+  geom_errorbar(aes(x=nfert, ymin=mean-se, ymax=mean+se), width=0.2, linewidth=0.8, color="gray20") +
   facet_grid2(rows=vars(factor(cc, levels=c("NC", "CC")), factor(till, levels=c("CT", "NT"))),
-             cols=vars(spcat12ssn2),
+             cols=vars(spcat12mossn),
              labeller = as_labeller(
                # c("Exceptional Drought"= "D4","Extreme Drought" = "D3","Severe Drought" = "D2","Moderate Drought" = "D1", "Abnormally Dry" = "D0",
                #   "Normal" = "Normal", "Abnormally Wet" = "W0", "Moderately Wet" = "W1", "Severely Wet" = "W2", "Extremely Wet" = "W3", "Exceptionally Wet" = "W4")))
-               c("Exceptional Drought" = "Exceptional\nDrought",
-                 "Severe/Extreme Drought" = "Severe/Extreme\nDrought",
-                 "Abnorm Dry/Mod Drt" = "Abnormally Dry/\nModerate Drought", 
-                 "Normal" = "Normal", 
-                 "Abnorm/Mod Wet" = "Abnormally Wet/\nModerately Wet", 
-                 "Severe/Extreme Wet" = "Severely/\nExtremely Wet", 
-                 "Exceptionally Wet" = "Exceptionally\nWet",
+               c("Moderate Drought" = "Moderate\nDrought", 
+                 "Abnormally Dry" = "Abnormally\nDry", 
+                 "Normal" = "Normal" ,
+                 "Abnormally Wet" = "Abnormally\nWet" , 
+                 "Moderately Wet" = "Moderately\nWet",
+                 # 
+                 # "Exceptional Drought" = "Exceptional\nDrought",
+                 # "Severe/Extreme Drought" = "Severe/Extreme\nDrought",
+                 # "Abnorm Dry/Mod Drt" = "Abnormally Dry/\nModerate Drought", 
+                 # "Normal" = "Normal", 
+                 # "Abnorm/Mod Wet" = "Abnormally Wet/\nModerately Wet", 
+                 # "Severe/Extreme Wet" = "Severely/\nExtremely Wet", 
+                 # "Exceptionally Wet" = "Exceptionally\nWet",
                  "NC"= "Without cover crops","CC" = "With cover crops",
                  "CT" = "Conventional Till", "NT" = "No Till")), 
-             strip = strip_themed(background_x = elem_list_rect(fill = pal7), #,  # cool stuff from ggh4x package!
-                                  text_x = elem_list_text(color= c("white", rep("black", 5), "white")))) +
+             strip = strip_themed(background_x = elem_list_rect(fill = pal5), #,  # cool stuff from ggh4x package!
+                                  text_x=elem_list_text(color="black"))) +
+                                  #text_x = elem_list_text(color= c("white", rep("black", 5), "white")))) +
   ylab("Mean probability corn grain biomass-C\n> median in Normal year in 2020s") +
   xlab("N management") +
   scale_x_discrete(breaks=c("Fall N", "High N", "Recommended N"),
                    labels = c("Fall\nN", "High\nN", "Recomm.\nN")) +
-  geom_text(aes(x=nfert, y=mean +0.15, label=cld)) + 
+  geom_text(aes(x=nfert, y=mean +0.15, label=cld), size=5) + 
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
@@ -514,7 +598,7 @@ ggsave("plots/resilience/IL_corngr biomass prob summer SPEI nc-ct v cc-nt withle
 
 
 ################################## resilience: sediment yield
-rm(bmil, bmilgr, speibm)
+rm(bmil, bmilgr, speibm, denssub, lecdf, lecdf_simp, lecdf_sum, norm30corn, norm30cornssn, norm30soy, ntest, ntestn, Tukout_simp, cld_lecdf, cld_simp, cornaov_simp)
 sed <- read.csv("data/water, nitrate, sediments/wdatyr.csv")
 
 
@@ -528,48 +612,51 @@ unique(sed$climate_scenario)
 speised <- inner_join(spei[,-2], sed[-4], join_by(site==site_name, year==year), 
                       relationship="many-to-many")
 
-windows(xpinch=200, ypinch=200, width=5, height=5)
-ggplot(data=speised, 
-       aes(x=fit.12mo, y=sed.yr)) +  #  x=abs(fit.1mo), x=fit.12mo
-  geom_point(size=0.1, alpha=0.5) +
-  facet_grid(cols=vars(factor(month)), rows=vars(factor(cc), factor(till)))
+# windows(xpinch=200, ypinch=200, width=5, height=5)
+# ggplot(data=speised, 
+#        aes(x=fit.12mo, y=sed.yr)) +  #  x=abs(fit.1mo), x=fit.12mo
+#   geom_point(size=0.1, alpha=0.5) +
+#   facet_grid(cols=vars(factor(month)), rows=vars(factor(cc), factor(till)))
 
 
 
 norm20 <- speised[speised$year>2022 & speised$year<2030 & 
-                       speised$spcat12ssn2 =="Normal",]
+                       speised$spcat12mossn =="Normal",] # calculate the median using the seasonally determined SPEI category
 
 norm20med <- median(norm20$sed.yr)
+rm(norm20)
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
-ggplot(data=speised[speised$season == "Summer" &
-                     !is.na(speised$spcat12ssn2) &  # for now just compare extremes: CT+NC and NT+CC
-                     speised$management %in% c("ct-nc-cn", "ct-nc-sn","nt-cc-cn", "nt-cc-sn"),],
+
+
+       
+ggplot(data=speised[speised$crop=="corn" & speised$season == "Summer" &
+                            !is.na(speised$spcat12mossn) &  # for now just compare extremes: CT+NC and NT+CC :
+                            speised$management %in% c("ct-nc-cn", "ct-nc-sn","nt-cc-cn", "nt-cc-sn") &
+                            !speised$spcat12mossn %in% c("Exceptional Drought", "Extreme Drought", "Severe Drought",
+                                                        "Exceptionally Wet", "Extremely Wet", "Severely Wet"),],
        aes(x=sed.yr)) +
   # geom_histogram() + # histogram (counts)
-  geom_density(aes(y=after_stat(density), # sets the y-axis units
-                   group=interaction(spcat12ssn2, cc, till)),
+  geom_density(aes(y=after_stat(density)), # sets the y-axis units
+                   #group=interaction(spcat12mossn, cc, till)),
                trim=T) +   # make sure calculating the density per facet, not whole dataset at once
   # labs(x="Corn grain biomass C (kg/ha)", y="Frequency (count) 2022 to 2072") +
   labs(x="sediment yield kg/ha", y="Frequency (%) 2022 to 2072") +
   scale_y_continuous(labels=scales::percent_format()) +
-  geom_vline(xintercept=norm20med, color="#BBcc33") +  # 4000 chosen arbitrarily - is there something more meaningful?
+  geom_vline(xintercept=norm20med, color="#BBcc33") +  # 
   # geom_vline(xintercept=norm30grainc_corn90p, color="#44bb99") + 
-  facet_grid2(rows=vars(spcat12ssn2), cols=vars(cc, till), scales="free_y", 
+  facet_grid2(cols=vars(spcat12mossn), rows=vars(factor(cc, levels=c("NC", "CC")), 
+                                                 factor(till, levels=c("CT", "NT"))), 
+              # scales="free_y", 
               labeller = as_labeller(
-                # c("Exceptional Drought"= "D4","Extreme Drought" = "D3","Severe Drought" = "D2","Moderate Drought" = "D1", "Abnormally Dry" = "D0",
-                #   "Normal" = "Normal", "Abnormally Wet" = "W0", "Moderately Wet" = "W1", "Severely Wet" = "W2", "Extremely Wet" = "W3", "Exceptionally Wet" = "W4")))
-                c("Exceptional Drought" = "Exceptional\nDrought",
-                  "Severe/Extreme Drought" = "Severe/Extreme\nDrought",
-                  "Abnorm Dry/Mod Drt" = "Abnormally Dry/\nModerate Drought", 
-                  "Normal" = "Normal", 
-                  "Abnorm/Mod Wet" = "Abnormally Wet/\nModerately Wet", 
-                  "Severe/Extreme Wet" = "Severely/\nExtremely Wet", 
-                  "Exceptionally Wet" = "Exceptionally\nWet",
-                  "NC"= "Without cover crops","CC" = "With cover crops",
-                  "CT" = "Conventional Till", "NT" = "No Till")), 
-              strip = strip_themed(background_y = elem_list_rect(fill = pal11),  # cool stuff from ggh4x package!
-                                   text_y = elem_list_text(color=c("white", rep("black", 9), "white")))) +
+                c("Moderate Drought" = "Moderate\nDrought",
+                  "Abnormally Dry" = "Abnormally\nDry", "Normal" = "Normal",
+                  "Abnormally Wet" = "Abnormally\nWet", "Moderately Wet" = "Moderately\nWet",
+                  "NC"= "No cover crops","CT" = "Conventional till","CC" = "Has cover crops", 
+                  "NT" = "No-till")),
+              strip = strip_themed(background_x = elem_list_rect(fill = pal5),  # cool stuff from ggh4x package!
+                                   text_x=elem_list_text(color="black"))) +
+                                   #text_y = elem_list_text(color=c("white", rep("black", 9), "white")))) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),  #,
@@ -584,20 +671,24 @@ ggsave("plots/resilience/IL_sed_bydrought_density Summer.png", width=4, height=1
 
 # Quantify areas under curves by site, SPEI, and treatments
 
-lsd <- filter(speised, season== "Summer") %>% 
-  group_split(site, spcat12ssn2, till, cc, nfert) # by site, so that we can compare means and variability of treatments across sites
+lsd <- filter(speised, season== "Summer", crop=="corn", 
+  !spcat12mossn %in% c("Exceptional Drought", "Extreme Drought", "Severe Drought",
+                              "Exceptionally Wet", "Extremely Wet", "Severely Wet")) %>%
+  group_split(site, spcat12mossn, till, cc, nfert) # crop
 
 # ecdf = empirical cumulative distribution function
 lecdf <- lapply(lsd, function(i){
   d_fun <- ecdf(i$sed.yr)
   sedmed <- 1 - d_fun(norm20med) # 1- gives the area under the curve to the RIGHT of the value
-  out <- i[1, c("site", "till", "cc", "nfert", "spcat12ssn2")]
+  out <- i[1, c("site", "till", "cc", "nfert", "spcat12mossn")]
   out$sedmed <- sedmed
   out
 })
 
 lecdf <- lecdf %>%
   bind_rows(lecdf)
+
+unique(lecdf$spcat12mossn)
 
 rm(lsd)
 
@@ -607,53 +698,44 @@ rm(lsd)
 ################## models: are the areas under the curves different?
 
 
-# lecdf$spcat12mo <- factor(lecdf$spcat12mo,
-#                            levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought", "Abnormally Dry",
-#                                     "Normal", "Abnormally Wet", "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
-#                            ordered=F)
+lecdf$spcat12mossn <- factor(lecdf$spcat12mossn,
+                             levels=c("Moderate Drought", 
+                                      "Abnormally Dry", "Normal" ,
+                                      "Abnormally Wet" , "Moderately Wet"),
+                             ordered=T)
 
-# lecdf$spcat12mo2 <- factor(lecdf$spcat12mo2,
-#                             levels=c("Exceptional Drought","Severe/Extreme Drought","Abnorm Dry/Mod Drt", 
-#                                      "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
-#                             ordered=T)
-
-lecdf$spcat12ssn2 <- factor(lecdf$spcat12ssn2,
-                            levels=c("Exceptional Drought","Severe/Extreme Drought","Abnorm Dry/Mod Drt", 
-                                     "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
-                            ordered=T)
 
 ##### letters for nt-cc, ct-nc x spei plot
 
 lecdf_simp <-  filter(lecdf, (till %in% c("CT", "NT"))) 
 
-sedaov_simp <- aov(sedmed~cc*till*spcat12ssn2,   # since we only have CC+NT vs NC+CT we've made till and cc redundant
+sedaov_simp <- aov(sedmed~cc*till*spcat12mossn,   # since we only have CC+NT vs NC+CT we've made till and cc redundant
                     data=lecdf_simp)
 
 summary(sedaov_simp)
-#                       Df Sum Sq Mean Sq  F value   Pr(>F)    
-# cc                     1   34.9   34.91  435.935  < 2e-16 ***
-# till                   1  208.6  208.63 2604.887  < 2e-16 ***
-# spcat12ssn2            6  145.4   24.23  302.582  < 2e-16 ***
-# cc:till                1    1.6    1.57   19.641 9.54e-06 ***
-# cc:spcat12ssn2         6    1.1    0.18    2.300   0.0321 *  
-# till:spcat12ssn2       6    4.2    0.70    8.707 1.87e-09 ***
-# cc:till:spcat12ssn2    6    7.5    1.26   15.681  < 2e-16 ***
-# Residuals           5108  409.1    0.08                      
+# Df Sum Sq Mean Sq  F value   Pr(>F)    
+# cc                      1  24.46   24.46  384.900  < 2e-16 ***
+#   till                    1 164.23  164.23 2584.084  < 2e-16 ***
+#   spcat12mossn            4  35.47    8.87  139.541  < 2e-16 ***
+#   cc:till                 1   2.21    2.21   34.753 4.07e-09 ***
+#   cc:spcat12mossn         4   1.01    0.25    3.973  0.00321 ** 
+#   till:spcat12mossn       4   4.69    1.17   18.442 5.07e-15 ***
+#   cc:till:spcat12mossn    4   2.73    0.68   10.732 1.19e-08 ***
+#   Residuals            3820 242.78    0.06                      
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-# 768 observations deleted due to missingness
 
 Tukout_simp <- TukeyHSD(sedaov_simp)
 cld_simp <- multcompLetters4(sedaov_simp, Tukout_simp)
 # table with letters and 3rd quantile
 lecdf_sum<- filter(lecdf, till %in% c("CT", "NT")) %>%
-  group_by(cc, till, spcat12ssn2) %>%  # 
-  drop_na(spcat12ssn2) %>%
+  group_by(cc, till, spcat12mossn) %>%  # 
+  drop_na(spcat12mossn) %>%
   summarize(mean=mean(sedmed), 
             se=se(sedmed)) %>%
   arrange(desc(mean))
 
-cld_lecdf <- as.data.frame.list(cld_simp$`cc:till:spcat12ssn2`)
+cld_lecdf <- as.data.frame.list(cld_simp$`cc:till:spcat12mossn`)
 lecdf_sum$cld <- cld_lecdf$Letters
 
 
@@ -667,24 +749,20 @@ ggplot(data=lecdf_sum, aes(x=yr, y=mean)) +  # yr is a dummy var
   geom_bar(stat="identity", fill="burlywood3", width=0.7) +
   geom_errorbar(aes(x=yr, ymin=mean-se, ymax=mean+se), width=0.2, size=0.8, color="sienna4") +
   facet_grid2(rows=vars(factor(till, levels=c("CT", "NT")), factor(cc, levels=c("NC", "CC"))),
-              cols=vars(spcat12ssn2),
+              cols=vars(spcat12mossn),
               labeller = as_labeller(
-                # c("Exceptional Drought"= "D4","Extreme Drought" = "D3","Severe Drought" = "D2","Moderate Drought" = "D1", "Abnormally Dry" = "D0",
-                #   "Normal" = "Normal", "Abnormally Wet" = "W0", "Moderately Wet" = "W1", "Severely Wet" = "W2", "Extremely Wet" = "W3", "Exceptionally Wet" = "W4")))
-                c("Exceptional Drought" = "Except.\nDrought",
-                  "Severe/Extreme Drought" = "Severe/\nExtreme\nDrought",
-                  "Abnorm Dry/Mod Drt" = "Abnormally \nDry/Mod.\nDrought", 
-                  "Normal" = "Normal", 
-                  "Abnorm/Mod Wet" = "Abnormally/\nMod. Wet", 
-                  "Severe/Extreme Wet" = "Severe/\nExtreme\nWet", 
-                  "Exceptionally Wet" = "Except.\nWet",
+                c("Moderate Drought" = "Moderate\nDrought", 
+                  "Abnormally Dry" = "Abnormally\nDry", 
+                  "Normal" = "Normal" ,
+                  "Abnormally Wet" = "Abnormally\nWet" , 
+                  "Moderately Wet" = "Moderately\nWet",
                   "NC"= "Without cover crops","CC" = "With cover crops",
                   "CT" = "Conventional Till", "NT" = "No Till")), 
-              strip = strip_themed(background_x = elem_list_rect(fill = pal7), #,  # cool stuff from ggh4x package!
-                                   text_x = elem_list_text(color= c("white", rep("black", 5), "white")))) +
+              strip = strip_themed(background_x = elem_list_rect(fill = pal5), #,  # cool stuff from ggh4x package!
+                                   text_x = elem_list_text(col="black"))) +          #color= c("white", rep("black", 5), "white")))) +
   ylab("Mean probability sediment yield\n> median in Normal year in 2020s") +
   xlab("Summer mean SPEI") +
-  geom_text(aes(x=yr, y=mean +0.15, label=cld)) + 
+  geom_text(aes(x=yr, y=mean +0.15, label=cld), size=5) + 
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
