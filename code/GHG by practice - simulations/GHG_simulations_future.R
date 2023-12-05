@@ -302,7 +302,7 @@ ggplot() +
   
   
 
-ggsave("plots/ghgs/IL_mean crop, site, decade annual em by decadeRCP60_with letters.png", width=8, height=6, dpi=300)
+ggsave("plots/ghgs/IL_simulation mean (crop, site, decade, nfert) annual em RCP60_with letters.png", width=8, height=6, dpi=300)
 
 
 ################ make a simpler version that averages across nfert levels
@@ -439,7 +439,7 @@ ggplot() +
     data=ghganndec2[ghganndec2$var == "ghgn2o" &  # need separate call for bars for n2o, for soc, and points for net
                      ghganndec2$till %in% c("CT", "NT"),], # for AGU only showing CT and NT not RT to simplify a bit
     aes(x=decade, y=mean), 
-    stat="identity", position=position_dodge(), fill="#ee8866", alpha=0.7) + #, color="gray20") + color="#bb5566"
+    stat="identity", position=position_dodge(), fill="#ee8866", alpha=0.4) + #, color="gray20") + color="#bb5566"
   geom_errorbar(data=ghganndec2[ghganndec2$var=="ghgn2o" & ghganndec2$till %in% c("CT", "NT"),], # ghganndec2$crop == "corn" &
                 aes(x=decade, ymin= mean-se, ymax=mean+se),  
                 width=0.3, position=position_dodge(0.9),color="#882255") +
@@ -452,7 +452,7 @@ ggplot() +
   geom_bar(data=ghganndec2[ghganndec2$var == "ghgdsoc" &  # need separate call for bars for n2o, for soc, and points for net
                             ghganndec2$till %in% c("CT", "NT"),], # for AGU only showing CT and NT not RT to simplify a bit
            aes(x=decade, y=mean),  
-           stat="identity", position=position_dodge(), fill="#99ddff", alpha=0.7) + #, color="gray20") + color="#33bbee"
+           stat="identity", position=position_dodge(), fill="#99ddff", alpha=0.4) + #, color="gray20") + color="#33bbee"
   geom_errorbar(data=ghganndec2[ghganndec2$var=="ghgdsoc" & ghganndec2$till %in% c("CT", "NT"),], 
                 aes(x=decade, ymin= mean-se, ymax=mean+se),  
                 width=0.3, position=position_dodge(0.9), color="#0077BB") +
@@ -467,11 +467,11 @@ ggplot() +
   geom_line(data=ghganndec2[ghganndec2$var == "net" &
                               ghganndec2$till %in% c("CT", "NT"),],
              aes(x=decade, y=mean, group=1),
-             alpha=0.4, linewidth=1, position=position_dodge(0.9)) +  # color="gray25",
+             alpha=0.7, linewidth=1, position=position_dodge(0.9)) +  # color="gray25",
   geom_point(data=ghganndec2[ghganndec2$var == "net" &
                               ghganndec2$till %in% c("CT", "NT"),],
              aes(x=decade, y=mean),
-             color="gray25", size=0.5, position=position_dodge(0.9)) +
+             color="black", size=1, position=position_dodge(0.9)) +
   geom_errorbar(data=ghganndec2[ghganndec2$var=="net" & 
                                  ghganndec2$till %in% c("CT", "NT"),], 
                 aes(x=decade, ymin= mean-se, ymax=mean+se),  
@@ -496,7 +496,7 @@ ggplot() +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
-    panel.background = element_rect(fill = 'gray95'),
+    panel.background = element_rect(fill = 'gray97'),
     axis.text.x=element_text(angle=-30, hjust=0.5, vjust=0, size=12, face="bold"),
     axis.text.y=element_text(size=12, face="bold"),
     plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
@@ -505,7 +505,7 @@ ggplot() +
 
 
 
-ggsave("plots/ghgs/IL_simulation mean (crop, site, decade, nfert) annual em by decadeRCP60_with letters.png", width=7, height=8, dpi=300)
+ggsave("plots/ghgs/IL_simulation mean (crop, site, decade, no nfert) annual em by decadeRCP60_with letters.png", width=7, height=8, dpi=300)
 
 
 
