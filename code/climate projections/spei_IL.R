@@ -158,6 +158,167 @@ colnames(spei12dat)[3] <- "fit.12mo"
 speidat <- left_join(spei1dat, spei12dat, relationship="one-to-one")
 # write.csv(speidat, "data/climate data not large/speiIL.csv", row.names=F)
 
+
+
+
+############################### get spei data ready to merge with other data
+
+# climate - SPEI
+spei <- read.csv("data/climate data not large/speiIL.csv")
+
+# let's focus on rcp 6.0 for now
+spei <- spei[spei$rcp=="rcp60",]
+
+# biomass is once per year, spei is monthly, could get annual (or water year) average
+# spei or look at July SPEI (or other month or average of months). Let's start
+# with july Spei
+
+spei <- spei %>%
+  separate_wider_delim(dat, delim=" ", 
+                       names=c("month", "year"),  # split the ID into two columns
+                       cols_remove=F)
+
+spei$season <- ifelse(spei$month %in% c("Dec", "Jan", "Feb"), "Winter",
+                      ifelse(spei$month %in% c("Mar", "Apr", "May"), "Spring",
+                             ifelse(spei$month %in% c("Jun", "Jul", "Aug"), "Summer", "Fall")))
+
+spei2 <- group_by(spei, season, site, year) %>%
+  summarize(fit.12mo.ssnavg = mean(fit.12mo))
+
+spei <- left_join(spei, spei2)
+rm(spei2)
+
+spei$year <- as.numeric(spei$year)
+
+# need to add ID variable for SPEI category for each row of data
+# again classifications from: https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx
+
+
+# spei$spcat1mo <- ifelse(spei$fit.1mo >= -0.4999999 & spei$fit.1mo <=0.49999999, "Normal",
+#                           # drought conditions
+#                           ifelse(spei$fit.1mo >= -0.7999999 & spei$fit.1mo <= -0.50, "Abnormally Dry",  
+#                                  ifelse(spei$fit.1mo >= -1.2999999 & spei$fit.1mo <= -0.80, "Moderate Drought",
+#                                         ifelse(spei$fit.1mo >= -1.59999999 & spei$fit.1mo <= -1.30, "Severe Drought",
+#                                                ifelse(spei$fit.1mo >= -1.9999999 & spei$fit.1mo <= -1.60, "Extreme Drought",
+#                                                       ifelse(spei$fit.1mo <= -2.0, "Exceptional Drought",
+#                                                              # wet conditions                           
+#                                                              ifelse(spei$fit.1mo <= 0.7999999 & spei$fit.1mo >= 0.50, "Abnormally Wet",    
+#                                                                     ifelse(spei$fit.1mo <= 1.2999999 & spei$fit.1mo >= 0.80, "Moderately Wet",
+#                                                                            ifelse(spei$fit.1mo <= 1.5999999 & spei$fit.1mo >= 1.30, "Severely Wet",
+#                                                                                   ifelse(spei$fit.1mo <= 1.999999 & spei$fit.1mo >= 1.60, "Extremely Wet",
+#                                                                                          ifelse(spei$fit.1mo >= 2.0, "Exceptionally Wet", "X")))))))))))
+# 
+# # Test
+# unique(spei$spcat1mo)
+
+spei$spcat12mo <- ifelse(spei$fit.12mo >= -0.4999999 & spei$fit.12mo <=0.49999999, "Normal",
+                         # drought conditions
+                         ifelse(spei$fit.12mo >= -0.7999999 & spei$fit.12mo <= -0.50, "Abnormally Dry",  
+                                ifelse(spei$fit.12mo >= -1.2999999 & spei$fit.12mo <= -0.80, "Moderate Drought",
+                                       ifelse(spei$fit.12mo >= -1.59999999 & spei$fit.12mo <= -1.30, "Severe Drought",
+                                              ifelse(spei$fit.12mo >= -1.9999999 & spei$fit.12mo <= -1.60, "Extreme Drought",
+                                                     ifelse(spei$fit.12mo <= -2.0, "Exceptional Drought",
+                                                            # wet conditions                           
+                                                            ifelse(spei$fit.12mo <= 0.7999999 & spei$fit.12mo >= 0.50, "Abnormally Wet",    
+                                                                   ifelse(spei$fit.12mo <= 1.2999999 & spei$fit.12mo >= 0.80, "Moderately Wet",
+                                                                          ifelse(spei$fit.12mo <= 1.5999999 & spei$fit.12mo >= 1.30, "Severely Wet",
+                                                                                 ifelse(spei$fit.12mo <= 1.999999 & spei$fit.12mo >= 1.60, "Extremely Wet",
+                                                                                        ifelse(spei$fit.12mo >= 2.0, "Exceptionally Wet", "X")))))))))))
+
+# Test
+unique(spei$spcat12mo)
+# NA values expected because first 11 months fit.12mo = NA. 
+
+
+spei$spcat12mo <- factor(spei$spcat12mo,
+                         levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought", "Abnormally Dry",
+                                  "Normal", "Abnormally Wet", "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+                         ordered=T)
+
+
+# SPEI category for seasonal average
+spei$spcat12mossn <- ifelse(spei$fit.12mo.ssnavg >= -0.4999999 & spei$fit.12mo.ssnavg <=0.49999999, "Normal",
+                            # drought conditions
+                            ifelse(spei$fit.12mo.ssnavg >= -0.7999999 & spei$fit.12mo.ssnavg <= -0.50, "Abnormally Dry",  
+                                   ifelse(spei$fit.12mo.ssnavg >= -1.2999999 & spei$fit.12mo.ssnavg <= -0.80, "Moderate Drought",
+                                          ifelse(spei$fit.12mo.ssnavg >= -1.59999999 & spei$fit.12mo.ssnavg <= -1.30, "Severe Drought",
+                                                 ifelse(spei$fit.12mo.ssnavg >= -1.9999999 & spei$fit.12mo.ssnavg <= -1.60, "Extreme Drought",
+                                                        ifelse(spei$fit.12mo.ssnavg <= -2.0, "Exceptional Drought",
+                                                               # wet conditions                           
+                                                               ifelse(spei$fit.12mo.ssnavg <= 0.7999999 & spei$fit.12mo.ssnavg >= 0.50, "Abnormally Wet",    
+                                                                      ifelse(spei$fit.12mo.ssnavg <= 1.2999999 & spei$fit.12mo.ssnavg >= 0.80, "Moderately Wet",
+                                                                             ifelse(spei$fit.12mo.ssnavg <= 1.5999999 & spei$fit.12mo.ssnavg >= 1.30, "Severely Wet",
+                                                                                    ifelse(spei$fit.12mo.ssnavg <= 1.999999 & spei$fit.12mo.ssnavg >= 1.60, "Extremely Wet",
+                                                                                           ifelse(spei$fit.12mo.ssnavg >= 2.0, "Exceptionally Wet", "X")))))))))))
+
+# Test
+unique(spei$spcat12mossn)
+# NA values expected because first 11 months fit.12mo = NA. 
+
+
+spei$spcat12mossn <- factor(spei$spcat12mossn,
+                            levels=c("Exceptional Drought","Extreme Drought","Severe Drought","Moderate Drought", "Abnormally Dry",
+                                     "Normal", "Abnormally Wet", "Moderately Wet", "Severely Wet", "Extremely Wet", "Exceptionally Wet"),
+                            ordered=T)
+
+
+
+# # condense 11 to 7 categories
+# spei$spcat12mo2 <- ifelse(spei$fit.12mo >= -0.4999999 & spei$fit.12mo <=0.49999999, "Normal",
+#                             # drought conditions
+#                             ifelse(spei$fit.12mo >= -1.2999999 & spei$fit.12mo <= -0.50, "Abnorm Dry/Mod Drt",  
+#                                    # ifelse(spei$fit.12mo >= -1.2999999 & spei$fit.12mo <= -0.80, "Moderate Drought",
+#                                    ifelse(spei$fit.12mo >= -1.9999999 & spei$fit.12mo <= -1.30, "Severe/Extreme Drought",
+#                                           # ifelse(spei$fit.12mo >= -1.9999999 & spei$fit.12mo <= -1.60, "Extreme Drought",
+#                                           ifelse(spei$fit.12mo <= -2.0, "Exceptional Drought",
+#                                                  # wet conditions                           
+#                                                  ifelse(spei$fit.12mo <= 1.2999999 & spei$fit.12mo >= 0.50, "Abnorm/Mod Wet",    
+#                                                         # ifelse(spei$fit.12mo <= 1.2999999 & spei$fit.12mo >= 0.80, "Moderately Wet",
+#                                                         ifelse(spei$fit.12mo <= 1.999999 & spei$fit.12mo >= 1.30, "Severe/Extreme Wet",
+#                                                                # ifelse(spei$fit.12mo <= 1.999999 & spei$fit.12mo >= 1.60, "Extremely Wet",
+#                                                                ifelse(spei$fit.12mo >= 2.0, "Exceptionally Wet", "X")))))))
+# 
+# # Test
+# unique(spei$spcat12mo2)
+# # NA values expected because first 11 months fit.12mo = NA. 
+# 
+# spei$spcat12mo2 <- factor(spei$spcat12mo2,
+#                             levels=c("Exceptional Drought","Severe/Extreme Drought","Abnorm Dry/Mod Drt", 
+#                                      "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
+#                             ordered=T)
+# 
+# 
+# # categories for seasonal average into the 7 SPEI categories
+# spei$spcat12ssn2 <- ifelse(spei$fit.12mo.ssnavg >= -0.4999999 & spei$fit.12mo.ssnavg <=0.49999999, "Normal",
+#                           # drought conditions
+#                           ifelse(spei$fit.12mo.ssnavg >= -1.2999999 & spei$fit.12mo.ssnavg <= -0.50, "Abnorm Dry/Mod Drt",  
+#                                  # ifelse(spei$fit.12mo.ssnavg >= -1.2999999 & spei$fit.12mo.ssnavg <= -0.80, "Moderate Drought",
+#                                  ifelse(spei$fit.12mo.ssnavg >= -1.9999999 & spei$fit.12mo.ssnavg <= -1.30, "Severe/Extreme Drought",
+#                                         # ifelse(spei$fit.12mo.ssnavg >= -1.9999999 & spei$fit.12mo.ssnavg <= -1.60, "Extreme Drought",
+#                                         ifelse(spei$fit.12mo.ssnavg <= -2.0, "Exceptional Drought",
+#                                                # wet conditions                           
+#                                                ifelse(spei$fit.12mo.ssnavg <= 1.2999999 & spei$fit.12mo.ssnavg >= 0.50, "Abnorm/Mod Wet",    
+#                                                       # ifelse(spei$fit.12mo.ssnavg <= 1.2999999 & spei$fit.12mo.ssnavg >= 0.80, "Moderately Wet",
+#                                                       ifelse(spei$fit.12mo.ssnavg <= 1.999999 & spei$fit.12mo.ssnavg >= 1.30, "Severe/Extreme Wet",
+#                                                              # ifelse(spei$fit.12mo.ssnavg <= 1.999999 & spei$fit.12mo.ssnavg >= 1.60, "Extremely Wet",
+#                                                              ifelse(spei$fit.12mo.ssnavg >= 2.0, "Exceptionally Wet", "X")))))))
+# 
+# # Test
+# unique(spei$spcat12ssn2)
+# # NA values expected because first 11 months fit.12mo = NA. 
+# 
+# spei$spcat12ssn2 <- factor(spei$spcat12ssn2,
+#                           levels=c("Exceptional Drought","Severe/Extreme Drought","Abnorm Dry/Mod Drt", 
+#                                    "Normal", "Abnorm/Mod Wet", "Severe/Extreme Wet", "Exceptionally Wet"),
+#                           ordered=T)
+
+write.csv(spei, "data/climate data not large/speiIL_formerge.csv", row.names = F)
+
+
+
+
+
+
 ##### MAKE SOME PLOTS
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
