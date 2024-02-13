@@ -135,7 +135,7 @@ write.csv(dayn_ny, "data/large_data/daily N/NY_forage_day_soil_n.csv", row.names
 rm(dayn_ny)
 beep(sound=5)
 
-dayn_pnw <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/NY_forage_day_soil_n.csv")
+dayn_pnw <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/Daily Nitrogen/PNW_hops_day_soil_n.csv")
 write.csv(dayn_pnw, "data/large_data/daily N/PNW_hops_day_soil_n.csv", row.names=F)
 rm(dayn_pnw)
 beep(sound=5)

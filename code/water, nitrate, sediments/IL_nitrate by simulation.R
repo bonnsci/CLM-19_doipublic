@@ -339,7 +339,7 @@ ggplot(data=ndeclong[ndeclong$variable=="NO3" & ndeclong$till %in% c("NT", "CT")
   #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
   scale_fill_manual(values=pal6blue) +
   xlab("N management") +
-  ylab("Mean annual N loss (kg/ha) 2022 to 2072") +
+  ylab("Mean annual nitrate loss (kg N /ha) 2022 to 2072") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
@@ -384,7 +384,7 @@ ggplot(data=ndeccroplong[ndeccroplong$variable=="NO3" & ndeccroplong$crop == "co
   #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
   scale_fill_manual(values=pal6) +
   xlab("N management") +
-  ylab("Corn mean annual NO3-N loss (kg N/ha) 2022 to 2072") +
+  ylab("Corn mean annual nitrate loss (kg N per ha) 2022 to 2072") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),

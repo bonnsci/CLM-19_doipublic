@@ -3,56 +3,50 @@ library(reshape2)
 
 se <- function(x) sd(x) / sqrt(length(x))
 
-# if you only need annual totals skip to ndatyr below
+# if you only need annual totals skip to wdatyr below
 
 # # if you need daily estimates use this:
 wdat <- read.csv("data/large_data/daily water, sediments/CA_almonds_day_water.csv")
-
-# UNITS: Transpiration, Evaporation, Water leaching, and runoff are mm/day.
-# Sediment yield is kg/ha.
-
-# # sum data by year
-wdatyr <- wdat %>%
-  group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
-  summarize(trans.yr = sum(Transpiration.mm.), evap.yr = sum(Evaporation.mm.),
-            leach.yr = sum(WaterLeaching), run.yr = sum(Runoff), sed.yr = sum(SedimentYield))
-
-# # 
-# clean up
-rm(wdat)
-
-colnames(wdatyr)[c(2,3,5)] <- c("crop", "management", "year")   ######### left off here 2/2/2024
-
-
-
-
-
-
-
-
-
 # 
-# write.csv(wdatyr, "data/water, nitrate, sediments/water,seds_CA_annualtotals.csv", row.names=F)
+# # UNITS: Transpiration, Evaporation, Water leaching, and runoff are mm/day.
+# # Sediment yield is kg/ha.
+# 
+# # # sum data by year
+# wdatyr <- wdat %>%
+#   group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
+#   summarize(trans.yr = sum(Transpiration.mm.), evap.yr = sum(Evaporation.mm.),
+#             leach.yr = sum(WaterLeaching), run.yr = sum(Runoff), sed.yr = sum(SedimentYield))
+# 
+# # # 
+# 
+# write.csv(wdatyr, "data/water, nitrate, sediments/CA_alm_water,seds_annualtotals.csv", row.names=F)
+# 
+# # clean up
+# rm(wdat)
 
-wdatyr <- read.csv("data/water, nitrate, sediments/water,seds_CA_annualtotals.csv")
+
+
+wdatyr <- read.csv("data/water, nitrate, sediments/CA_alm_water,seds_annualtotals.csv")
+
+colnames(wdatyr)[c(2,3,5)] <- c("crop", "management", "year") 
 
 
 wdatyr <- wdatyr[wdatyr$year>2021 & wdatyr$year<2073 & wdatyr$climate_scenario=="rcp60",]
-
-# make dummy variables
-wdatyr$till <- ifelse(grepl("ct-", wdatyr$management), "CT", 
-                      ifelse(grepl("rt-", wdatyr$management), "RT", "NT"))
-# # check
-# unique(wdatyr$till)
-
-# dummy for CC or NC
-wdatyr$cc <- ifelse(grepl("-cc-", wdatyr$management), "CC", "NC")
+# 
+# # make dummy variables
+# wdatyr$till <- ifelse(grepl("ct-", wdatyr$management), "CT", 
+#                       ifelse(grepl("rt-", wdatyr$management), "RT", "NT"))
+# # # check
+# # unique(wdatyr$till)
+# 
+# # dummy for CC or NC
+# wdatyr$cc <- ifelse(grepl("-cc-", wdatyr$management), "CC", "NC")
 # # check
 # unique(wdatyr$cc)
 
 # dummy for N treatment
-wdatyr$nfert <- ifelse(grepl("-cn", wdatyr$management), "High N", 
-                       ifelse(grepl("-fn", wdatyr$management), "Fall N","Recommended N"))
+# wdatyr$nfert <- ifelse(grepl("-cn", wdatyr$management), "High N", 
+#                        ifelse(grepl("-fn", wdatyr$management), "Fall N","Recommended N"))
 # # check
 # unique(wdatyr$nfert)
 
@@ -68,60 +62,52 @@ wdatyr$et.yr <- wdatyr$evap.yr + wdatyr$trans.yr
 
 # write.csv(wdatyr, "data/water, nitrate, sediments/wdatyr.csv", row.names=F)
 
-# first sum by site and crop name across all years, then calculate mean across crop types per site, 
-# Then mean and se across sites by treatments/management combinations
+# first site means across all years,
 
-wdat_tmttot <- wdatyr %>%
-  group_by(site_name, crop_system_name, till, cc, nfert) %>%
-  summarize(et.tot = sum(et.yr), 
-            evap.tot = sum(evap.yr),
-            trans.tot = sum(trans.yr),
-            leach.tot = sum(leach.yr),
-            run.tot = sum(run.yr),
-            sed.tot = sum(sed.yr)) %>%
-  group_by(site_name, till, cc, nfert) %>%
-  summarize(et.sitemean = mean(et.tot),  # mean of corn-soy and soy-corn per site
-            evap.sitemean = mean(evap.tot),
-            trans.sitemean = mean(trans.tot),
-            leach.sitemean = mean(leach.tot),
-            run.sitemean = mean(run.tot),
-            sed.sitemean = mean(sed.tot)) %>%
-  group_by(till, cc) %>%
-  summarize(et.mean = mean(et.sitemean), # mean across sites and N treatments in each treatment combo
-            et.se = se(et.sitemean), # variability across sites and N treatments in each treatment combo
-            evap.mean = mean(evap.sitemean), # (N treatments don't really affect water and sediment losses, I checked)
-            evap.se = se(evap.sitemean),
-            trans.mean = mean(trans.sitemean),
-            trans.se = se(trans.sitemean),
-            leach.mean = mean(leach.sitemean),
-            leach.se = se(leach.sitemean),
-            run.mean = mean(run.sitemean),
-            run.se = se(run.sitemean),
-            sed.mean = mean(sed.sitemean),
-            sed.se = se(sed.sitemean))
+wdat_sitemean <- wdatyr %>%
+  group_by(site_name, management) %>%
+  summarize(et_mean = mean(et.yr), 
+            evap_mean = mean(evap.yr),
+            trans_mean = mean(trans.yr),
+            leach_mean = mean(leach.yr),
+            run_mean = mean(run.yr),
+            sed_mean = mean(sed.yr),
+            et_se = se(et.yr), 
+            evap_se = se(evap.yr),
+            trans_se = se(trans.yr),
+            leach_se = se(leach.yr),
+            run_se = se(run.yr),
+            sed_se = se(sed.yr)) %>%
+  pivot_longer(cols=-c("site_name", "management"), # i.e., don't pivot these columns
+               names_to=c("component", ".value"), # what we are calling the objects 
+               # there should be as many new columns as there are unique tags
+               # after the "_" separator (i.e., "_mean" and "_se")
+               names_sep="_")  # note this type of pivot_longer doesn't work if you use a "." separator!
+                          
+
+################################# left off here adapting the code for almonds 2/5/2024
 
 
-wdat_tmtperyr <- wdatyr %>%
-  group_by(site_name, till, cc, nfert) %>%
-  summarize(et.sitemean = mean(et.yr),  # mean of corn-soy and soy-corn per site and n treatment
-            evap.sitemean = mean(evap.yr),
-            trans.sitemean = mean(trans.yr),
-            leach.sitemean = mean(leach.yr),
-            run.sitemean = mean(run.yr),
-            sed.sitemean = mean(sed.yr)) %>%
-  group_by(till, cc) %>%
-  summarize(et.mean = mean(et.sitemean), # mean across sites and N treatments in each treatment combo
-            et.se = se(et.sitemean), # variability across sites and N treatments in each treatment combo
-            evap.mean = mean(evap.sitemean),
-            evap.se = se(evap.sitemean),
-            trans.mean = mean(trans.sitemean),
-            trans.se = se(trans.sitemean),
-            leach.mean = mean(leach.sitemean),
-            leach.se = se(leach.sitemean),
-            run.mean = mean(run.sitemean),
-            run.se = se(run.sitemean),
-            sed.mean = mean(sed.sitemean),
-            sed.se = se(sed.sitemean))
+
+
+  
+wdat_globmean <- wdatyr %>%
+  group_by(site_name, management) %>%
+  summarize(et.mean = mean(et.yr), 
+            evap.mean = mean(evap.yr),
+            trans.mean = mean(trans.yr),
+            leach.mean = mean(leach.yr),
+            run.mean = mean(run.yr),
+            sed.mean = mean(sed.yr),
+            et.se = se(et.yr), 
+            evap.se = se(evap.yr),
+            trans.se = se(trans.yr),
+            leach.se = se(leach.yr),
+            run.se = se(run.yr),
+            sed.se = se(sed.yr)) 
+  
+  
+  
 
 ############################### 50 YEAR TOTAL WATER AND SED LOSSES PLOT
 # prep data for plotting

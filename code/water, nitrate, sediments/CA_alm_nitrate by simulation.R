@@ -213,9 +213,9 @@ ndat_50yr.global$cld <- cld$Letters
 
 #N treatment rates in lb/ac
 # Conventional
-50*2.20462/2.47105 # 44.6 lb/ac
+(3*82.2)*2.20462/2.47105 # 220 lb/ac
 # Reduced
-40*2.20462/2.47105 # 35.7 lb/ac
+(3*57.5)*2.20462/2.47105 # 154 lb/ac
 
 ############ make graph
 
@@ -235,16 +235,16 @@ ggplot(data=ndat_50yr.global,
                  # "Fall N" = "Fall\nN", "High N" = "High\nN", "Recommended N"="Recm'd\nN"))) +
   scale_fill_manual(values=c("#20243d", "#C2e4ef")) +
   xlab("N management") +
-  ylab("Mean annual N loss (lb per ac) 2022 to 2072") +
+  ylab("Mean annual nitrate loss (lb N per ac) 2022 to 2072") +
   scale_x_discrete(breaks=c("Conventional N", "Reduced N"),
-                    labels=c("50 lb N\nper acre", "40 lb N\nper acre")) +
+                    labels=c("220 lb N\nper acre", "154 lb N\nper acre")) +
   geom_text(aes(x=nfert, y=NO3.mean+20, label=cld), size=5, fontface="bold") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/water, nitrate, sediments/CA_NO3 losses mean annual bars lbac.png", width=7, height=6, dpi=300)
+ggsave("plots/water, nitrate, sediments/CA_alm_NO3 losses mean annual bars lbac.png", width=7, height=6, dpi=300)
 
 
 
@@ -272,11 +272,13 @@ ggplot(data=ndat_dec.global, aes(x=nfert, y=NO3.mean, fill=decade)) +
   #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
   scale_fill_manual(values=pal6blue) +
   xlab("N management") +
-  ylab("Mean annual N loss (lb per acre) 2022 to 2072") +
+  ylab("Mean annual nitrate loss (lb N per acre) 2022 to 2072") +
+  scale_x_discrete(breaks=c("Conventional N", "Reduced N"),
+                   labels=c("220 lb N\nper acre", "154 lb N\nper acre")) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/water, nitrate, sediments/CA_N losses mean annual bars blue.png", width=7, height=5, dpi=300)
+ggsave("plots/water, nitrate, sediments/CA_alm_NO3 losses mean annual bars blue.png", width=7, height=5, dpi=300)
 
