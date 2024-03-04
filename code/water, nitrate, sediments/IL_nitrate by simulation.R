@@ -26,94 +26,102 @@ se <- function(x) sd(x) / sqrt(length(x))
 # ndatyr <- ndat %>%
 #   group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
 #   summarize(N2O.yr = sum(N2O.flux), NO3.yr = sum(NO3.leach))
-# 
+
 # # clean up
 # rm(ndat)
 
 # colnames(ndatyr)[c(3,5)] <- c("management", "year")
 
-# write.csv(ndatyr, "data/water, nitrate, sediments/nitrate_IL_annualtotals.csv", row.names=F)
+
+
+
+# ndatyr <- ndatyr[ndatyr$year>2021 & ndatyr$year<2073 & ndatyr$climate_scenario=="rcp60",]
+# 
+# ndatyr$till <- ifelse(grepl("ct-", ndatyr$management), "CT", 
+#                       ifelse(grepl("rt-", ndatyr$management), "RT", "NT"))
+# # # check
+# # unique(ndatyr$till)
+# 
+# # dummy for CC or NC
+# ndatyr$cc <- ifelse(grepl("-cc-", ndatyr$management), "CC", "NC")
+# # # check
+# # unique(ndatyr$cc)
+# 
+# # dummy for N treatment
+# ndatyr$nfert <- ifelse(grepl("-cn", ndatyr$management), "High N", 
+#                        ifelse(grepl("-fn", ndatyr$management), "Fall N","Recommended N"))
+# # # check
+# # unique(ndatyr$nfert)
+# 
+# # dummy for decade
+# ndatyr$decade <- ifelse(ndatyr$year <2031, "2020s",
+#                         ifelse(ndatyr$year>=2031 & ndatyr$year <2041, "2030s",
+#                                ifelse(ndatyr$year>=2041 & ndatyr$year <2051, "2040s",
+#                                       ifelse(ndatyr$year>=2051 & ndatyr$year <2061, "2050s",
+#                                              ifelse(ndatyr$year>=2061 & ndatyr$year <2071, "2060s", "2070s")))))
+# # unique(ndatyr$decade)
+# 
+# 
+# # because crop_system_name - is soy-corn or corn-soy.
+# # For the crop name "corn-soy" that means corn was planted first and corn is 
+# # present in every odd year and soy is planted every even year, whereas in the 
+# # "soy-corn" simulations, soy was planted in odd years and corn was planted in 
+# # even years. 
+# # if we want to know NO3 loss from corn per year or soy per year, need to split up data by odd and even years.
+# 
+# ndatyr$crop <- ifelse(ndatyr$crop_system_name=="corn-soy" & ndatyr$year%%2 ==0, "soy",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
+#                       ifelse(ndatyr$crop_system_name=="corn-soy" & !ndatyr$year%%2 ==0, "corn",
+#                              ifelse(ndatyr$crop_system_name=="soy-corn" & ndatyr$year%%2 ==0, "corn",
+#                                     ifelse(ndatyr$crop_system_name=="soy-corn" & !ndatyr$year%%2 ==0, "soy", "X"))))
+# 
+# # check no Xs
+# # unique(ndatyr$crop)
+# 
+# write.csv(ndatyr, "data/water, nitrate, sediments/IL_nitrate_annualtotals.csv", row.names=F)
+
 
 ndatyr <- read.csv("data/water, nitrate, sediments/IL_nitrate_annualtotals.csv")
-
-
-ndatyr <- ndatyr[ndatyr$year>2021 & ndatyr$year<2073 & ndatyr$climate_scenario=="rcp60",]
-
-ndatyr$till <- ifelse(grepl("ct-", ndatyr$management), "CT", 
-                      ifelse(grepl("rt-", ndatyr$management), "RT", "NT"))
-# # check
-# unique(ndatyr$till)
-
-# dummy for CC or NC
-ndatyr$cc <- ifelse(grepl("-cc-", ndatyr$management), "CC", "NC")
-# # check
-# unique(ndatyr$cc)
-
-# dummy for N treatment
-ndatyr$nfert <- ifelse(grepl("-cn", ndatyr$management), "High N", 
-                       ifelse(grepl("-fn", ndatyr$management), "Fall N","Recommended N"))
-# # check
-# unique(ndatyr$nfert)
-
-# dummy for decade
-ndatyr$decade <- ifelse(ndatyr$year <2031, "2020s",
-                        ifelse(ndatyr$year>=2031 & ndatyr$year <2041, "2030s",
-                               ifelse(ndatyr$year>=2041 & ndatyr$year <2051, "2040s",
-                                      ifelse(ndatyr$year>=2051 & ndatyr$year <2061, "2050s",
-                                             ifelse(ndatyr$year>=2061 & ndatyr$year <2071, "2060s", "2070s")))))
-# unique(ndatyr$decade)
-
-
-# because crop_system_name - is soy-corn or corn-soy.
-# For the crop name "corn-soy" that means corn was planted first and corn is 
-# present in every odd year and soy is planted every even year, whereas in the 
-# "soy-corn" simulations, soy was planted in odd years and corn was planted in 
-# even years. 
-# if we want to know NO3 loss from corn per year or soy per year, need to split up data by odd and even years.
-
-ndatyr$crop <- ifelse(ndatyr$crop_system_name=="corn-soy" & ndatyr$year%%2 ==0, "soy",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
-                      ifelse(ndatyr$crop_system_name=="corn-soy" & !ndatyr$year%%2 ==0, "corn",
-                             ifelse(ndatyr$crop_system_name=="soy-corn" & ndatyr$year%%2 ==0, "corn",
-                                    ifelse(ndatyr$crop_system_name=="soy-corn" & !ndatyr$year%%2 ==0, "soy", "X"))))
-
-# check no Xs
-# unique(ndatyr$crop)
 
 
 # calculate totals and annual means ACROSS ALL YEARS and by decade
 # first sum by site and crop name, then calculate mean across crop types per site, 
 # Then mean and se across sites by treatments/management combinations
 
-# TOTALS ACROSS ALL YEARS for rotation
-ndat_tmttot <- ndatyr %>%
-  group_by(site_name, crop_system_name, till, cc, nfert) %>%
-  summarize(N2O.tot = sum(N2O.yr),  # this is two totals one for corn and one for  soy per year
-            NO3.tot = sum(NO3.yr),
-            N.tot = sum(N2O.yr) + sum(NO3.yr)) %>%
-  group_by(site_name, till, cc, nfert) %>%
-  summarize(N2O.sitemean = mean(N2O.tot),  # so here we take the mean across corn-soybeans at each site
-            NO3.sitemean = mean(NO3.tot),
-            Ntot.sitemean = mean(N.tot)) %>%
-  group_by(till, cc, nfert) %>%
-  summarize(N2O.mean = mean(N2O.sitemean), # mean total across sites in each treatment combo
-            N2O.se = se(N2O.sitemean), # variability across sites in each treatment combo
-            NO3.mean = mean(NO3.sitemean),
-            NO3.se = se(NO3.sitemean),
-            Ntot.mean = mean(Ntot.sitemean),
-            Ntot.se = se(Ntot.sitemean))
+# # TOTALS ACROSS ALL YEARS for rotation
+# ndat_tmttot <- ndatyr %>%
+#   group_by(site_name, crop_system_name, till, cc, nfert) %>%
+#   summarize(N2O.tot = sum(N2O.yr),  # this is two totals one for corn and one for  soy per year
+#             NO3.tot = sum(NO3.yr),
+#             N.tot = sum(N2O.yr) + sum(NO3.yr)) %>%
+#   group_by(site_name, till, cc, nfert) %>%
+#   summarize(N2O.sitemean = mean(N2O.tot),  # so here we take the mean across corn-soybeans at each site
+#             NO3.sitemean = mean(NO3.tot),
+#             Ntot.sitemean = mean(N.tot)) %>%
+#   group_by(till, cc, nfert) %>%
+#   summarize(N2O.mean = mean(N2O.sitemean), # mean total across sites in each treatment combo
+#             N2O.se = se(N2O.sitemean), # variability across sites in each treatment combo
+#             NO3.mean = mean(NO3.sitemean),
+#             NO3.se = se(NO3.sitemean),
+#             Ntot.mean = mean(Ntot.sitemean),
+#             Ntot.se = se(Ntot.sitemean))
 
 # ANNUAL MEANS ACROSS ALL YEARS for rotation
+# ndat_tmtperyr <- ndatyr %>%
+#   group_by(site_name, crop_system_name, till, cc, nfert) %>%
+#   summarize(NO3.sitemean = mean(NO3.yr) ) %>%  # mean annual N loss per site 
+#   group_by(crop_system_name, till, cc, nfert) %>%  # drop sitename to get mean across sites
+#   summarize(NO3.mean = mean(NO3.sitemean), # mean of the means across sites in each treatment combo
+#             NO3.se = se(NO3.sitemean)) # variability across sites in each treatment combo
+#             
+ 
 ndat_tmtperyr <- ndatyr %>%
   group_by(site_name, crop_system_name, till, cc, nfert) %>%
-  summarize(N2O.sitemean = mean(N2O.yr),  # mean annual N loss per site
-            NO3.sitemean = mean(NO3.yr)) %>%
-  group_by(crop_system_name, till, cc, nfert) %>%  # drop sitename to get mean across sites
-  summarize(N2O.mean = mean(N2O.sitemean), # mean of the means across sites in each treatment combo
-            N2O.se = se(N2O.sitemean), # variability across sites in each treatment combo
-            NO3.mean = mean(NO3.sitemean),
-            NO3.se = se(NO3.sitemean))
-
-
+  summarize(NO3.sitemean = mean(NO3.yr) ) %>%  # mean annual N loss per site 
+  group_by(till, cc, nfert) %>%  # drop sitename to get mean across sites
+  summarize(NO3.mean = mean(NO3.sitemean), # mean of the means across sites and rotations in each treatment combo
+            NO3.se = se(NO3.sitemean)) %>% #         
+  filter(till %in% c("NT", "CT")) %>% # remove RT results for farmer reports
+  arrange(desc(NO3.mean)) # to set up with AOV letters order below
 
 # TOTALS BY DECADE - doesn't really work b/c 2020s and 2070s have fewer years
 # could do by 10 year intervals in the data if necessary
@@ -148,66 +156,66 @@ ndat_dec_crop <- ndatyr %>%
             NO3.se = se(NO3.sitemean))
 
 
-############################### 50 YEAR TOTAL N LOSSES PLOT
-# prep data for plotting
-# put data in long form for plotting, 1 column for N2O, NO3, and Ntots
-ndat_tmttotlong <- melt(ndat_tmttot, id=c("till", "cc", "nfert"))
-# separate means from se's
-ndat_tmttotlong$mean.se <- ifelse(grepl("mean", ndat_tmttotlong$variable), "mean", "se")
-
-# make new column for se values
-dat.se <- ndat_tmttotlong[ndat_tmttotlong$mean.se=="se",1:5]
-colnames(dat.se)[5] <- "se"
-dat.se$variable <- gsub(".se", "", dat.se$variable)
-dat.mean <- ndat_tmttotlong[ndat_tmttotlong$mean.se=="mean",1:5]
-colnames(dat.mean)[5] <- "mean"
-dat.mean$variable <- gsub(".mean", "", dat.mean$variable)
-ntotlong <- left_join(dat.mean, dat.se) # , relationship="one-to-one")
-rm(dat.se, dat.mean)
-
-windows(xpinch=200, ypinch=200, width=5, height=5)
-
-
-ggplot(data=ntotlong[!ntotlong$variable=="Ntot",], aes(x=nfert, y=mean, fill=variable)) +
-  geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.9)) +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
-             cols=vars(factor(cc, levels=c("CC", "NC"))), 
-                       #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
-             labeller = as_labeller(
-               c(CC="Has Cover Crop", NC="No Cover Crop",
-                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
-                 #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
-  scale_fill_manual(values=c("#99DDFF", "#44AA99" )) +
-  xlab("N management") +
-  ylab("N loss (kg/ha) 2022 to 2072") +
-  theme(
-    panel.grid.minor=element_blank(), 
-    panel.grid.major=element_blank(),
-    panel.background = element_rect(fill = 'gray95'))
-
-
-ggsave("plots/water, nitrate, sediments/IL_N losses 50 yr total bars.png", width=7, height=7, dpi=300)
+# ############################### 50 YEAR TOTAL N LOSSES PLOT
+# # prep data for plotting
+# # put data in long form for plotting, 1 column for N2O, NO3, and Ntots
+# ndat_tmttotlong <- melt(ndat_tmttot, id=c("till", "cc", "nfert"))
+# # separate means from se's
+# ndat_tmttotlong$mean.se <- ifelse(grepl("mean", ndat_tmttotlong$variable), "mean", "se")
+# 
+# # make new column for se values
+# dat.se <- ndat_tmttotlong[ndat_tmttotlong$mean.se=="se",1:5]
+# colnames(dat.se)[5] <- "se"
+# dat.se$variable <- gsub(".se", "", dat.se$variable)
+# dat.mean <- ndat_tmttotlong[ndat_tmttotlong$mean.se=="mean",1:5]
+# colnames(dat.mean)[5] <- "mean"
+# dat.mean$variable <- gsub(".mean", "", dat.mean$variable)
+# ntotlong <- left_join(dat.mean, dat.se) # , relationship="one-to-one")
+# rm(dat.se, dat.mean)
+# 
+# windows(xpinch=200, ypinch=200, width=5, height=5)
+# 
+# 
+# ggplot(data=ntotlong[!ntotlong$variable=="Ntot",], aes(x=nfert, y=mean, fill=variable)) +
+#   geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
+#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.9)) +
+#   facet_grid(rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
+#              cols=vars(factor(cc, levels=c("CC", "NC"))), 
+#                        #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
+#              labeller = as_labeller(
+#                c(CC="Has Cover Crop", NC="No Cover Crop",
+#                  "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+#                  #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
+#   scale_fill_manual(values=c("#99DDFF", "#44AA99" )) +
+#   xlab("N management") +
+#   ylab("N loss (kg/ha) 2022 to 2072") +
+#   theme(
+#     panel.grid.minor=element_blank(), 
+#     panel.grid.major=element_blank(),
+#     panel.background = element_rect(fill = 'gray95'))
+# 
+# 
+# ggsave("plots/water, nitrate, sediments/IL_N losses 50 yr total bars.png", width=7, height=7, dpi=300)
 
 
 ############################### N LOSSES PER YEAR PLOT
 # prep data for plotting
 # put data in long form for plotting, 1 column for N2O, NO3, and Ntots
-ndat_peryrlong <- melt(ndat_tmtperyr, id=c("till", "cc", "nfert", "crop_system_name"))
-ndat_peryrlong <- group_by(ndat_peryrlong, till, cc, nfert, variable) %>% # get the mean across crop systems corn-soy and soy-corn
-  summarize(value=mean(value))
+# ndat_peryrlong <- melt(ndat_tmtperyr, id=c("till", "cc", "nfert", "crop_system_name"))
+# ndat_peryrlong <- group_by(ndat_peryrlong, till, cc, nfert, variable) %>% # get the mean across crop systems corn-soy and soy-corn
+#   summarize(value=mean(value))
 # separate means from se's
-ndat_peryrlong$mean.se <- ifelse(grepl("mean", ndat_peryrlong$variable), "mean", "se")
-
-# make new column for se values
-dat.se <- ndat_peryrlong[ndat_peryrlong$mean.se=="se",1:5]
-colnames(dat.se)[5] <- "se"
-dat.se$variable <- gsub(".se", "", dat.se$variable)
-dat.mean <- ndat_peryrlong[ndat_peryrlong$mean.se=="mean",1:5]
-colnames(dat.mean)[5] <- "mean"
-dat.mean$variable <- gsub(".mean", "", dat.mean$variable)
-npyrlong <- left_join(dat.mean, dat.se) # , relationship="one-to-one")
-rm(dat.se, dat.mean)
+# ndat_peryrlong$mean.se <- ifelse(grepl("mean", ndat_peryrlong$variable), "mean", "se")
+# 
+# # make new column for se values
+# dat.se <- ndat_peryrlong[ndat_peryrlong$mean.se=="se",1:5]
+# colnames(dat.se)[5] <- "se"
+# dat.se$variable <- gsub(".se", "", dat.se$variable)
+# dat.mean <- ndat_peryrlong[ndat_peryrlong$mean.se=="mean",1:5]
+# colnames(dat.mean)[5] <- "mean"
+# dat.mean$variable <- gsub(".mean", "", dat.mean$variable)
+# npyrlong <- left_join(dat.mean, dat.se) # , relationship="one-to-one")
+# rm(dat.se, dat.mean)
 
 
 ### get letters for the bars
@@ -255,19 +263,56 @@ summary(no3aov)
 Tukout <- TukeyHSD(no3aov)
 cld <- multcompView::multcompLetters4(no3aov, Tukout)
 
-
-npyrlongnoRT <- filter(npyrlong, till %in% c("NT", "CT"), variable=="NO3") %>%
-  arrange(desc(mean))
-
 cld <- as.data.frame.list(cld$`till:cc:nfert`)
-npyrlongnoRT$cld <- cld$Letters
+ndat_tmtperyr$cld <- cld$Letters
 
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
 
-npyrlongnoRT$meanlbac <- npyrlongnoRT$mean*2.20462/2.47105
-npyrlongnoRT$selbac <- npyrlongnoRT$se*2.20462/2.47105
+ndat_tmtperyr$meanlbac <- ndat_tmtperyr$NO3.mean*2.20462/2.47105
+ndat_tmtperyr$selbac <- ndat_tmtperyr$NO3.se*2.20462/2.47105
+
+ndat_tmtperyr
+# # A tibble: 12 × 8
+# # Groups:   till, cc [4]
+# till  cc    nfert         NO3.mean NO3.se cld   meanlbac selbac
+# <chr> <chr> <chr>            <dbl>  <dbl> <chr>    <dbl>  <dbl>
+#   1 CT    NC    Fall N            73.8  1.66  a         65.8  1.48 
+# 2 CT    NC    High N            71.7  1.74  b         63.9  1.56 
+# 3 NT    NC    Fall N            70.6  1.48  b         63.0  1.32 
+# 4 NT    NC    High N            68.6  1.51  c         61.2  1.34 
+# 5 CT    NC    Recommended N     53.6  1.69  d         47.8  1.51 
+# 6 NT    NC    Recommended N     49.7  1.45  e         44.3  1.29 
+# 7 CT    CC    Fall N            43.4  1.25  f         38.7  1.11 
+# 8 NT    CC    Fall N            39.5  1.27  g         35.2  1.14 
+# 9 CT    CC    High N            35.2  1.31  h         31.4  1.17 
+# 10 NT    CC    High N            31.4  1.21  i         28.0  1.08 
+# 11 CT    CC    Recommended N     22.5  1.00  j         20.1  0.894
+# 12 NT    CC    Recommended N     19.9  0.932 k         17.8  0.831
+
+
+
+
+
+
+# > npyrlongnoRT
+# # A tibble: 12 × 9
+# # Groups:   till, cc, nfert [12]
+# till  cc    nfert         variable  mean    se cld   meanlbac selbac
+# <chr> <chr> <chr>         <chr>    <dbl> <dbl> <chr>    <dbl>  <dbl>
+#   1 CT    NC    Fall N        NO3       73.8  2.36 a         65.8   2.11
+# 2 CT    NC    High N        NO3       71.7  2.49 b         63.9   2.22
+# 3 NT    NC    Fall N        NO3       70.6  2.11 b         63.0   1.88
+# 4 NT    NC    High N        NO3       68.6  2.15 c         61.2   1.92
+# 5 CT    NC    Recommended N NO3       53.6  2.41 d         47.8   2.15
+# 6 NT    NC    Recommended N NO3       49.7  2.06 e         44.3   1.84
+# 7 CT    CC    Fall N        NO3       43.4  1.78 f         38.7   1.59
+# 8 NT    CC    Fall N        NO3       39.5  1.82 g         35.2   1.62
+# 9 CT    CC    High N        NO3       35.2  1.87 h         31.4   1.67
+# 10 NT    CC    High N        NO3       31.4  1.72 i         28.0   1.54
+# 11 CT    CC    Recommended N NO3       22.5  1.43 j         20.1   1.27
+# 12 NT    CC    Recommended N NO3       19.9  1.33 k         17.8   1.18
 
 #N treatment rates in lb/ac
 190*2.20462/2.47105 # 169.51 lb/ac
@@ -277,26 +322,138 @@ npyrlongnoRT$selbac <- npyrlongnoRT$se*2.20462/2.47105
 ggplot(data=npyrlongnoRT, 
        aes(x=nfert, y=meanlbac, fill=nfert)) +   # fill=variable
   geom_bar(stat="identity", position=position_dodge(), show.legend=F) + # color="#332288", 
-  geom_errorbar(aes(ymin=meanlbac-selbac, ymax=meanlbac+selbac), width=0.3, position=position_dodge(0.9)) +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))), 
-             cols=vars(factor(cc, levels=c("NC", "CC"))), 
-             #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
-             labeller = as_labeller(
-               c(NC="No Cover Crop",CC="Has Cover Crop", 
-                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+  geom_errorbar(aes(ymin=meanlbac-selbac, ymax=meanlbac+selbac), 
+                width=0.3, position=position_dodge(0.9), color="#20243d") +
+  # facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),   2x2 facets
+  #            cols=vars(factor(cc, levels=c("NC", "CC"))), 
+  #            #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
+  #            labeller = as_labeller(
+  #              c(NC="No Cover Crop",CC="Has Cover Crop", 
+  #                "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
                  # "Fall N" = "Fall\nN", "High N" = "High\nN", "Recommended N"="Recm'd\nN"))) +
-  scale_fill_manual(values=c("#c44f2d","#20243d", "#C2e4ef")) +
+  facet_grid(  # 1 x 4 facets
+    cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
+    labeller = as_labeller(
+      c(NC="No Cover Crop", CC="Rye Cover Crop", 
+        "CT" = "Conventional Till", "NT" = "No Till"))) +
+  geom_hline(yintercept=0, color="#20243d") +
+  
+  scale_fill_manual(values=c("#20243d", "#C2e4ef", "#669947")) +
   xlab("N management") +
   ylab("Mean annual N loss (lb per ac) 2022 to 2072") +
   # scale_x_discrete(breaks=c("Fall N", "High N", "Recommended N"),
   #                  labels=c("Fall\nN", "High\N", "Recm'd\nN")) +
-  geom_text(aes(x=nfert, y=meanlbac+10, label=cld), size=5, fontface="bold") +
+  # geom_text(aes(x=nfert, y=meanlbac+10, label=cld), size=5, fontface="bold") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-# ggsave("plots/water, nitrate, sediments/IL_NO3 losses mean annual bars lbac.png", width=7, height=6, dpi=300)
+ggsave("plots/water, nitrate, sediments/IL_NO3 losses mean annual bars lbac 1x4 no letters.png", width=6, height=3, dpi=300)
+
+
+# percent differences
+# rye cover (with conventional till) reduced NO3- in Fall N by
+cc.ct.fn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="Fall N"]-
+               npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Fall N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="Fall N"]
+#  0.4113
+# rye cover (with conventional till) reduced NO3- in high N by
+cc.ct.hn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="High N"] - 
+               npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="High N"]) /
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="High N"]
+#  0.5088
+# rye cover (with conventional till) reduced NO3- in recommended N by
+cc.ct.rn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="Recommended N"]-
+               npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="Recommended N"]
+#  0.5804
+mean(c(cc.ct.fn, cc.ct.hn, cc.ct.rn))  # 0.5002
+
+
+# rye cover PLUS NO TIL reduced NO3- BY ANOTHER (compared to CC + CT above) in Fall N by
+cc.nt.fn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Fall N"] -
+               npyrlongnoRT$mean[npyrlongnoRT$till=="NT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Fall N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Fall N"]
+#  0.0906
+# rye cover PLUS NO TIL reduced NO3- BY ANOTHER (compared to CC + CT above) in high N by
+cc.nt.hn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="High N"] -
+               npyrlongnoRT$mean[npyrlongnoRT$till=="NT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="High N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="High N"]
+#  0.1067
+# rye cover PLUS NO TIL reduced NO3- BY ANOTHER (compared to CC + CT above) recommended N by
+cc.nt.rn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"] -
+               npyrlongnoRT$mean[npyrlongnoRT$till=="NT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"]
+#  0.1152
+mean(c(cc.nt.fn, cc.nt.hn, cc.nt.rn))  # 0.104
+
+# an 80 acre field with NC + CT + high N would lose 
+loss.ctnchn80 <- npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="High N"] * 80
+# 5732 lb
+loss.ctnchn80dollars <- loss.ctnchn80*0.6
+# $3439
+
+# an 80 acre field with CC + NT + recommended N would lose 
+loss.ntccrn80 <- npyrlongnoRT$mean[npyrlongnoRT$till=="NT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"] * 80
+# 1592.439 lb
+loss.ntccrn80dollars <- loss.ntccrn80*0.6
+# 955
+
+
+### above plot but as difference from Fall N
+
+falln <- filter(npyrlongnoRT, nfert=="Fall N") %>%
+  rename("meanlbac.falln" = "meanlbac", "selbac.falln" = "selbac") %>%
+  ungroup(nfert) %>%
+  select(cc, till, meanlbac.falln, selbac.falln)
+
+springn <- filter(npyrlongnoRT, !nfert=="Fall N") %>%
+  select(cc, till, nfert, meanlbac, selbac)
+
+npyrlongnoRT2 <- left_join(springn, falln)
+
+rm(falln, springn)
+
+npyrlongnoRT2$mean.falldiff <- npyrlongnoRT2$meanlbac - npyrlongnoRT2$meanlbac.falln
+
+pal2 <- c("#004a23", "#669947")
+
+
+ggplot(data=npyrlongnoRT2, aes(x=nfert, y=mean.falldiff, fill=nfert)) +
+  geom_bar(stat="identity", position=position_dodge(),  show.legend=F) +  # color="#20243d",
+  geom_errorbar(width=0.3, aes(ymin=mean.falldiff-selbac.falln, 
+                               ymax=mean.falldiff + selbac.falln),  
+                position=position_dodge(0.9),
+                color="#20243d") +
+  facet_grid( # rows=vars(factor(till, levels=c("CT", "NT"))), 
+    cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
+    labeller = as_labeller(
+      c(NC="No Cover Crop", CC="Rye Cover Crop", 
+        "CT" = "Conventional Till", "NT" = "No Till"))) +
+  xlab("N management") +
+  ylab(expression(bold("Nitrate loss difference from fall applied N (lb N per ac)"))) + 
+  scale_x_discrete(breaks=c("High N", "Recommended N"),
+                   labels = c("High N", "Recomm. N")) +
+  # ylim(0,3800)+
+  # geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5,
+  # color="gray20", size=4, fontface="bold") +
+  scale_fill_manual(values=pal2) +
+  scale_y_continuous(expand=c(0,0)) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'),
+    axis.text.x=element_text(angle=-10, hjust=0, size=11),
+    axis.text.y=element_text(size=11),
+    plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=11, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+# # strip.background=element_rect(fill="lightblue", color="black", size=1) 
+
+ggsave("plots/water, nitrate, sediments/IL_NO3 loss_diff from Fall N.png", width=6, height=3, dpi=300)
+
+
 
 
 

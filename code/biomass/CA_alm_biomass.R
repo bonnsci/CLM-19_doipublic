@@ -42,7 +42,7 @@ library(multcompView) # for tukey HSD letters
 #######################   (1) set up the data
 #######################   
 
-bmalm <- read.csv("data/biomass/biomass_almond.csv")
+bmalm <- read.csv("data/biomass/biomass_almond_20240220.csv")
 
 # DO NOT need to find literature values to convert kg C grain to kg grain.
 # since we'll only be looking at them RELATIVE TO EACH OTHER, not absolute amounts...

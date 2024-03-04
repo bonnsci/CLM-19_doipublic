@@ -9,13 +9,15 @@ library(MASS) # for boxcox
 se <- function(x) sd(x) / sqrt(length(x))
 
 # load data
-ghgdat <- read.csv("data/simulations/un-weighted_resultsNY.csv")
+ghgdat <- read.csv("data/simulations/un-weighted_resultsNY.csv") # keep the "corn-grain"  "corn-silage" "corn-soy"    "soy-corn"   from this one
+ghgdat2 <- read.csv("data/simulations/un-weighted_resultsNYalf_20240220.csv") # new alfalfa rotation data -- removed irrigation and now have 5 rotations rather than 3 so all crops growing every year
 # as.data.frame(names(ghgdat))
 # names(ghgdat) - all are calendar year sums
 # 1         site_name
 # 2       region_name
 # 3         crop_name  #### this is actually the ROTATION And not the crop grown that year necessarily, see ghgdat$crop made below
 unique(ghgdat$crop_name) # "alfalfa-act" "alfalfa-cta" "alfalfa-tac" "corn-grain"  "corn-silage" "corn-soy"    "soy-corn"  
+unique(ghgdat2$crop_name) # "alfalfa-act"  "alfalfa-act2" "alfalfa-act3" "alfalfa-cta"  "alfalfa-cta2"
 # 4        management 
 unique(ghgdat$management) # "ct-cc" "ct-nc" "nt-cc" "nt-nc" "rt-cc" "rt-nc"
 # 5  climate_scenario
@@ -31,6 +33,14 @@ unique(ghgdat$management) # "ct-cc" "ct-nc" "nt-cc" "nt-nc" "rt-cc" "rt-nc"
 # 15          ghg_n2o sum of DIRECT n2o em in tonne co2e/ha
 # 16 ghg_indirect_n2o sum of indirect n2o em in tonne co2e/ha
 # 17    ghg_total_n2o total n2o em in tonne co2e/ha
+
+
+
+# combine the two datasets
+ghgdat <- ghgdat[ghgdat$crop_name %in% c("corn-grain" , "corn-silage" ,"corn-soy"  ,  "soy-corn"),]
+ghgdat2 <- ghgdat2[,-1]
+ghgdat <- rbind(ghgdat, ghgdat2)
+rm(ghgdat2)
 
 
 ghgdat <- ghgdat[ghgdat$year>2021 & ghgdat$year<2073& ghgdat$climate_scenario=="rcp60",c(1,3:6, 10, 13, 17)]
@@ -71,43 +81,57 @@ ghgdat$decade <- ifelse(ghgdat$year <2031, "2020s",
 
 actcorn <- seq(2017,2072, 5)
 ctacorn <- seq(2013, 2072, 5)
-taccorn <- seq(2018, 2072, 5)
+cta2corn <- seq(2014, 2072, 5)
+act2corn <- seq(2015, 2072, 5)
+act3corn <- seq(2016, 2072, 5)
 
 actalf <- sort(c(seq(2014,2072, 5), seq(2015,2072,5), seq(2016,2072,5)))
 ctaalf <- sort(c(seq(2015,2072, 5), seq(2016,2072,5), seq(2017,2072,5)))
-tacalf <- sort(c(seq(2015,2072, 5), seq(2016,2072,5), seq(2017,2072,5)))
+cta2alf <- sort(c(seq(2016, 2072, 5), seq(2017, 2072, 5), seq(2018, 2072, 5)))
+act2alf <- sort(c(2013, 2014, seq(2017, 2072, 5), seq(2018, 2072, 5), seq(2019, 2072, 5)))
+act3alf <- sort(c(2013, 2014, 2015, seq(2018, 2072, 5), seq(2019, 2072, 5), seq(2020, 2072, 5)))
+
 
 acttri <- seq(2018,2072, 5)
 ctatri <- seq(2019, 2072, 5)
-tactri <- seq(2019, 2072, 5)
+cta2tri <- seq(2015, 2072, 5)
+act2tri <- seq(2016, 2072, 5)
+act3tri <- seq(2017, 2072, 5)
+
 
 
 # label data for the crop they are (depends on the rotation and the year)
-ghgdat$crop <- ifelse(ghgdat$crop=="corn-soy" & ghgdat$year%%2 ==0, "soy cs",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
-                      ifelse(ghgdat$crop=="corn-soy" & !ghgdat$year%%2 ==0, "corn grain cs",  # cs= to indicate corn-soy rotation
-                             ifelse(ghgdat$crop=="soy-corn" & ghgdat$year%%2 ==0, "corn grain cs",
-                                    ifelse(ghgdat$crop=="soy-corn" & !ghgdat$year%%2 ==0, "soy cs", 
-                                           ifelse(ghgdat$crop=="corn-grain", "corn grain mono",
-                                                  ifelse(ghgdat$crop=="corn-silage", "corn silage mono",
+ghgdat$crop <- ifelse(ghgdat$crop_name=="corn-soy" & ghgdat$year%%2 ==0, "soy cs",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
+                      ifelse(ghgdat$crop_name=="corn-soy" & !ghgdat$year%%2 ==0, "corn grain cs",  # cs= to indicate corn-soy rotation
+                             ifelse(ghgdat$crop_name=="soy-corn" & ghgdat$year%%2 ==0, "corn grain cs",
+                                    ifelse(ghgdat$crop_name=="soy-corn" & !ghgdat$year%%2 ==0, "soy cs", 
+                                           ifelse(ghgdat$crop_name=="corn-grain", "corn grain mono",
+                                                  ifelse(ghgdat$crop_name=="corn-silage", "corn silage mono",
                                                         # corn in alfalfa rotation
-                                                          ifelse(ghgdat$crop=="alfalfa-act" & ghgdat$year %in% actcorn, "corn alf",
-                                                                ifelse(ghgdat$crop=="alfalfa-cta" & ghgdat$year %in% ctacorn, "corn alf",
-                                                                       ifelse(ghgdat$crop=="alfalfa-tac" & ghgdat$year %in% taccorn, "corn alf",
+                                                          ifelse(ghgdat$crop_name=="alfalfa-act" & ghgdat$year %in% actcorn, "corn alf",
+                                                                ifelse(ghgdat$crop_name=="alfalfa-cta" & ghgdat$year %in% ctacorn, "corn alf",
+                                                                       ifelse(ghgdat$crop_name=="alfalfa-cta2" & ghgdat$year %in% cta2corn, "corn alf",
+                                                                              ifelse(ghgdat$crop_name=="alfalfa-act2" & ghgdat$year %in% act2corn, "corn alf",
+                                                                                     ifelse(ghgdat$crop_name=="alfalfa-act3" & ghgdat$year %in% act3corn, "corn alf",
                                                                              # alf in alf rotation
-                                                                               ifelse(ghgdat$crop=="alfalfa-act" & ghgdat$year %in% actalf, "alf",
-                                                                                     ifelse(ghgdat$crop=="alfalfa-cta" & ghgdat$year %in% ctaalf, "alf",
-                                                                                            ifelse(ghgdat$crop=="alfalfa-tac" & ghgdat$year %in% tacalf, "alf",
+                                                                               ifelse(ghgdat$crop_name=="alfalfa-act" & ghgdat$year %in% actalf, "alf",
+                                                                                     ifelse(ghgdat$crop_name=="alfalfa-cta" & ghgdat$year %in% ctaalf, "alf",
+                                                                                            ifelse(ghgdat$crop_name=="alfalfa-cta2" & ghgdat$year %in% cta2alf, "alf",
+                                                                                                   ifelse(ghgdat$crop_name=="alfalfa-act2" & ghgdat$year %in% act2alf, "alf",
+                                                                                                          ifelse(ghgdat$crop_name=="alfalfa-act3" & ghgdat$year %in% act3alf, "alf",
                                                                                             # triticale in alf rotation
-                                                                                            ifelse(ghgdat$crop=="alfalfa-act" & ghgdat$year %in% acttri, "tri alf",
-                                                                                                   ifelse(ghgdat$crop=="alfalfa-cta" & ghgdat$year %in% ctatri, "tri alf",
-                                                                                                          ifelse(ghgdat$crop=="alfalfa-tac" & ghgdat$year %in% tactri, "tri alf", "X")))))))))))))))
+                                                                                            ifelse(ghgdat$crop_name=="alfalfa-act" & ghgdat$year %in% acttri, "tri alf",
+                                                                                                   ifelse(ghgdat$crop_name=="alfalfa-cta" & ghgdat$year %in% ctatri, "tri alf",
+                                                                                                          ifelse(ghgdat$crop_name=="alfalfa-cta2" & ghgdat$year %in% cta2tri, "tri alf", 
+                                                                                                                 ifelse(ghgdat$crop_name=="alfalfa-act2" & ghgdat$year %in% act2tri, "tri alf", 
+                                                                                                                        ifelse(ghgdat$crop_name=="alfalfa-act3" & ghgdat$year %in% act3tri, "tri alf",   "X")))))))))))))))))))))
                                              
 
  
 # check no Xs
 # unique(ghgdat$crop)
 
-
+rm(act2alf, act2corn, act2tri, act3alf, act3corn, act3tri, actalf, actcorn, acttri, cta2alf, cta2corn, cta2tri, ctaalf, ctacorn, ctatri)
 
 
 
@@ -126,60 +150,60 @@ summary(lmn2o)
 #   lm(formula = ghg_total_n2o ~ crop:till:cc, data = ghgdat)
 # 
 # Residuals:
-#   Min       1Q   Median       3Q      Max 
-# -0.78419 -0.06848 -0.01012  0.05543  1.35415 
+#   Min      1Q  Median      3Q     Max 
+# -1.0460 -0.0899 -0.0157  0.0816  3.7781 
 # 
 # Coefficients: (1 not defined because of singularities)
 # Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                       0.181747   0.006879  26.420  < 2e-16 ***
-#   cropalf:tillCT:ccCC               0.087006   0.007922  10.983  < 2e-16 ***
-#   cropcorn-grain cs:tillCT:ccCC     0.383154   0.008670  44.195  < 2e-16 ***
-#   cropcorn-grain mono:tillCT:ccCC   0.463204   0.008670  53.429  < 2e-16 ***
-#   cropcorn-silage mono:tillCT:ccCC  0.294202   0.008670  33.935  < 2e-16 ***
-#   cropcorn alf:tillCT:ccCC          0.119791   0.009650  12.414  < 2e-16 ***
-#   cropsoy cs:tillCT:ccCC           -0.019360   0.008670  -2.233 0.025547 *  
-#   croptri alf:tillCT:ccCC           0.067727   0.009729   6.962 3.42e-12 ***
-#   cropalf:tillNT:ccCC               0.184898   0.007922  23.340  < 2e-16 ***
-#   cropcorn-grain cs:tillNT:ccCC     0.704655   0.008670  81.280  < 2e-16 ***
-#   cropcorn-grain mono:tillNT:ccCC   1.036684   0.008670 119.578  < 2e-16 ***
-#   cropcorn-silage mono:tillNT:ccCC  0.607492   0.008670  70.072  < 2e-16 ***
-#   cropcorn alf:tillNT:ccCC          0.044065   0.009650   4.566 4.98e-06 ***
-#   cropsoy cs:tillNT:ccCC            0.124056   0.008670  14.309  < 2e-16 ***
-#   croptri alf:tillNT:ccCC          -0.037716   0.009729  -3.877 0.000106 ***
-#   cropalf:tillRT:ccCC               0.120432   0.007922  15.203  < 2e-16 ***
-#   cropcorn-grain cs:tillRT:ccCC     0.416521   0.008670  48.044  < 2e-16 ***
-#   cropcorn-grain mono:tillRT:ccCC   0.532169   0.008670  61.384  < 2e-16 ***
-#   cropcorn-silage mono:tillRT:ccCC  0.341648   0.008670  39.408  < 2e-16 ***
-#   cropcorn alf:tillRT:ccCC          0.100312   0.009650  10.395  < 2e-16 ***
-#   cropsoy cs:tillRT:ccCC            0.001479   0.008670   0.171 0.864581    
-# croptri alf:tillRT:ccCC           0.034143   0.009729   3.509 0.000450 ***
-#   cropalf:tillCT:ccNC               0.107928   0.007922  13.624  < 2e-16 ***
-#   cropcorn-grain cs:tillCT:ccNC     0.438103   0.008670  50.534  < 2e-16 ***
-#   cropcorn-grain mono:tillCT:ccNC   0.496855   0.008670  57.311  < 2e-16 ***
-#   cropcorn-silage mono:tillCT:ccNC  0.379849   0.008670  43.814  < 2e-16 ***
-#   cropcorn alf:tillCT:ccNC          0.248129   0.009650  25.713  < 2e-16 ***
-#   cropsoy cs:tillCT:ccNC            0.025007   0.008670   2.884 0.003924 ** 
-#   croptri alf:tillCT:ccNC           0.027791   0.009729   2.857 0.004284 ** 
-#   cropalf:tillNT:ccNC               0.192678   0.007922  24.322  < 2e-16 ***
-#   cropcorn-grain cs:tillNT:ccNC     0.627512   0.008670  72.381  < 2e-16 ***
-#   cropcorn-grain mono:tillNT:ccNC   0.970879   0.008670 111.988  < 2e-16 ***
-#   cropcorn-silage mono:tillNT:ccNC  0.768781   0.008670  88.676  < 2e-16 ***
-#   cropcorn alf:tillNT:ccNC          0.183255   0.009650  18.990  < 2e-16 ***
-#   cropsoy cs:tillNT:ccNC            0.146768   0.008670  16.929  < 2e-16 ***
-#   croptri alf:tillNT:ccNC          -0.058367   0.009729  -5.999 2.00e-09 ***
-#   cropalf:tillRT:ccNC               0.142649   0.007922  18.007  < 2e-16 ***
-#   cropcorn-grain cs:tillRT:ccNC     0.457171   0.008670  52.733  < 2e-16 ***
-#   cropcorn-grain mono:tillRT:ccNC   0.553160   0.008670  63.805  < 2e-16 ***
-#   cropcorn-silage mono:tillRT:ccNC  0.392400   0.008670  45.262  < 2e-16 ***
-#   cropcorn alf:tillRT:ccNC          0.232699   0.009650  24.114  < 2e-16 ***
-#   cropsoy cs:tillRT:ccNC            0.047185   0.008670   5.443 5.29e-08 ***
-#   croptri alf:tillRT:ccNC                 NA         NA      NA       NA    
+# (Intercept)                       1.04456    0.01019 102.488  < 2e-16 ***
+#   cropalf:tillCT:ccCC              -0.72170    0.01177 -61.324  < 2e-16 ***
+#   cropcorn alf:tillCT:ccCC         -0.73967    0.01441 -51.317  < 2e-16 ***
+#   cropcorn grain cs:tillCT:ccCC    -0.47966    0.01441 -33.278  < 2e-16 ***
+#   cropcorn grain mono:tillCT:ccCC  -0.39961    0.01441 -27.724  < 2e-16 ***
+#   cropcorn silage mono:tillCT:ccCC -0.56861    0.01441 -39.449  < 2e-16 ***
+#   cropsoy cs:tillCT:ccCC           -0.88217    0.01441 -61.204  < 2e-16 ***
+#   croptri alf:tillCT:ccCC           0.07886    0.01441   5.471 4.50e-08 ***
+#   cropalf:tillNT:ccCC              -0.62908    0.01177 -53.453  < 2e-16 ***
+#   cropcorn alf:tillNT:ccCC         -0.81274    0.01441 -56.387  < 2e-16 ***
+#   cropcorn grain cs:tillNT:ccCC    -0.15815    0.01441 -10.973  < 2e-16 ***
+#   cropcorn grain mono:tillNT:ccCC   0.17387    0.01441  12.063  < 2e-16 ***
+#   cropcorn silage mono:tillNT:ccCC -0.25532    0.01441 -17.714  < 2e-16 ***
+#   cropsoy cs:tillNT:ccCC           -0.73875    0.01441 -51.254  < 2e-16 ***
+#   croptri alf:tillNT:ccCC          -0.01349    0.01441  -0.936 0.349281    
+# cropalf:tillRT:ccCC              -0.69113    0.01177 -58.726  < 2e-16 ***
+#   cropcorn alf:tillRT:ccCC         -0.75750    0.01441 -52.554  < 2e-16 ***
+#   cropcorn grain cs:tillRT:ccCC    -0.44629    0.01441 -30.963  < 2e-16 ***
+#   cropcorn grain mono:tillRT:ccCC  -0.33064    0.01441 -22.939  < 2e-16 ***
+#   cropcorn silage mono:tillRT:ccCC -0.52116    0.01441 -36.157  < 2e-16 ***
+#   cropsoy cs:tillRT:ccCC           -0.86133    0.01441 -59.758  < 2e-16 ***
+#   croptri alf:tillRT:ccCC           0.04985    0.01441   3.458 0.000544 ***
+#   cropalf:tillCT:ccNC              -0.70722    0.01177 -60.093  < 2e-16 ***
+#   cropcorn alf:tillCT:ccNC         -0.60622    0.01441 -42.059  < 2e-16 ***
+#   cropcorn grain cs:tillCT:ccNC    -0.42471    0.01441 -29.465  < 2e-16 ***
+#   cropcorn grain mono:tillCT:ccNC  -0.36595    0.01441 -25.389  < 2e-16 ***
+#   cropcorn silage mono:tillCT:ccNC -0.48296    0.01441 -33.507  < 2e-16 ***
+#   cropsoy cs:tillCT:ccNC           -0.83780    0.01441 -58.125  < 2e-16 ***
+#   croptri alf:tillCT:ccNC           0.02799    0.01441   1.942 0.052134 .  
+# cropalf:tillNT:ccNC              -0.62922    0.01177 -53.465  < 2e-16 ***
+#   cropcorn alf:tillNT:ccNC         -0.66845    0.01441 -46.376  < 2e-16 ***
+#   cropcorn grain cs:tillNT:ccNC    -0.23530    0.01441 -16.325  < 2e-16 ***
+#   cropcorn grain mono:tillNT:ccNC   0.10807    0.01441   7.498 6.62e-14 ***
+#   cropcorn silage mono:tillNT:ccNC -0.09403    0.01441  -6.524 6.94e-11 ***
+#   cropsoy cs:tillNT:ccNC           -0.71604    0.01441 -49.678  < 2e-16 ***
+#   croptri alf:tillNT:ccNC          -0.05422    0.01441  -3.762 0.000169 ***
+#   cropalf:tillRT:ccNC              -0.67673    0.01177 -57.502  < 2e-16 ***
+#   cropcorn alf:tillRT:ccNC         -0.62073    0.01441 -43.065  < 2e-16 ***
+#   cropcorn grain cs:tillRT:ccNC    -0.40564    0.01441 -28.143  < 2e-16 ***
+#   cropcorn grain mono:tillRT:ccNC  -0.30965    0.01441 -21.483  < 2e-16 ***
+#   cropcorn silage mono:tillRT:ccNC -0.47041    0.01441 -32.636  < 2e-16 ***
+#   cropsoy cs:tillRT:ccNC           -0.81562    0.01441 -56.587  < 2e-16 ***
+#   croptri alf:tillRT:ccNC                NA         NA      NA       NA    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 0.1507 on 34230 degrees of freedom
-# Multiple R-squared:  0.7546,	Adjusted R-squared:  0.7543 
-# F-statistic:  2567 on 41 and 34230 DF,  p-value: < 2.2e-16
+# Residual standard error: 0.2911 on 44022 degrees of freedom
+# Multiple R-squared:  0.4905,	Adjusted R-squared:  0.4901 
+# F-statistic:  1034 on 41 and 44022 DF,  p-value: < 2.2e-16
 
 summary(lmsoc)
 # Call:
@@ -187,59 +211,59 @@ summary(lmsoc)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -5.3759 -0.4115  0.0662  0.5782  3.3633 
+# -5.4892 -0.4421  0.1057  0.6837  3.2751 
 # 
 # Coefficients: (1 not defined because of singularities)
 # Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                       2.09698    0.05487  38.221  < 2e-16 ***
-#   cropalf:tillCT:ccCC              -3.63995    0.06318 -57.612  < 2e-16 ***
-#   cropcorn-grain cs:tillCT:ccCC    -2.43413    0.06914 -35.204  < 2e-16 ***
-#   cropcorn-grain mono:tillCT:ccCC  -3.67037    0.06914 -53.083  < 2e-16 ***
-#   cropcorn-silage mono:tillCT:ccCC -3.78180    0.06914 -54.694  < 2e-16 ***
-#   cropcorn alf:tillCT:ccCC         -5.01759    0.07696 -65.195  < 2e-16 ***
-#   cropsoy cs:tillCT:ccCC           -4.01682    0.06914 -58.093  < 2e-16 ***
-#   croptri alf:tillCT:ccCC           1.40804    0.07759  18.147  < 2e-16 ***
-#   cropalf:tillNT:ccCC              -2.66810    0.06318 -42.230  < 2e-16 ***
-#   cropcorn-grain cs:tillNT:ccCC    -2.97300    0.06914 -42.997  < 2e-16 ***
-#   cropcorn-grain mono:tillNT:ccCC  -3.30129    0.06914 -47.745  < 2e-16 ***
-#   cropcorn-silage mono:tillNT:ccCC -4.66819    0.06914 -67.514  < 2e-16 ***
-#   cropcorn alf:tillNT:ccCC         -5.54264    0.07696 -72.017  < 2e-16 ***
-#   cropsoy cs:tillNT:ccCC           -3.20467    0.06914 -46.348  < 2e-16 ***
-#   croptri alf:tillNT:ccCC          -0.64762    0.07759  -8.347  < 2e-16 ***
-#   cropalf:tillRT:ccCC              -3.15139    0.06318 -49.879  < 2e-16 ***
-#   cropcorn-grain cs:tillRT:ccCC    -2.59996    0.06914 -37.602  < 2e-16 ***
-#   cropcorn-grain mono:tillRT:ccCC  -3.41934    0.06914 -49.452  < 2e-16 ***
-#   cropcorn-silage mono:tillRT:ccCC -3.92026    0.06914 -56.697  < 2e-16 ***
-#   cropcorn alf:tillRT:ccCC         -5.26296    0.07696 -68.383  < 2e-16 ***
-#   cropsoy cs:tillRT:ccCC           -3.60740    0.06914 -52.172  < 2e-16 ***
-#   croptri alf:tillRT:ccCC           0.55681    0.07759   7.176 7.31e-13 ***
-#   cropalf:tillCT:ccNC              -3.78289    0.06318 -59.874  < 2e-16 ***
-#   cropcorn-grain cs:tillCT:ccNC    -2.01145    0.06914 -29.091  < 2e-16 ***
-#   cropcorn-grain mono:tillCT:ccNC  -3.29000    0.06914 -47.582  < 2e-16 ***
-#   cropcorn-silage mono:tillCT:ccNC -2.78371    0.06914 -40.259  < 2e-16 ***
-#   cropcorn alf:tillCT:ccNC         -2.93568    0.07696 -38.144  < 2e-16 ***
-#   cropsoy cs:tillCT:ccNC           -3.52561    0.06914 -50.989  < 2e-16 ***
-#   croptri alf:tillCT:ccNC           0.88274    0.07759  11.377  < 2e-16 ***
-#   cropalf:tillNT:ccNC              -2.91335    0.06318 -46.111  < 2e-16 ***
-#   cropcorn-grain cs:tillNT:ccNC    -2.37446    0.06914 -34.341  < 2e-16 ***
-#   cropcorn-grain mono:tillNT:ccNC  -2.87935    0.06914 -41.643  < 2e-16 ***
-#   cropcorn-silage mono:tillNT:ccNC -3.79305    0.06914 -54.857  < 2e-16 ***
-#   cropcorn alf:tillNT:ccNC         -3.22227    0.07696 -41.868  < 2e-16 ***
-#   cropsoy cs:tillNT:ccNC           -2.78053    0.06914 -40.213  < 2e-16 ***
-#   croptri alf:tillNT:ccNC          -1.08607    0.07759 -13.997  < 2e-16 ***
-#   cropalf:tillRT:ccNC              -3.32396    0.06318 -52.610  < 2e-16 ***
-#   cropcorn-grain cs:tillRT:ccNC    -2.14663    0.06914 -31.046  < 2e-16 ***
-#   cropcorn-grain mono:tillRT:ccNC  -3.03633    0.06914 -43.913  < 2e-16 ***
-#   cropcorn-silage mono:tillRT:ccNC -2.89579    0.06914 -41.880  < 2e-16 ***
-#   cropcorn alf:tillRT:ccNC         -3.09118    0.07696 -40.164  < 2e-16 ***
-#   cropsoy cs:tillRT:ccNC           -3.15957    0.06914 -45.695  < 2e-16 ***
+# (Intercept)                       1.76795    0.04579  38.610   <2e-16 ***
+#   cropalf:tillCT:ccCC              -3.16375    0.05287 -59.836   <2e-16 ***
+#   cropcorn alf:tillCT:ccCC         -4.73286    0.06476 -73.087   <2e-16 ***
+#   cropcorn grain cs:tillCT:ccCC    -2.10510    0.06476 -32.508   <2e-16 ***
+#   cropcorn grain mono:tillCT:ccCC  -3.34133    0.06476 -51.598   <2e-16 ***
+#   cropcorn silage mono:tillCT:ccCC -3.45276    0.06476 -53.319   <2e-16 ***
+#   cropsoy cs:tillCT:ccCC           -3.68778    0.06476 -56.948   <2e-16 ***
+#   croptri alf:tillCT:ccCC           1.34969    0.06476  20.842   <2e-16 ***
+#   cropalf:tillNT:ccCC              -2.25093    0.05287 -42.572   <2e-16 ***
+#   cropcorn alf:tillNT:ccCC         -5.28277    0.06476 -81.578   <2e-16 ***
+#   cropcorn grain cs:tillNT:ccCC    -2.64396    0.06476 -40.829   <2e-16 ***
+#   cropcorn grain mono:tillNT:ccCC  -2.97225    0.06476 -45.899   <2e-16 ***
+#   cropcorn silage mono:tillNT:ccCC -4.33916    0.06476 -67.007   <2e-16 ***
+#   cropsoy cs:tillNT:ccCC           -2.87563    0.06476 -44.407   <2e-16 ***
+#   croptri alf:tillNT:ccCC          -0.63961    0.06476  -9.877   <2e-16 ***
+#   cropalf:tillRT:ccCC              -2.70860    0.05287 -51.228   <2e-16 ***
+#   cropcorn alf:tillRT:ccCC         -4.98284    0.06476 -76.947   <2e-16 ***
+#   cropcorn grain cs:tillRT:ccCC    -2.27092    0.06476 -35.068   <2e-16 ***
+#   cropcorn grain mono:tillRT:ccCC  -3.09030    0.06476 -47.722   <2e-16 ***
+#   cropcorn silage mono:tillRT:ccCC -3.59122    0.06476 -55.457   <2e-16 ***
+#   cropsoy cs:tillRT:ccCC           -3.27836    0.06476 -50.626   <2e-16 ***
+#   croptri alf:tillRT:ccCC           0.59583    0.06476   9.201   <2e-16 ***
+#   cropalf:tillCT:ccNC              -3.31656    0.05287 -62.726   <2e-16 ***
+#   cropcorn alf:tillCT:ccNC         -2.58267    0.06476 -39.883   <2e-16 ***
+#   cropcorn grain cs:tillCT:ccNC    -1.68241    0.06476 -25.980   <2e-16 ***
+#   cropcorn grain mono:tillCT:ccNC  -2.96096    0.06476 -45.724   <2e-16 ***
+#   cropcorn silage mono:tillCT:ccNC -2.45467    0.06476 -37.906   <2e-16 ***
+#   cropsoy cs:tillCT:ccNC           -3.19657    0.06476 -49.363   <2e-16 ***
+#   croptri alf:tillCT:ccNC           0.80407    0.06476  12.417   <2e-16 ***
+#   cropalf:tillNT:ccNC              -2.51361    0.05287 -47.540   <2e-16 ***
+#   cropcorn alf:tillNT:ccNC         -2.87252    0.06476 -44.359   <2e-16 ***
+#   cropcorn grain cs:tillNT:ccNC    -2.04542    0.06476 -31.586   <2e-16 ***
+#   cropcorn grain mono:tillNT:ccNC  -2.55031    0.06476 -39.383   <2e-16 ***
+#   cropcorn silage mono:tillNT:ccNC -3.46401    0.06476 -53.493   <2e-16 ***
+#   cropsoy cs:tillNT:ccNC           -2.45149    0.06476 -37.857   <2e-16 ***
+#   croptri alf:tillNT:ccNC          -1.12003    0.06476 -17.296   <2e-16 ***
+#   cropalf:tillRT:ccNC              -2.89638    0.05287 -54.779   <2e-16 ***
+#   cropcorn alf:tillRT:ccNC         -2.74499    0.06476 -42.389   <2e-16 ***
+#   cropcorn grain cs:tillRT:ccNC    -1.81759    0.06476 -28.068   <2e-16 ***
+#   cropcorn grain mono:tillRT:ccNC  -2.70729    0.06476 -41.807   <2e-16 ***
+#   cropcorn silage mono:tillRT:ccNC -2.56675    0.06476 -39.637   <2e-16 ***
+#   cropsoy cs:tillRT:ccNC           -2.83053    0.06476 -43.710   <2e-16 ***
 #   croptri alf:tillRT:ccNC                NA         NA      NA       NA    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 1.202 on 34230 degrees of freedom
-# Multiple R-squared:  0.4991,	Adjusted R-squared:  0.4985 
-# F-statistic:   832 on 41 and 34230 DF,  p-value: < 2.2e-16
+# Residual standard error: 1.308 on 44022 degrees of freedom
+# Multiple R-squared:  0.4696,	Adjusted R-squared:  0.4691 
+# F-statistic: 950.7 on 41 and 44022 DF,  p-value: < 2.2e-16
 
 
 summary(lmnet)
@@ -248,59 +272,59 @@ summary(lmnet)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -5.2865 -0.4438  0.0758  0.6126  3.4840 
+# -5.4836 -0.4957  0.1144  0.7563  3.9693 
 # 
 # Coefficients: (1 not defined because of singularities)
 # Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                       2.25154    0.05519  40.799  < 2e-16 ***
-#   cropalf:tillCT:ccCC              -3.55455    0.06355 -55.932  < 2e-16 ***
-#   cropcorn-grain cs:tillCT:ccCC    -2.05277    0.06955 -29.515  < 2e-16 ***
-#   cropcorn-grain mono:tillCT:ccCC  -3.21058    0.06955 -46.163  < 2e-16 ***
-#   cropcorn-silage mono:tillCT:ccCC -3.49087    0.06955 -50.193  < 2e-16 ***
-#   cropcorn alf:tillCT:ccCC         -4.89727    0.07741 -63.261  < 2e-16 ***
-#   cropsoy cs:tillCT:ccCC           -4.03933    0.06955 -58.079  < 2e-16 ***
-#   croptri alf:tillCT:ccCC           1.47386    0.07805  18.885  < 2e-16 ***
-#   cropalf:tillNT:ccCC              -2.48036    0.06355 -39.030  < 2e-16 ***
-#   cropcorn-grain cs:tillNT:ccCC    -2.25611    0.06955 -32.439  < 2e-16 ***
-#   cropcorn-grain mono:tillNT:ccCC  -2.25021    0.06955 -32.354  < 2e-16 ***
-#   cropcorn-silage mono:tillNT:ccCC -4.06369    0.06955 -58.429  < 2e-16 ***
-#   cropcorn alf:tillNT:ccCC         -5.49174    0.07741 -70.940  < 2e-16 ***
-#   cropsoy cs:tillNT:ccCC           -3.06994    0.06955 -44.141  < 2e-16 ***
-#   croptri alf:tillNT:ccCC          -0.68079    0.07805  -8.723  < 2e-16 ***
-#   cropalf:tillRT:ccCC              -3.03133    0.06355 -47.699  < 2e-16 ***
-#   cropcorn-grain cs:tillRT:ccCC    -2.18329    0.06955 -31.392  < 2e-16 ***
-#   cropcorn-grain mono:tillRT:ccCC  -2.88775    0.06955 -41.521  < 2e-16 ***
-#   cropcorn-silage mono:tillRT:ccCC -3.57969    0.06955 -51.470  < 2e-16 ***
-#   cropcorn alf:tillRT:ccCC         -5.16066    0.07741 -66.663  < 2e-16 ***
-#   cropsoy cs:tillRT:ccCC           -3.60710    0.06955 -51.864  < 2e-16 ***
-#   croptri alf:tillRT:ccCC           0.59052    0.07805   7.566 3.94e-14 ***
-#   cropalf:tillCT:ccNC              -3.67602    0.06355 -57.844  < 2e-16 ***
-#   cropcorn-grain cs:tillCT:ccNC    -1.57434    0.06955 -22.636  < 2e-16 ***
-#   cropcorn-grain mono:tillCT:ccNC  -2.79602    0.06955 -40.202  < 2e-16 ***
-#   cropcorn-silage mono:tillCT:ccNC -2.40529    0.06955 -34.584  < 2e-16 ***
-#   cropcorn alf:tillCT:ccNC         -2.68674    0.07741 -34.706  < 2e-16 ***
-#   cropsoy cs:tillCT:ccNC           -3.50279    0.06955 -50.364  < 2e-16 ***
-#   croptri alf:tillCT:ccNC           0.90920    0.07805  11.650  < 2e-16 ***
-#   cropalf:tillNT:ccNC              -2.71817    0.06355 -42.772  < 2e-16 ***
-#   cropcorn-grain cs:tillNT:ccNC    -1.73695    0.06955 -24.974  < 2e-16 ***
-#   cropcorn-grain mono:tillNT:ccNC  -1.89549    0.06955 -27.254  < 2e-16 ***
-#   cropcorn-silage mono:tillNT:ccNC -3.03224    0.06955 -43.598  < 2e-16 ***
-#   cropcorn alf:tillNT:ccNC         -3.03383    0.07741 -39.190  < 2e-16 ***
-#   cropsoy cs:tillNT:ccNC           -2.62482    0.06955 -37.740  < 2e-16 ***
-#   croptri alf:tillNT:ccNC          -1.14027    0.07805 -14.610  < 2e-16 ***
-#   cropalf:tillRT:ccNC              -3.18126    0.06355 -50.058  < 2e-16 ***
-#   cropcorn-grain cs:tillRT:ccNC    -1.68885    0.06955 -24.283  < 2e-16 ***
-#   cropcorn-grain mono:tillRT:ccNC  -2.48349    0.06955 -35.708  < 2e-16 ***
-#   cropcorn-silage mono:tillRT:ccNC -2.50376    0.06955 -36.000  < 2e-16 ***
-#   cropcorn alf:tillRT:ccNC         -2.85646    0.07741 -36.899  < 2e-16 ***
-#   cropsoy cs:tillRT:ccNC           -3.11292    0.06955 -44.759  < 2e-16 ***
+# (Intercept)                       2.78409    0.04673  59.572   <2e-16 ***
+#   cropalf:tillCT:ccCC              -3.88573    0.05396 -72.005   <2e-16 ***
+#   cropcorn alf:tillCT:ccCC         -5.47141    0.06609 -82.784   <2e-16 ***
+#   cropcorn grain cs:tillCT:ccCC    -2.58532    0.06609 -39.116   <2e-16 ***
+#   cropcorn grain mono:tillCT:ccCC  -3.74313    0.06609 -56.634   <2e-16 ***
+#   cropcorn silage mono:tillCT:ccCC -4.02342    0.06609 -60.875   <2e-16 ***
+#   cropsoy cs:tillCT:ccCC           -4.57189    0.06609 -69.174   <2e-16 ***
+#   croptri alf:tillCT:ccCC           1.42666    0.06609  21.586   <2e-16 ***
+#   cropalf:tillNT:ccCC              -2.87574    0.05396 -53.289   <2e-16 ***
+#   cropcorn alf:tillNT:ccCC         -6.08759    0.06609 -92.107   <2e-16 ***
+#   cropcorn grain cs:tillNT:ccCC    -2.78866    0.06609 -42.193   <2e-16 ***
+#   cropcorn grain mono:tillNT:ccCC  -2.78276    0.06609 -42.104   <2e-16 ***
+#   cropcorn silage mono:tillNT:ccCC -4.59624    0.06609 -69.542   <2e-16 ***
+#   cropsoy cs:tillNT:ccCC           -3.60250    0.06609 -54.507   <2e-16 ***
+#   croptri alf:tillNT:ccCC          -0.64887    0.06609  -9.818   <2e-16 ***
+#   cropalf:tillRT:ccCC              -3.39879    0.05396 -62.982   <2e-16 ***
+#   cropcorn alf:tillRT:ccCC         -5.73771    0.06609 -86.813   <2e-16 ***
+#   cropcorn grain cs:tillRT:ccCC    -2.71584    0.06609 -41.091   <2e-16 ***
+#   cropcorn grain mono:tillRT:ccCC  -3.42030    0.06609 -51.750   <2e-16 ***
+#   cropcorn silage mono:tillRT:ccCC -4.11224    0.06609 -62.219   <2e-16 ***
+#   cropsoy cs:tillRT:ccCC           -4.13965    0.06609 -62.634   <2e-16 ***
+#   croptri alf:tillRT:ccCC           0.64522    0.06609   9.762   <2e-16 ***
+#   cropalf:tillCT:ccNC              -4.02352    0.05396 -74.558   <2e-16 ***
+#   cropcorn alf:tillCT:ccNC         -3.18747    0.06609 -48.227   <2e-16 ***
+#   cropcorn grain cs:tillCT:ccNC    -2.10689    0.06609 -31.878   <2e-16 ***
+#   cropcorn grain mono:tillCT:ccNC  -3.32857    0.06609 -50.362   <2e-16 ***
+#   cropcorn silage mono:tillCT:ccNC -2.93784    0.06609 -44.450   <2e-16 ***
+#   cropsoy cs:tillCT:ccNC           -4.03534    0.06609 -61.056   <2e-16 ***
+#   croptri alf:tillCT:ccNC           0.83079    0.06609  12.570   <2e-16 ***
+#   cropalf:tillNT:ccNC              -3.13889    0.05396 -58.166   <2e-16 ***
+#   cropcorn alf:tillNT:ccNC         -3.53484    0.06609 -53.483   <2e-16 ***
+#   cropcorn grain cs:tillNT:ccNC    -2.26950    0.06609 -34.338   <2e-16 ***
+#   cropcorn grain mono:tillNT:ccNC  -2.42804    0.06609 -36.737   <2e-16 ***
+#   cropcorn silage mono:tillNT:ccNC -3.56479    0.06609 -53.936   <2e-16 ***
+#   cropsoy cs:tillNT:ccNC           -3.15737    0.06609 -47.772   <2e-16 ***
+#   croptri alf:tillNT:ccNC          -1.17029    0.06609 -17.707   <2e-16 ***
+#   cropalf:tillRT:ccNC              -3.57175    0.05396 -66.187   <2e-16 ***
+#   cropcorn alf:tillRT:ccNC         -3.36305    0.06609 -50.884   <2e-16 ***
+#   cropcorn grain cs:tillRT:ccNC    -2.22140    0.06609 -33.610   <2e-16 ***
+#   cropcorn grain mono:tillRT:ccNC  -3.01604    0.06609 -45.633   <2e-16 ***
+#   cropcorn silage mono:tillRT:ccNC -3.03631    0.06609 -45.940   <2e-16 ***
+#   cropsoy cs:tillRT:ccNC           -3.64548    0.06609 -55.157   <2e-16 ***
 #   croptri alf:tillRT:ccNC                NA         NA      NA       NA    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 1.209 on 34230 degrees of freedom
-# Multiple R-squared:  0.4943,	Adjusted R-squared:  0.4937 
-# F-statistic:   816 on 41 and 34230 DF,  p-value: < 2.2e-16
+# Residual standard error: 1.335 on 44022 degrees of freedom
+# Multiple R-squared:  0.5329,	Adjusted R-squared:  0.5325 
+# F-statistic:  1225 on 41 and 44022 DF,  p-value: < 2.2e-16
 
 
 aovn2o <- aov(ghg_total_n2o ~crop:till:cc, data=ghgdat)  
@@ -309,22 +333,22 @@ aovnet <- aov(ghg ~crop:till:cc, data=ghgdat)
 
 summary(aovn2o)
 # Df Sum Sq Mean Sq F value Pr(>F)    
-# crop:till:cc    41 2390.8   58.31    2567 <2e-16 ***
-#   Residuals    34230  777.5    0.02                   
+# crop:till:cc    41   3593   87.63    1034 <2e-16 ***
+#   Residuals    44022   3731    0.08                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 summary(aovsoc)
 # Df Sum Sq Mean Sq F value Pr(>F)    
-# crop:till:cc    41  49287  1202.1     832 <2e-16 ***
-#   Residuals    34230  49459     1.4                   
+# crop:till:cc    41  66690  1626.6   950.7 <2e-16 ***
+#   Residuals    44022  75319     1.7                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 summary(aovnet)
 # Df Sum Sq Mean Sq F value Pr(>F)    
-# crop:till:cc    41  48911  1193.0     816 <2e-16 ***
-#   Residuals    34230  50040     1.5                   
+# crop:till:cc    41  89519  2183.4    1225 <2e-16 ***
+#   Residuals    44022  78458     1.8                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
@@ -447,7 +471,94 @@ ggplot(data=ghgsummary, aes(x=crop)) +
 
 
 
-ggsave("plots/ghgs/NY_mean em 2022-72 RCP60_no letters.png", width=10, height=8, dpi=300)
+ggsave("plots/ghgs/NY_mean em 2022-72 RCP60_no letters_20240312.png", width=10, height=8, dpi=300)
+
+
+
+
+
+# Same graph as above but SOC only and average across N treatments for farmer report:
+
+effectsoc <- aov(ghg_dsoc ~till*cc, data=ghgdat[ghgdat$till %in% c("NT", "CT"),])  # ghgdat$crop=="corn" &
+summary(effectsoc)
+# Df Sum Sq Mean Sq F value Pr(>F)    
+# till            1      0     0.1   0.031  0.860    
+# cc              1   1079  1079.2 333.187 <2e-16 ***
+#   till:cc         1      0     0.0   0.004  0.951    
+# Residuals   29372  95135     3.2                   
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Tukoutsoc <- TukeyHSD(effectsoc)
+cldsoc<- multcompView::multcompLetters4(effectsoc, Tukoutsoc)
+ghgsocsum <- filter(ghgdat,till %in% c("NT", "CT")) %>%  # crop=="corn",
+  group_by(cc, till) %>%
+  summarize(mean.soc=mean(ghg_dsoc), 
+            se.soc=se(ghg_dsoc)) %>%
+  arrange(desc(mean.soc)) %>%
+  ungroup() %>%
+  mutate(mean.soc.ac = mean.soc/2.471,
+         se.soc.ac = se.soc/2.471,
+         dummy = rep("x", 4))
+
+cldsoc<- as.data.frame.list(cldsoc$`till:cc`)
+ghgsocsum$cldsoc <- cldsoc$Letters
+ghgsocsum
+# A tibble: 4 × 8
+# cc    till  mean.soc se.soc mean.soc.ac se.soc.ac dummy cldsoc
+# <chr> <chr>    <dbl>  <dbl>       <dbl>     <dbl> <chr> <chr> 
+#   1 NC    CT      -0.679 0.0209      -0.275   0.00846 x     a     
+# 2 NC    NT      -0.681 0.0168      -0.276   0.00681 x     a     
+# 3 CC    CT      -1.06  0.0242      -0.429   0.00977 x     b     
+# 4 CC    NT      -1.07  0.0215      -0.431   0.00868 x     b     
+
+mean(c(0.429, 0.431)) # 0.43
+mean(c(0.276, 0.275)) # 0.2755
+(0.43-0.2755)/0.2755
+
+
+
+windows(xpinch=200, ypinch=200, width=5, height=5)
+
+ggplot(data=ghgsocsum, aes(x=dummy)) +
+  # dsoc bars, error bars, letters
+  geom_bar(aes(y=mean.soc.ac*-1),   # Data are in terms of emissions, so -dSOC is negative emissions, 
+           # multiply here by -1 to show buildup of SOC as positive.
+           stat="identity", position=position_dodge(), fill="#1982be", width=0.6) + #, color="gray20") +
+  geom_errorbar(aes(ymin= (-1*mean.soc.ac)-se.soc.ac, ymax=(-1*mean.soc.ac)+se.soc.ac),  
+                width=0.2, position=position_dodge(0.9), color="#20243d") +
+  geom_text(aes(x=dummy, label=cldsoc, y= (mean.soc.ac*-1) + 0.05),
+            vjust=-0.5, color="#0077BB", size=4, fontface="bold") +
+  # 
+  # zero-line
+  # geom_hline(yintercept=0, color="#20243d", linewidth=0.5) +
+  
+  
+  # make it pretty
+  facet_grid(cols=vars(factor(cc, levels=c("NC", "CC")), factor(till, levels=c("CT", "NT"))), 
+             # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
+             labeller = as_labeller(
+               c("NC"="No Cover Crop", "CC"="Has Cover Crop",
+                 "CT" = "Conventional Till", "NT" = "No Till"))) +  #, "RT"="Reduced Till"))) +
+  #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recomm. N"))) +
+  # scale_fill_manual(values=c("#eaeccc", "#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"),
+  #                   name="Decade")+ #, name="N management") +
+  
+  ylab(expression('Mean annual change in SOC (tonnes CO'[2]*'e per acre)')) +
+  
+  # scale_y_continuous(breaks=seq(-6,5,1), limits=c(-6,5)) +
+  
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'))
+
+ggsave("plots/ghgs/NY_simulation mean annual SOC buildup_with letters.png", width=5, height=3, dpi=300)
+
+
+
+
+
+
 
 
 

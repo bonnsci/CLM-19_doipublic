@@ -1,6 +1,7 @@
 # Here we summarize future N2O emissions by DNDC simulations
 # i.e., look for effects of till, cc, and Nfert on N2O emissions 2022-2072.
 
+
 # packages
 library(tidyverse) # has ggplot, dplyr, reshape2, etc.
 library(reshape2) # for dcast / melt
@@ -9,7 +10,7 @@ library(MASS) # for boxcox
 se <- function(x) sd(x) / sqrt(length(x))
 
 # load data
-ghgdat <- read.csv("data/simulations/un-weighted_resultsCA.csv")
+ghgdat <- read.csv("data/simulations/un-weighted_resultsCA_20240220.csv")
 # as.data.frame(names(ghgdat))
 # names(ghgdat) - all are calendar year sums
 # 1         site_name
@@ -34,7 +35,7 @@ ghgdat <- read.csv("data/simulations/un-weighted_resultsCA.csv")
 # 17    ghg_total_n2o total n2o em in tonne co2e/ha
 
 
-ghgdat <- ghgdat[ghgdat$year>2021 & ghgdat$climate_scenario=="rcp60",c(1,3:6, 10, 13, 17)]
+ghgdat <- ghgdat[ghgdat$year>2021 & ghgdat$climate_scenario=="rcp60",c(2,4:7, 11, 14, 16, 18)]
 
 ghgdat$till <- ifelse(grepl("_ct-", ghgdat$management), "CT", 
                     ifelse(grepl("_rt-", ghgdat$management), "RT", "NT"))
@@ -43,12 +44,12 @@ ghgdat$till <- ifelse(grepl("_ct-", ghgdat$management), "CT",
 
 # dummy for CC or NC
 ghgdat$cc <- ifelse(grepl("-nc", ghgdat$management),"NC",
-                    ifelse(grepl("-bc", ghgdat$management), "TC", "LC"))
+                    ifelse(grepl("-bc", ghgdat$management), "BarC", "LegC"))
 # # check
 # unique(ghgdat$cc)
 
 # dummy for N treatment
-ghgdat$nfert <- ifelse(grepl("cn_", ghgdat$management), "50 N", "40 N")
+ghgdat$nfert <- ifelse(grepl("cn_", ghgdat$management), "Conventional N", "Reduced N")
 # # check
 # unique(ghgdat$nfert)
 
@@ -61,7 +62,9 @@ ghgdat$decade <- ifelse(ghgdat$year <2031, "2020s",
 
 
 
+# filter to just the grape results
 
+ghgdat <- ghgdat[ghgdat$crop_name=="grape",]
 
 # mean annual n2o emissions by decade
 
@@ -85,153 +88,152 @@ ghgdec <- ghgdat %>%
 
 # $value is in units of cumulative tco2e/ha
 
-
 # make stacked bar chart of n2o, soc, net by decade 
 # with letters comparing the 2022-72 mean of each treatment group (cover*till*Nfert combo) for soc, n2o, net
 
 # first, find the diffs among n2o bars, soc bars, net bars
 
-ghgdat.a <- ghgdat[ghgdat$crop_name=="almond",]
-ghgdat.g <- ghgdat[ghgdat$crop_name=="grape",]
 
-# ALMOND RESULTS
-lmn2o <- lm(ghg_total_n2o ~till:cc:nfert, data=ghgdat.g)  
-lmsoc <- lm(ghg_dsoc ~till:cc:nfert, data=ghgdat.g)  
-lmnet <- lm(ghg ~till:cc:nfert, data=ghgdat.g)
+
+
+# GRAPE RESULTS
+lmn2o <- lm(ghg_total_n2o ~till:cc:nfert, data=ghgdat)  
+lmsoc <- lm(ghg_dsoc ~till:cc:nfert, data=ghgdat)  
+lmnet <- lm(ghg ~till:cc:nfert, data=ghgdat)
 summary(lmn2o)
 summary(lmsoc)
 summary(lmnet)
 # Call:
-#   lm(formula = ghg_total_n2o ~ till:cc:nfert, data = ghgdat.g)
+#   lm(formula = ghg_total_n2o ~ till:cc:nfert, data = ghgdat)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -1.7923 -0.2098 -0.0562  0.1734  3.6658 
+# -1.8387 -0.2142 -0.0575  0.1711  3.6549 
 # 
 # Coefficients: (1 not defined because of singularities)
 # Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)            0.43021    0.02083  20.653  < 2e-16 ***
-#   tillCT:ccLC:nfert40 N  1.25272    0.02946  42.524  < 2e-16 ***
-#   tillNT:ccLC:nfert40 N  1.87558    0.02946  63.668  < 2e-16 ***
-#   tillRT:ccLC:nfert40 N  1.30184    0.02946  44.192  < 2e-16 ***
-#   tillCT:ccNC:nfert40 N  0.07065    0.02946   2.398  0.01648 *  
-#   tillNT:ccNC:nfert40 N  0.06750    0.02946   2.291  0.02195 *  
-#   tillRT:ccNC:nfert40 N  0.05093    0.02946   1.729  0.08387 .  
-# tillCT:ccTC:nfert40 N  0.04316    0.02946   1.465  0.14293    
-# tillNT:ccTC:nfert40 N  0.25412    0.02946   8.626  < 2e-16 ***
-#   tillRT:ccTC:nfert40 N -0.00644    0.02946  -0.219  0.82696    
-# tillCT:ccLC:nfert50 N  1.25916    0.02946  42.743  < 2e-16 ***
-#   tillNT:ccLC:nfert50 N  1.88202    0.02946  63.886  < 2e-16 ***
-#   tillRT:ccLC:nfert50 N  1.30828    0.02946  44.410  < 2e-16 ***
-#   tillCT:ccNC:nfert50 N  0.07709    0.02946   2.617  0.00888 ** 
-#   tillNT:ccNC:nfert50 N  0.07394    0.02946   2.510  0.01208 *  
-#   tillRT:ccNC:nfert50 N  0.05737    0.02946   1.947  0.05151 .  
-# tillCT:ccTC:nfert50 N  0.04960    0.02946   1.684  0.09227 .  
-# tillNT:ccTC:nfert50 N  0.26056    0.02946   8.845  < 2e-16 ***
-#   tillRT:ccTC:nfert50 N       NA         NA      NA       NA    
+# (Intercept)                     0.431739   0.021162  20.402  < 2e-16 ***
+#   tillCT:ccLegC:nfertConventional N 1.287005   0.029928  43.004  < 2e-16 ***
+#   tillNT:ccLegC:nfertConventional N 1.933999   0.029928  64.623  < 2e-16 ***
+#   tillRT:ccLegC:nfertConventional N 1.341137   0.029928  44.813  < 2e-16 ***
+#   tillCT:ccNC:nfertConventional N 0.078080   0.029928   2.609  0.00909 ** 
+#   tillNT:ccNC:nfertConventional N 0.075355   0.029928   2.518  0.01182 *  
+#   tillRT:ccNC:nfertConventional N 0.058868   0.029928   1.967  0.04920 *  
+#   tillCT:ccBarC:nfertConventional N 0.055791   0.029928   1.864  0.06231 .  
+# tillNT:ccBarC:nfertConventional N 0.270903   0.029928   9.052  < 2e-16 ***
+#   tillRT:ccBarC:nfertConventional N 0.006414   0.029928   0.214  0.83030    
+# tillCT:ccLegC:nfertReduced N      1.280591   0.029928  42.790  < 2e-16 ***
+#   tillNT:ccLegC:nfertReduced N      1.927585   0.029928  64.408  < 2e-16 ***
+#   tillRT:ccLegC:nfertReduced N      1.334722   0.029928  44.598  < 2e-16 ***
+#   tillCT:ccNC:nfertReduced N      0.071666   0.029928   2.395  0.01665 *  
+#   tillNT:ccNC:nfertReduced N      0.068940   0.029928   2.304  0.02126 *  
+#   tillRT:ccNC:nfertReduced N      0.052454   0.029928   1.753  0.07968 .  
+# tillCT:ccBarC:nfertReduced N      0.049377   0.029928   1.650  0.09899 .  
+# tillNT:ccBarC:nfertReduced N      0.264489   0.029928   8.838  < 2e-16 ***
+#   tillRT:ccBarC:nfertReduced N            NA         NA      NA       NA    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 0.595 on 14670 degrees of freedom
-# Multiple R-squared:  0.5678,	Adjusted R-squared:  0.5673 
-# F-statistic:  1134 on 17 and 14670 DF,  p-value: < 2.2e-16
+# Residual standard error: 0.6104 on 14958 degrees of freedom
+# Multiple R-squared:  0.5672,	Adjusted R-squared:  0.5667 
+# F-statistic:  1153 on 17 and 14958 DF,  p-value: < 2.2e-16
 # 
 # > summary(lmsoc)
 # 
 # Call:
-#   lm(formula = ghg_dsoc ~ till:cc:nfert, data = ghgdat.g)
+#   lm(formula = ghg_dsoc ~ till:cc:nfert, data = ghgdat)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -6.5264 -0.4539 -0.0983  0.5550  7.3143 
+# -6.4835 -0.4599 -0.1017  0.5496  8.9024 
 # 
 # Coefficients: (1 not defined because of singularities)
 # Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)           -1.1875465  0.0454893 -26.106  < 2e-16 ***
-#   tillCT:ccLC:nfert40 N -0.6971119  0.0643315 -10.836  < 2e-16 ***
-#   tillNT:ccLC:nfert40 N -1.0803309  0.0643315 -16.793  < 2e-16 ***
-#   tillRT:ccLC:nfert40 N -1.1693839  0.0643315 -18.177  < 2e-16 ***
-#   tillCT:ccNC:nfert40 N  1.5085598  0.0643315  23.450  < 2e-16 ***
-#   tillNT:ccNC:nfert40 N  1.4439881  0.0643315  22.446  < 2e-16 ***
-#   tillRT:ccNC:nfert40 N  1.3929891  0.0643315  21.653  < 2e-16 ***
-#   tillCT:ccTC:nfert40 N  0.2762824  0.0643315   4.295 1.76e-05 ***
-#   tillNT:ccTC:nfert40 N  0.1167342  0.0643315   1.815   0.0696 .  
-# tillRT:ccTC:nfert40 N  0.0002098  0.0643315   0.003   0.9974    
-# tillCT:ccLC:nfert50 N -0.6973217  0.0643315 -10.840  < 2e-16 ***
-#   tillNT:ccLC:nfert50 N -1.0805407  0.0643315 -16.796  < 2e-16 ***
-#   tillRT:ccLC:nfert50 N -1.1695937  0.0643315 -18.181  < 2e-16 ***
-#   tillCT:ccNC:nfert50 N  1.5083500  0.0643315  23.447  < 2e-16 ***
-#   tillNT:ccNC:nfert50 N  1.4437784  0.0643315  22.443  < 2e-16 ***
-#   tillRT:ccNC:nfert50 N  1.3927793  0.0643315  21.650  < 2e-16 ***
-#   tillCT:ccTC:nfert50 N  0.2760726  0.0643315   4.291 1.79e-05 ***
-#   tillNT:ccTC:nfert50 N  0.1165244  0.0643315   1.811   0.0701 .  
-# tillRT:ccTC:nfert50 N         NA         NA      NA       NA    
+# (Intercept)                     -1.2025477  0.0453887 -26.494  < 2e-16 ***
+#   tillCT:ccLegC:nfertConventional N -0.7224159  0.0641893 -11.254  < 2e-16 ***
+#   tillNT:ccLegC:nfertConventional N -1.0566749  0.0641893 -16.462  < 2e-16 ***
+#   tillRT:ccLegC:nfertConventional N -1.1993099  0.0641893 -18.684  < 2e-16 ***
+#   tillCT:ccNC:nfertConventional N  1.5211245  0.0641893  23.697  < 2e-16 ***
+#   tillNT:ccNC:nfertConventional N  1.4638942  0.0641893  22.806  < 2e-16 ***
+#   tillRT:ccNC:nfertConventional N  1.4078091  0.0641893  21.932  < 2e-16 ***
+#   tillCT:ccBarC:nfertConventional N  0.2746498  0.0641893   4.279 1.89e-05 ***
+#   tillNT:ccBarC:nfertConventional N  0.1256711  0.0641893   1.958   0.0503 .  
+# tillRT:ccBarC:nfertConventional N -0.0002295  0.0641893  -0.004   0.9971    
+# tillCT:ccLegC:nfertReduced N      -0.7221863  0.0641893 -11.251  < 2e-16 ***
+#   tillNT:ccLegC:nfertReduced N      -1.0564453  0.0641893 -16.458  < 2e-16 ***
+#   tillRT:ccLegC:nfertReduced N      -1.1990803  0.0641893 -18.680  < 2e-16 ***
+#   tillCT:ccNC:nfertReduced N       1.5213541  0.0641893  23.701  < 2e-16 ***
+#   tillNT:ccNC:nfertReduced N       1.4641237  0.0641893  22.809  < 2e-16 ***
+#   tillRT:ccNC:nfertReduced N       1.4080387  0.0641893  21.936  < 2e-16 ***
+#   tillCT:ccBarC:nfertReduced N       0.2748794  0.0641893   4.282 1.86e-05 ***
+#   tillNT:ccBarC:nfertReduced N       0.1259006  0.0641893   1.961   0.0499 *  
+#   tillRT:ccBarC:nfertReduced N              NA         NA      NA       NA    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 1.299 on 14670 degrees of freedom
-# Multiple R-squared:  0.3737,	Adjusted R-squared:  0.3729 
-# F-statistic: 514.8 on 17 and 14670 DF,  p-value: < 2.2e-16
+# Residual standard error: 1.309 on 14958 degrees of freedom
+# Multiple R-squared:  0.3749,	Adjusted R-squared:  0.3742 
+# F-statistic: 527.7 on 17 and 14958 DF,  p-value: < 2.2e-16
 # 
 # > summary(lmnet)
 # 
 # Call:
-#   lm(formula = ghg ~ till:cc:nfert, data = ghgdat.g)
+#   lm(formula = ghg ~ till:cc:nfert, data = ghgdat)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -7.0821 -0.5748 -0.1261  0.6188  8.3980 
+# -7.1032 -0.5784 -0.1271  0.6159 10.8058 
 # 
 # Coefficients: (1 not defined because of singularities)
 # Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)           -0.78016    0.05165 -15.104  < 2e-16 ***
-#   tillCT:ccLC:nfert40 N  0.54773    0.07305   7.498 6.85e-14 ***
-#   tillNT:ccLC:nfert40 N  0.79156    0.07305  10.836  < 2e-16 ***
-#   tillRT:ccLC:nfert40 N  0.12019    0.07305   1.645   0.0999 .  
-# tillCT:ccNC:nfert40 N  1.59478    0.07305  21.832  < 2e-16 ***
-#   tillNT:ccNC:nfert40 N  1.52589    0.07305  20.889  < 2e-16 ***
-#   tillRT:ccNC:nfert40 N  1.45823    0.07305  19.962  < 2e-16 ***
-#   tillCT:ccTC:nfert40 N  0.32146    0.07305   4.401 1.09e-05 ***
-#   tillNT:ccTC:nfert40 N  0.37804    0.07305   5.175 2.31e-07 ***
-#   tillRT:ccTC:nfert40 N -0.00623    0.07305  -0.085   0.9320    
-# tillCT:ccLC:nfert50 N  0.55396    0.07305   7.583 3.57e-14 ***
-#   tillNT:ccLC:nfert50 N  0.79779    0.07305  10.921  < 2e-16 ***
-#   tillRT:ccLC:nfert50 N  0.12642    0.07305   1.731   0.0835 .  
-# tillCT:ccNC:nfert50 N  1.60101    0.07305  21.917  < 2e-16 ***
-#   tillNT:ccNC:nfert50 N  1.53212    0.07305  20.974  < 2e-16 ***
-#   tillRT:ccNC:nfert50 N  1.46446    0.07305  20.048  < 2e-16 ***
-#   tillCT:ccTC:nfert50 N  0.32769    0.07305   4.486 7.32e-06 ***
-#   tillNT:ccTC:nfert50 N  0.38427    0.07305   5.260 1.46e-07 ***
-#   tillRT:ccTC:nfert50 N       NA         NA      NA       NA    
+# (Intercept)                     -0.793801   0.051285 -15.478  < 2e-16 ***
+#   tillCT:ccLegC:nfertConventional N  0.556789   0.072528   7.677 1.73e-14 ***
+#   tillNT:ccLegC:nfertConventional N  0.873663   0.072528  12.046  < 2e-16 ***
+#   tillRT:ccLegC:nfertConventional N  0.129646   0.072528   1.788   0.0739 .  
+# tillCT:ccNC:nfertConventional N  1.614998   0.072528  22.267  < 2e-16 ***
+#   tillNT:ccNC:nfertConventional N  1.553870   0.072528  21.424  < 2e-16 ***
+#   tillRT:ccNC:nfertConventional N  1.481212   0.072528  20.423  < 2e-16 ***
+#   tillCT:ccBarC:nfertConventional N  0.332445   0.072528   4.584 4.61e-06 ***
+#   tillNT:ccBarC:nfertConventional N  0.403891   0.072528   5.569 2.61e-08 ***
+#   tillRT:ccBarC:nfertConventional N  0.006185   0.072528   0.085   0.9320    
+# tillCT:ccLegC:nfertReduced N       0.550604   0.072528   7.592 3.35e-14 ***
+#   tillNT:ccLegC:nfertReduced N       0.867478   0.072528  11.961  < 2e-16 ***
+#   tillRT:ccLegC:nfertReduced N       0.123461   0.072528   1.702   0.0887 .  
+# tillCT:ccNC:nfertReduced N       1.608814   0.072528  22.182  < 2e-16 ***
+#   tillNT:ccNC:nfertReduced N       1.547685   0.072528  21.339  < 2e-16 ***
+#   tillRT:ccNC:nfertReduced N       1.475028   0.072528  20.337  < 2e-16 ***
+#   tillCT:ccBarC:nfertReduced N       0.326261   0.072528   4.498 6.90e-06 ***
+#   tillNT:ccBarC:nfertReduced N       0.397706   0.072528   5.483 4.24e-08 ***
+#   tillRT:ccBarC:nfertReduced N             NA         NA      NA       NA    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 1.476 on 14670 degrees of freedom
-# Multiple R-squared:  0.1387,	Adjusted R-squared:  0.1377 
-# F-statistic: 138.9 on 17 and 14670 DF,  p-value: < 2.2e-16
+# Residual standard error: 1.479 on 14958 degrees of freedom
+# Multiple R-squared:  0.1403,	Adjusted R-squared:  0.1393 
+# F-statistic: 143.6 on 17 and 14958 DF,  p-value: < 2.2e-16
 
-aovn2o <- aov(ghg_total_n2o ~till:cc:nfert, data=ghgdat.g)  
-aovsoc <- aov(ghg_dsoc ~till:cc:nfert, data=ghgdat.g)  
-aovnet <- aov(ghg ~till:cc:nfert, data=ghgdat.g)  
+aovn2o <- aov(ghg_total_n2o ~till:cc:nfert, data=ghgdat)  
+aovsoc <- aov(ghg_dsoc ~till:cc:nfert, data=ghgdat)  
+aovnet <- aov(ghg ~till:cc:nfert, data=ghgdat)  
 
 summary(aovn2o)
 # Df Sum Sq Mean Sq F value Pr(>F)    
-# till:cc:nfert    17   6825   401.5    1134 <2e-16 ***
-#   Residuals     14670   5194     0.4                   
+# till:cc:nfert    17   7303   429.6    1153 <2e-16 ***
+#   Residuals     14958   5573     0.4                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 summary(aovsoc)
 # Df Sum Sq Mean Sq F value Pr(>F)    
-# till:cc:nfert    17  14778   869.3   514.8 <2e-16 ***
-#   Residuals     14670  24771     1.7                   
+# till:cc:nfert    17  15377   904.5   527.7 <2e-16 ***
+#   Residuals     14958  25638     1.7                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 summary(aovnet)
 # Df Sum Sq Mean Sq F value Pr(>F)    
-# till:cc:nfert    17   5142  302.45   138.9 <2e-16 ***
-#   Residuals     14670  31939    2.18                   
+# till:cc:nfert    17   5341  314.15   143.6 <2e-16 ***
+#   Residuals     14958  32733    2.19                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
@@ -242,7 +244,7 @@ Tukoutn2o <- TukeyHSD(aovn2o)
 #   arrange(term)
 
 Tukoutsoc <- TukeyHSD(aovsoc)
-Tukoutnet <- TukeyHSD(aovnet)
+Tukoutnet <- TukeyHSD(aovnet)          
 
 
 # compact letter display (cld)  ~ letters for bars
@@ -251,7 +253,7 @@ cldsoc<- multcompView::multcompLetters4(aovsoc, Tukoutsoc)
 cldnet<- multcompView::multcompLetters4(aovnet, Tukoutnet)
 
 # table with letters n2o
-ghgn2osum <- group_by(ghgdat.a, cc, till, nfert) %>%
+ghgn2osum <- group_by(ghgdat, cc, till, nfert) %>%
   summarize(mean.n2o=mean(ghg_total_n2o), 
             se.n2o=se(ghg_total_n2o)) %>%
   arrange(desc(mean.n2o))
@@ -261,7 +263,7 @@ ghgn2osum$cldn2o <- cldn2o$Letters
 
 
 # table with letters dsoc
-ghgsocsum <-group_by(ghgdat.a, cc, till, nfert) %>%
+ghgsocsum <-group_by(ghgdat, cc, till, nfert) %>%
   summarize(mean.soc=mean(ghg_dsoc), 
             se.soc=se(ghg_dsoc)) %>%
   arrange(desc(mean.soc))
@@ -270,7 +272,7 @@ cldsoc<- as.data.frame.list(cldsoc$`till:cc:nfert`)
 ghgsocsum$cldsoc <- cldsoc$Letters
 
 # table with letters net
-ghgnetsum <- group_by(ghgdat.a, cc, till, nfert) %>%
+ghgnetsum <- group_by(ghgdat, cc, till, nfert) %>%
   summarize(mean.net=mean(ghg), 
             se.net=se(ghg)) %>%
   arrange(desc(mean.net))
@@ -285,77 +287,215 @@ ghgsummary <- left_join(ghgsocsum, ghgn2osum) %>%
 rm(ghgsocsum, ghgn2osum, ghgnetsum, cldn2o, cldnet, cldsoc)
 
 
+### simpler version - average across all years, SOC only
 
-# make plot with letters
+ghgann <- ghgdat %>%
+  filter(nfert=="Conventional N", till %in% c("CT", "NT")) %>%  # not big diffs between the 2 so just use the recommended
+  group_by(till, cc) %>%  # , crop # calculate means and se across all sites and all years
+  summarize( #net.mean=mean(ghg),
+    # net.se=se(ghg),
+    ghgdsoc.mean = mean(ghg_dsoc),
+    ghgdsoc.se=se(ghg_dsoc)) %>%
+  #ghgn2o.mean = mean(ghg_total_n2o),
+  # ghgn2o.se = se(ghg_total_n2o)) %>%
+  melt(id=c("till", "cc")) %>%  # , "crop", "nfert"
+  rename(var1=variable) %>%
+  mutate(mean.se = ifelse(grepl(pattern="mean", x=var1), "mean", "se"),
+         var2 = ifelse(mean.se=="mean", gsub(pattern = ".mean", replacement="", x=var1), 
+                       gsub(pattern = ".se", replacement="", x=var1))) %>%
+  dplyr::select(-var1) %>%
+  dcast(till + cc  +var2 ~mean.se) # + crop 
+
+ghgann$mean.ac <- ghgann$mean/2.471
+ghgann$se.ac <- ghgann$se/2.471
+ghgann
+# till cc    var2       mean         se    mean.ac       se.ac
+# 1   CT LegC ghgdsoc -1.9249636 0.06982288 -0.7790221 0.028256932
+# 2   CT NC ghgdsoc  0.3185768 0.01594594  0.1289263 0.006453234
+# 3   CT BarC ghgdsoc -0.9278979 0.02292538 -0.3755151 0.009277772
+# 4   NT LegC ghgdsoc -2.2592226 0.07638711 -0.9142948 0.030913439
+# 5   NT NC ghgdsoc  0.2613465 0.01732773  0.1057655 0.007012437
+# 6   NT BarC ghgdsoc -1.0768766 0.02374665 -0.4358060 0.009610136
+
+unique(ghgdat$cc)
+unique(ghgdat$till)
+effectsoc <-  aov(ghg_dsoc ~till*cc, data=ghgdat[ghgdat$till %in% c("NT", "CT") & ghgdat$nfert=="Conventional N",])  # 
+summary(effectsoc)
+# Df Sum Sq Mean Sq  F value   Pr(>F)    
+# till           1     41    40.5   23.644 1.19e-06 ***
+#   cc             2   4732  2366.2 1381.197  < 2e-16 ***
+#   till:cc        2     17     8.3    4.836  0.00798 ** 
+#   Residuals   4986   8542     1.7                      
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Tukoutsoc <- TukeyHSD(effectsoc)
+Tukoutsoc
+# Tukey multiple comparisons of means
+# 95% family-wise confidence level
+# 
+# Fit: aov(formula = ghg_dsoc ~ till * cc, data = ghgdat[ghgdat$till %in% c("NT", "CT") & ghgdat$nfert == "Conventional N", ])
+# 
+# $till
+# diff      lwr       upr   p adj
+# NT-CT -0.180156 -0.25279 -0.107522 1.2e-06
+# 
+# $cc
+# diff        lwr       upr p adj
+# NC-LegC  2.382055  2.2756737  2.488436     0
+# BarC-LegC  1.089706  0.9833248  1.196087     0
+# BarC-NC -1.292349 -1.3987299 -1.185968     0
+# 
+# $`till:cc`
+# diff        lwr         upr     p adj
+# NT:LegC-CT:LegC -0.33425898 -0.5172022 -0.15131575 0.0000029
+# CT:NC-CT:LegC  2.24354041  2.0605972  2.42648364 0.0000000
+# NT:NC-CT:LegC  2.18631005  2.0033668  2.36925328 0.0000000
+# CT:BarC-CT:LegC  0.99706571  0.8141225  1.18000894 0.0000000
+# NT:BarC-CT:LegC  0.84808697  0.6651437  1.03103020 0.0000000
+# CT:NC-NT:LegC  2.57779939  2.3948562  2.76074262 0.0000000
+# NT:NC-NT:LegC  2.52056903  2.3376258  2.70351226 0.0000000
+# CT:BarC-NT:LegC  1.33132468  1.1483815  1.51426791 0.0000000
+# NT:BarC-NT:LegC  1.18234594  0.9994027  1.36528917 0.0000000
+# NT:NC-CT:NC -0.05723036 -0.2401736  0.12571287 0.9485773
+# CT:BarC-CT:NC -1.24647470 -1.4294179 -1.06353148 0.0000000
+# NT:BarC-CT:NC -1.39545345 -1.5783967 -1.21251022 0.0000000
+# CT:BarC-NT:NC -1.18924434 -1.3721876 -1.00630111 0.0000000
+# NT:BarC-NT:NC -1.33822308 -1.5211663 -1.15527986 0.0000000
+# NT:BarC-CT:BarC -0.14897874 -0.3319220  0.03396449 0.1854642
+cldsoc<- multcompView::multcompLetters4(effectsoc, Tukoutsoc)
+cldsoc<- as.data.frame.list(cldsoc$`till:cc`)
+ghgann <- arrange(ghgann, desc(mean))
+ghgann$cld <- cldsoc$Letters
+ghgann
+# till cc    var2       mean         se    mean.ac       se.ac cld
+# 1   CT NC ghgdsoc  0.3185768 0.01594594  0.1289263 0.006453234   a
+# 2   NT NC ghgdsoc  0.2613465 0.01732773  0.1057655 0.007012437   a
+# 3   CT BarC ghgdsoc -0.9278979 0.02292538 -0.3755151 0.009277772   b
+# 4   NT BarC ghgdsoc -1.0768766 0.02374665 -0.4358060 0.009610136   b
+# 5   CT LegC ghgdsoc -1.9249636 0.06982288 -0.7790221 0.028256932   c
+# 6   NT LegC ghgdsoc -2.2592226 0.07638711 -0.9142948 0.030913439   d
+# barley compared to NC
+(mean(c(0.32, 0.26))-mean(c(-0.93, -1.08)))/(mean(c(0.32, 0.26)))  # 446% or 1.30 t
+# faba bean compared to NC
+(mean(c(0.32, 0.26))-mean(c(-1.92, -2.26)))/(mean(c(0.32, 0.26)))  # 821% or 2.38 t
+# faba CT vs NT
+(-1.92--2.26)/-1.92  # 18%  or 0.34 t
+
+
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
+pal2 <- c("#20243d", "#669947")  #  "#C2e4ef",
 
-       
-ggplot() +
-  # n2o bars, error bars, letters
-  geom_bar(data=ghgdec[ghgdec$var == "ghgn2o" & ghgdec$crop_name == "grape",], # need separate call for bars for n2o, for soc, and points for net
-           aes(x=nfert, y=mean, group=decade), 
-           stat="identity", position=position_dodge(), fill="#ee8866", alpha=0.7, color="#bb5566") + #, color="gray20") +
-  geom_errorbar(data=ghgdec[ghgdec$var=="ghgn2o" & ghgdec$crop_name == "grape",], # ghgdec$crop == "corn" &
-                aes(x=nfert, ymin= mean-se, ymax=mean+se, group=decade),  
-                width=0.3, position=position_dodge(0.9),color="#882255") +
-  #geom_bar(data=ghgsummary, aes(x=nfert, y=mean.n2o), stat="identity", color=NA, fill=NA) +
-  geom_text(data=ghgsummary, aes(x=nfert, label=cldn2o, 
-                                 y=ifelse(mean.n2o<1.5, mean.n2o + 0.2*mean.n2o, mean.n2o+0.35*mean.n2o)), 
-            vjust=-0.5, color="#882255", size=4, fontface="bold") +
- 
-  
-  # dsoc bars, error bars, letters
-  geom_bar(data=ghgdec[ghgdec$var == "ghgdsoc" & ghgdec$crop_name == "grape",],  # need separate call for bars for n2ghgdec$till %in% c("CT", "NT"),], # for AGU only showing CT and NT not RT to simplify a bit
-    aes(x=nfert, y=mean, group=decade),  
-    stat="identity", position=position_dodge(), fill="#99ddff", alpha=0.7, color="#33bbee") + #, color="gray20") +
-  geom_errorbar(data=ghgdec[ghgdec$var=="ghgdsoc" & ghgdec$crop_name == "grape",],
-               aes(x=nfert, ymin= mean-se, ymax=mean+se, group=decade),  
-               width=0.3, position=position_dodge(0.9), color="#33bbee") +
-  #geom_bar(data=ghgsummary, aes(x=nfert, y=mean.soc), stat="identity", color=NA, fill=NA) +
-  geom_text(data=ghgsummary, aes(x=nfert, label=cldsoc, 
-                                 y=ifelse(mean.soc>-1, mean.soc + 0.5*mean.soc, mean.soc+0.35*mean.soc)), 
-            vjust=-0.5, color="#0077BB", size=4, fontface="bold") +
-  
-  # zero-lin
-  geom_hline(yintercept=0, color="#009988", linewidth=0.5) +
-  
-  # net points letters
-  # geom_line(data=ghgdec[ghgdec$var == "net" &
-  #                             ghgdec$till %in% c("CT", "NT"),],
-  #            aes(x=nfert, y=mean),
-  #            alpha=0.6, linewidth=1, position=position_dodge(0.9)) +  # color="gray25", 
-  geom_point(data=ghgdec[ghgdec$var == "net" & ghgdec$crop_name == "grape",],
-             aes(x=nfert, y=mean, group=decade),
-             color="gray25", size=0.5, position=position_dodge(0.9)) +
-  geom_errorbar(data=ghgdec[ghgdec$var=="net" & ghgdec$crop_name == "grape",], 
-              aes(x=nfert, ymin= mean-se, ymax=mean+se, group=decade),  
-              width=0.3, position=position_dodge(0.9), color="gray35") +
-  geom_text(data=ghgsummary, aes(x=nfert, label=cldnet, y=mean.net-0.3),
-                                 color="black", size=4, fontface="bold.italic")+
-
+ggplot(ghgann, aes(x=till, y=-1*mean.ac)) +  # multiply by -1 to make dSOC (in raw data increase in SOC is shown as a negative emission)
+  geom_bar(stat="identity", position=position_dodge(), aes(fill=till), width=0.6) + #, color="gray20") + color="#33bbee"
+  geom_errorbar(aes(ymin= -1*mean.ac-se.ac, ymax=-1*mean.ac+se.ac),  
+                width=0.3, position=position_dodge(0.9), color="#20243d") +
+  scale_fill_manual(values=pal2) + 
+  # letters
+  # geom_text(aes(label=cld),
+  #           nudge_y =ifelse(ghgann$mean.ac>0, -0.1, +0.1),
+  #           color="#20243d", size=7, fontface="bold") +
+  # zero-line
+  geom_hline(yintercept=0, color="#20243d", linewidth=0.5) +
   # make it pretty
-  facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))),  #, "RT"
-             cols=vars(factor(cc, levels=c("NC", "TC", "LC"))), 
-                      # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
+  facet_grid(cols=vars(factor(cc, levels=c("NC", "BarC", "LegC"))),  # factor(till, levels=c("CT", "NT"))), 
+             # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
              labeller = as_labeller(
-               c("NC"="No Cover Crop", "TC"="Barley Cover", "LC" = "Legume Cover",
-                 "CT" = "Conventional Till", "RT" = "Reduced Till", "NT" = "No Till"))) +  #, "RT"="Reduced Till"))) +
-                 #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recomm. N"))) +
+               c("NC"="No Cover Crop", "BarC" = "Triticale Cover", "LegC"="Legume Cover"))) +
+  #"CT" = "Conventional Till",  "NT" = "No Till"))) +  #, "RT"="Reduced Till"))) +
+  #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recomm. N"))) +
   # scale_fill_manual(values=c("#eaeccc", "#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"),
   #                   name="Decade")+ #, name="N management") +
   xlab("Decade") +
-  ylab(expression('Mean annual emissions (CO'[2]*'e ha'^-1*')')) +
-  # scale_y_continuous(breaks=seq(-3,2,1), limits=c(-3,2.8)) +
- 
+  ylab(expression(bold('Mean change in SOC (CO'[2]*'e per acre)'))) +
+  # scale_y_continuous(breaks=seq(-0.1, 0.7, 0.1), limits=c(-0.15, 0.75)) +
+  scale_y_continuous(breaks=seq(-0.2,1,0.2), limits=c(-0.2,1)) +
+  
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
-    panel.background = element_rect(fill = 'gray95'))
-  
-  
+    panel.background = element_rect(fill = 'gray97'),
+    axis.text.x=element_text(angle=-30, hjust=0.5, vjust=0, size=12, face="bold"),
+    axis.text.y=element_text(size=12, face="bold"),
+    plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=13, face="bold"),
+    strip.text=element_text(face="bold", size=11))
 
-ggsave("plots/ghgs/CA_grape_decadal mean net em RCP60_with letters.png", width=8, height=6, dpi=300)
+
+
+ggsave("plots/ghgs/CA_grape_mean dSOC cc, till_no letters.png", width=7, height=4, dpi=300)
+
+
+
+# # make stacked bar plot with letters
+# windows(xpinch=200, ypinch=200, width=5, height=5)
+# 
+#        
+# ggplot() +
+#   # n2o bars, error bars, letters
+#   geom_bar(data=ghgdec[ghgdec$var == "ghgn2o" & ghgdec$crop_name == "grape",], # need separate call for bars for n2o, for soc, and points for net
+#            aes(x=nfert, y=mean, group=decade), 
+#            stat="identity", position=position_dodge(), fill="#ee8866", alpha=0.7, color="#bb5566") + #, color="gray20") +
+#   geom_errorbar(data=ghgdec[ghgdec$var=="ghgn2o" & ghgdec$crop_name == "grape",], # ghgdec$crop == "corn" &
+#                 aes(x=nfert, ymin= mean-se, ymax=mean+se, group=decade),  
+#                 width=0.3, position=position_dodge(0.9),color="#882255") +
+#   #geom_bar(data=ghgsummary, aes(x=nfert, y=mean.n2o), stat="identity", color=NA, fill=NA) +
+#   geom_text(data=ghgsummary, aes(x=nfert, label=cldn2o, 
+#                                  y=ifelse(mean.n2o<1.5, mean.n2o + 0.2*mean.n2o, mean.n2o+0.35*mean.n2o)), 
+#             vjust=-0.5, color="#882255", size=4, fontface="bold") +
+#  
+#   
+#   # dsoc bars, error bars, letters
+#   geom_bar(data=ghgdec[ghgdec$var == "ghgdsoc" & ghgdec$crop_name == "grape",],  # need separate call for bars for n2ghgdec$till %in% c("CT", "NT"),], # for AGU only showing CT and NT not RT to simplify a bit
+#     aes(x=nfert, y=mean, group=decade),  
+#     stat="identity", position=position_dodge(), fill="#99ddff", alpha=0.7, color="#33bbee") + #, color="gray20") +
+#   geom_errorbar(data=ghgdec[ghgdec$var=="ghgdsoc" & ghgdec$crop_name == "grape",],
+#                aes(x=nfert, ymin= mean-se, ymax=mean+se, group=decade),  
+#                width=0.3, position=position_dodge(0.9), color="#33bbee") +
+#   #geom_bar(data=ghgsummary, aes(x=nfert, y=mean.soc), stat="identity", color=NA, fill=NA) +
+#   geom_text(data=ghgsummary, aes(x=nfert, label=cldsoc, 
+#                                  y=ifelse(mean.soc>-1, mean.soc + 0.5*mean.soc, mean.soc+0.35*mean.soc)), 
+#             vjust=-0.5, color="#0077BB", size=4, fontface="bold") +
+#   
+#   # zero-lin
+#   geom_hline(yintercept=0, color="#009988", linewidth=0.5) +
+#   
+#   # net points letters
+#   # geom_line(data=ghgdec[ghgdec$var == "net" &
+#   #                             ghgdec$till %in% c("CT", "NT"),],
+#   #            aes(x=nfert, y=mean),
+#   #            alpha=0.6, linewidth=1, position=position_dodge(0.9)) +  # color="gray25", 
+#   geom_point(data=ghgdec[ghgdec$var == "net" & ghgdec$crop_name == "grape",],
+#              aes(x=nfert, y=mean, group=decade),
+#              color="gray25", size=0.5, position=position_dodge(0.9)) +
+#   geom_errorbar(data=ghgdec[ghgdec$var=="net" & ghgdec$crop_name == "grape",], 
+#               aes(x=nfert, ymin= mean-se, ymax=mean+se, group=decade),  
+#               width=0.3, position=position_dodge(0.9), color="gray35") +
+#   geom_text(data=ghgsummary, aes(x=nfert, label=cldnet, y=mean.net-0.3),
+#                                  color="black", size=4, fontface="bold.italic")+
+# 
+#   # make it pretty
+#   facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))),  #, "RT"
+#              cols=vars(factor(cc, levels=c("NC", "BarC", "LegC"))), 
+#                       # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
+#              labeller = as_labeller(
+#                c("NC"="No Cover Crop", "BarC"="Barley Cover", "LegC" = "Legume Cover",
+#                  "CT" = "Conventional Till", "RT" = "Reduced Till", "NT" = "No Till"))) +  #, "RT"="Reduced Till"))) +
+#                  #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recomm. N"))) +
+#   # scale_fill_manual(values=c("#eaeccc", "#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"),
+#   #                   name="Decade")+ #, name="N management") +
+#   xlab("Decade") +
+#   ylab(expression('Mean annual emissions (CO'[2]*'e ha'^-1*')')) +
+#   # scale_y_continuous(breaks=seq(-3,2,1), limits=c(-3,2.8)) +
+#  
+#   theme(
+#     panel.grid.minor=element_blank(), 
+#     panel.grid.major=element_blank(),
+#     panel.background = element_rect(fill = 'gray95'))
+#   
+#   
+# 
+# ggsave("plots/ghgs/CA_grape_decadal mean net em RCP60_with letters.png", width=8, height=6, dpi=300)
 
 
 
@@ -373,70 +513,61 @@ ghgsummary <- mutate(ghgsummary,
                         se.net.ac=se.net*2.47105)
 
 
-ggplot(data=ghgsummary, aes(x=nfert)) +
-  # n2o bars, error bars, letters
-  geom_bar(aes(y=mean.n2o.ac), 
-    stat="identity", position=position_dodge(), fill="#c44f2d", alpha=0.4) + #, color="gray20") +
-  # geom_errorbar(aes(ymin= mean.n2o-se.n2o, ymax=mean.n2o+se.n2o),  
-  #               width=0.3, position=position_dodge(0.9),color="#882255") +
-  geom_text(data=ghgsummary, aes(x=nfert, label=cldn2o, 
-                                 y=mean.n2o.ac + 0.3),
-                                 # y=ifelse(mean.n2o<1.5, mean.n2o + 0.2*mean.n2o, mean.n2o+0.35*mean.n2o)), 
-              color="#882255", size=4, fontface="bold") +
-  # 
-  
-  # dsoc bars, error bars, letters
-  geom_bar(aes(y=mean.soc.ac),  
-           stat="identity", position=position_dodge(), fill="#20243d", alpha=0.4) + #, color="gray20") +
-  # geom_errorbar(aes(ymin= mean.soc-se.soc, ymax=mean.soc+se.soc),  
-  #               width=0.3, position=position_dodge(0.9), color="#33bbee") +
-  geom_text(data=ghgsummary, aes(x=nfert, label=cldsoc, 
-                              y=mean.soc.ac -0.5),
-                                 #y=ifelse(mean.soc>-1, mean.soc + 0.5*mean.soc, mean.soc+0.35*mean.soc)), 
-         color="#0077BB", size=4, fontface="bold") +
-  
-  # zero-line
-  geom_hline(yintercept=0, color="#20243d", linewidth=0.5) +
-  
-  # net points
-  geom_point(aes(y=mean.net.ac),
-             color="#20243d", size=0.8, position=position_dodge(0.9)) +
-  # geom_errorbar(aes(ymin= mean.net-se.net, ymax=mean.net+se.net),  
-  #               width=0.3, position=position_dodge(0.9), color="gray35") +
-  geom_text(data=ghgsummary, aes(label=cldnet, y=mean.net.ac-0.3),
-            color="#20243d", size=4, fontface="bold.italic")+
-  
-  # make it pretty
-  facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))),  #, "RT"
-             cols=vars(factor(cc, levels=c("NC", "TC", "LC"))), 
-             # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
-             labeller = as_labeller(
-               c("NC"="No Cover Crop", "TC" = "Barley Cover", "LC"="Legume Cover",
-                 "CT" = "Conventional Till", "RT" = "Reduced Till", "NT" = "No Till"))) +  #, "RT"="Reduced Till"))) +
-  #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recomm. N"))) +
-  # scale_fill_manual(values=c("#eaeccc", "#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"),
-  #                   name="Decade")+ #, name="N management") +
-
-  ylab(expression('Mean annual emissions (tonnes CO'[2]*'e per acre)')) +
-  # scale_y_continuous(breaks=seq(-6,5,1), limits=c(-6,5)) +
-  
-  theme(
-    panel.grid.minor=element_blank(), 
-    panel.grid.major=element_blank(),
-    panel.background = element_rect(fill = 'gray95'))
-
-
-
-ggsave("plots/ghgs/CA_grape_mean 2022-2072 em RCP60_with letters.png", width=6, height=7, dpi=300)
-
-
-
-
-
-
-
-
-
+# ggplot(data=ghgsummary, aes(x=nfert)) +
+#   # n2o bars, error bars, letters
+#   geom_bar(aes(y=mean.n2o.ac), 
+#     stat="identity", position=position_dodge(), fill="#c44f2d", alpha=0.4) + #, color="gray20") +
+#   # geom_errorbar(aes(ymin= mean.n2o-se.n2o, ymax=mean.n2o+se.n2o),  
+#   #               width=0.3, position=position_dodge(0.9),color="#882255") +
+#   geom_text(data=ghgsummary, aes(x=nfert, label=cldn2o, 
+#                                  y=mean.n2o.ac + 0.3),
+#                                  # y=ifelse(mean.n2o<1.5, mean.n2o + 0.2*mean.n2o, mean.n2o+0.35*mean.n2o)), 
+#               color="#882255", size=4, fontface="bold") +
+#   # 
+#   
+#   # dsoc bars, error bars, letters
+#   geom_bar(aes(y=mean.soc.ac),  
+#            stat="identity", position=position_dodge(), fill="#20243d", alpha=0.4) + #, color="gray20") +
+#   # geom_errorbar(aes(ymin= mean.soc-se.soc, ymax=mean.soc+se.soc),  
+#   #               width=0.3, position=position_dodge(0.9), color="#33bbee") +
+#   geom_text(data=ghgsummary, aes(x=nfert, label=cldsoc, 
+#                               y=mean.soc.ac -0.5),
+#                                  #y=ifelse(mean.soc>-1, mean.soc + 0.5*mean.soc, mean.soc+0.35*mean.soc)), 
+#          color="#0077BB", size=4, fontface="bold") +
+#   
+#   # zero-line
+#   geom_hline(yintercept=0, color="#20243d", linewidth=0.5) +
+#   
+#   # net points
+#   geom_point(aes(y=mean.net.ac),
+#              color="#20243d", size=0.8, position=position_dodge(0.9)) +
+#   # geom_errorbar(aes(ymin= mean.net-se.net, ymax=mean.net+se.net),  
+#   #               width=0.3, position=position_dodge(0.9), color="gray35") +
+#   geom_text(data=ghgsummary, aes(label=cldnet, y=mean.net.ac-0.3),
+#             color="#20243d", size=4, fontface="bold.italic")+
+#   
+#   # make it pretty
+#   facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))),  #, "RT"
+#              cols=vars(factor(cc, levels=c("NC", "BarC", "LegC"))), 
+#              # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
+#              labeller = as_labeller(
+#                c("NC"="No Cover Crop", "BarC" = "Barley Cover", "LegC"="Legume Cover",
+#                  "CT" = "Conventional Till", "RT" = "Reduced Till", "NT" = "No Till"))) +  #, "RT"="Reduced Till"))) +
+#   #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recomm. N"))) +
+#   # scale_fill_manual(values=c("#eaeccc", "#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"),
+#   #                   name="Decade")+ #, name="N management") +
+# 
+#   ylab(expression('Mean annual emissions (tonnes CO'[2]*'e per acre)')) +
+#   # scale_y_continuous(breaks=seq(-6,5,1), limits=c(-6,5)) +
+#   
+#   theme(
+#     panel.grid.minor=element_blank(), 
+#     panel.grid.major=element_blank(),
+#     panel.background = element_rect(fill = 'gray95'))
+# 
+# 
+# 
+# ggsave("plots/ghgs/CA_grape_mean 2022-2072 em RCP60_with letters.png", width=6, height=7, dpi=300)
 
 
 
