@@ -277,26 +277,138 @@ npyrlongnoRT$selbac <- npyrlongnoRT$se*2.20462/2.47105
 ggplot(data=npyrlongnoRT, 
        aes(x=nfert, y=meanlbac, fill=nfert)) +   # fill=variable
   geom_bar(stat="identity", position=position_dodge(), show.legend=F) + # color="#332288", 
-  geom_errorbar(aes(ymin=meanlbac-selbac, ymax=meanlbac+selbac), width=0.3, position=position_dodge(0.9)) +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))), 
-             cols=vars(factor(cc, levels=c("NC", "CC"))), 
-             #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
-             labeller = as_labeller(
-               c(NC="No Cover Crop",CC="Has Cover Crop", 
-                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
+  geom_errorbar(aes(ymin=meanlbac-selbac, ymax=meanlbac+selbac), 
+                width=0.3, position=position_dodge(0.9), color="#20243d") +
+  # facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),   2x2 facets
+  #            cols=vars(factor(cc, levels=c("NC", "CC"))), 
+  #            #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
+  #            labeller = as_labeller(
+  #              c(NC="No Cover Crop",CC="Has Cover Crop", 
+  #                "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
                  # "Fall N" = "Fall\nN", "High N" = "High\nN", "Recommended N"="Recm'd\nN"))) +
-  scale_fill_manual(values=c("#c44f2d","#20243d", "#C2e4ef")) +
+  facet_grid(  # 1 x 4 facets
+    cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
+    labeller = as_labeller(
+      c(NC="No Cover Crop", CC="Rye Cover Crop", 
+        "CT" = "Conventional Till", "NT" = "No Till"))) +
+  geom_hline(yintercept=0, color="#20243d") +
+  
+  scale_fill_manual(values=c("#20243d", "#C2e4ef", "#669947")) +
   xlab("N management") +
   ylab("Mean annual N loss (lb per ac) 2022 to 2072") +
   # scale_x_discrete(breaks=c("Fall N", "High N", "Recommended N"),
   #                  labels=c("Fall\nN", "High\N", "Recm'd\nN")) +
-  geom_text(aes(x=nfert, y=meanlbac+10, label=cld), size=5, fontface="bold") +
+  # geom_text(aes(x=nfert, y=meanlbac+10, label=cld), size=5, fontface="bold") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-# ggsave("plots/water, nitrate, sediments/IL_NO3 losses mean annual bars lbac.png", width=7, height=6, dpi=300)
+ggsave("plots/water, nitrate, sediments/IL_NO3 losses mean annual bars lbac 1x4 no letters.png", width=6, height=3, dpi=300)
+
+
+# percent differences
+# rye cover (with conventional till) reduced NO3- in Fall N by
+cc.ct.fn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="Fall N"]-
+               npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Fall N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="Fall N"]
+#  0.4113
+# rye cover (with conventional till) reduced NO3- in high N by
+cc.ct.hn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="High N"] - 
+               npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="High N"]) /
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="High N"]
+#  0.5088
+# rye cover (with conventional till) reduced NO3- in recommended N by
+cc.ct.rn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="Recommended N"]-
+               npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="Recommended N"]
+#  0.5804
+mean(c(cc.ct.fn, cc.ct.hn, cc.ct.rn))  # 0.5002
+
+
+# rye cover PLUS NO TIL reduced NO3- BY ANOTHER (compared to CC + CT above) in Fall N by
+cc.nt.fn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Fall N"] -
+               npyrlongnoRT$mean[npyrlongnoRT$till=="NT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Fall N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Fall N"]
+#  0.0906
+# rye cover PLUS NO TIL reduced NO3- BY ANOTHER (compared to CC + CT above) in high N by
+cc.nt.hn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="High N"] -
+               npyrlongnoRT$mean[npyrlongnoRT$till=="NT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="High N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="High N"]
+#  0.1067
+# rye cover PLUS NO TIL reduced NO3- BY ANOTHER (compared to CC + CT above) recommended N by
+cc.nt.rn <- (npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"] -
+               npyrlongnoRT$mean[npyrlongnoRT$till=="NT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"])/
+  npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"]
+#  0.1152
+mean(c(cc.nt.fn, cc.nt.hn, cc.nt.rn))  # 0.104
+
+# an 80 acre field with NC + CT + high N would lose 
+loss.ctnchn80 <- npyrlongnoRT$mean[npyrlongnoRT$till=="CT" & npyrlongnoRT$cc=="NC" & npyrlongnoRT$nfert=="High N"] * 80
+# 5732 lb
+loss.ctnchn80dollars <- loss.ctnchn80*0.6
+# $3439
+
+# an 80 acre field with CC + NT + recommended N would lose 
+loss.ntccrn80 <- npyrlongnoRT$mean[npyrlongnoRT$till=="NT" & npyrlongnoRT$cc=="CC" & npyrlongnoRT$nfert=="Recommended N"] * 80
+# 1592.439 lb
+loss.ntccrn80dollars <- loss.ntccrn80*0.6
+# 955
+
+
+### above plot but as difference from Fall N
+
+falln <- filter(npyrlongnoRT, nfert=="Fall N") %>%
+  rename("meanlbac.falln" = "meanlbac", "selbac.falln" = "selbac") %>%
+  ungroup(nfert) %>%
+  select(cc, till, meanlbac.falln, selbac.falln)
+
+springn <- filter(npyrlongnoRT, !nfert=="Fall N") %>%
+  select(cc, till, nfert, meanlbac, selbac)
+
+npyrlongnoRT2 <- left_join(springn, falln)
+
+rm(falln, springn)
+
+npyrlongnoRT2$mean.falldiff <- npyrlongnoRT2$meanlbac - npyrlongnoRT2$meanlbac.falln
+
+pal2 <- c("#004a23", "#669947")
+
+
+ggplot(data=npyrlongnoRT2, aes(x=nfert, y=mean.falldiff, fill=nfert)) +
+  geom_bar(stat="identity", position=position_dodge(),  show.legend=F) +  # color="#20243d",
+  geom_errorbar(width=0.3, aes(ymin=mean.falldiff-selbac.falln, 
+                               ymax=mean.falldiff + selbac.falln),  
+                position=position_dodge(0.9),
+                color="#20243d") +
+  facet_grid( # rows=vars(factor(till, levels=c("CT", "NT"))), 
+    cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
+    labeller = as_labeller(
+      c(NC="No Cover Crop", CC="Rye Cover Crop", 
+        "CT" = "Conventional Till", "NT" = "No Till"))) +
+  xlab("N management") +
+  ylab(expression(bold("Nitrate loss difference from fall applied N (lb N per ac)"))) + 
+  scale_x_discrete(breaks=c("High N", "Recommended N"),
+                   labels = c("High N", "Recomm. N")) +
+  # ylim(0,3800)+
+  # geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5,
+  # color="gray20", size=4, fontface="bold") +
+  scale_fill_manual(values=pal2) +
+  scale_y_continuous(expand=c(0,0)) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'),
+    axis.text.x=element_text(angle=-10, hjust=0, size=11),
+    axis.text.y=element_text(size=11),
+    plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=11, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+# # strip.background=element_rect(fill="lightblue", color="black", size=1) 
+
+ggsave("plots/water, nitrate, sediments/IL_NO3 loss_diff from Fall N.png", width=6, height=3, dpi=300)
+
+
 
 
 

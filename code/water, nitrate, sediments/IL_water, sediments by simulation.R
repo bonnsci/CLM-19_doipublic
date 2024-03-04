@@ -25,7 +25,7 @@ se <- function(x) sd(x) / sqrt(length(x))
 # 
 # write.csv(wdatyr, "data/water, nitrate, sediments/water,seds_IL_annualtotals.csv", row.names=F)
 
-wdatyr <- read.csv("data/water, nitrate, sediments/water,seds_IL_annualtotals.csv")
+wdatyr <- read.csv("data/water, nitrate, sediments/IL_water,seds_annualtotals.csv")
 
 
 wdatyr <- wdatyr[wdatyr$year>2021 & wdatyr$year<2073 & wdatyr$climate_scenario=="rcp60",]
@@ -57,7 +57,7 @@ wdatyr$decade <- ifelse(wdatyr$year <2031, "2020s",
 
 wdatyr$et.yr <- wdatyr$evap.yr + wdatyr$trans.yr
 
-# write.csv(wdatyr, "data/water, nitrate, sediments/wdatyr.csv", row.names=F)
+# write.csv(wdatyr, "data/water, nitrate, sediments/IL_wdatyr.csv", row.names=F)
 
 # first sum by site and crop name across all years, then calculate mean across crop types per site, 
 # Then mean and se across sites by treatments/management combinations
@@ -283,28 +283,32 @@ wdat_nositesed <- group_by(wdat_persite, till, cc, variable) %>%
 cldsed <- as.data.frame.list(cldsed$`till:cc`)
 wdat_nositesed$cld <- cldsed$Letters
 
+wpyrlong$mean.tac <- wpyrlong$mean/(907.1847*2.471)
+wpyrlong$se.tac <- wpyrlong$se/(907.1847*2.471)
 
-ggplot(data=wpyrlong[wpyrlong$variable %in% c("sed"),], aes(x=till, y=mean)) +
-  geom_bar(stat="identity", position=position_dodge(), color="sienna4", width=0.8, fill="burlywood3") +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.3, position=position_dodge(0.8),color="sienna4", linewidth=1) +
-  facet_grid( #rows=vars(factor(till, levels=c("CT", "NT", "RT"))), 
-    cols=vars(factor(cc, levels=c("NC", "CC"))), 
-    #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
-    labeller = as_labeller(
-      c(NC="No Cover Crop", CC="Has Cover Crop"))) +
-  # "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
-  #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
-  scale_y_continuous(breaks=seq(0,300, 50), limits=c(0,300)) +
-  scale_x_discrete(breaks = c("CT", "RT", "NT"),
-                   labels = c("Conv.", "Reduced", "No")) +
-  geom_bar(data=wdat_nositesed, 
-           aes(x=till, y=mean), stat="identity", 
-           position=position_dodge(), color=NA, fill=NA) +
-  geom_text(data=wdat_nositesed, 
-            aes(x=till, label=cld, y=mean), vjust=-2,
-            position=position_dodge(0.9), color="gray20", size=4, fontface="bold") +
+wpyrlong$mean.lbac <- wpyrlong$mean/(0.4536*2.471)
+wpyrlong$se.lbac <- wpyrlong$se/(0.4536*2.471)
+
+ggplot(data=wpyrlong[wpyrlong$variable =="sed" & wpyrlong$till %in% c("CT", "NT"),], aes(x=variable, y=mean.lbac)) +
+  geom_bar(stat="identity", position=position_dodge(), width=0.6, fill="burlywood3") +
+  geom_errorbar(aes(ymin=mean.lbac-se.lbac, ymax=mean.lbac+se.lbac), 
+                width=0.3, position=position_dodge(0.8),color="sienna4") +
+  facet_grid(cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
+             # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
+             labeller = as_labeller(
+               c("NC"="No Cover Crop", "CC"="Has Cover Crop",
+                 "CT" = "Conventional Till", "NT" = "No Till"))) +
+  # scale_y_continuous(breaks=seq(0,300, 50), limits=c(0,300)) +
+  # scale_x_discrete(breaks = c("CT", "RT", "NT"),
+                   # labels = c("Conv.", "Reduced", "No")) +
+  # geom_bar(data=wdat_nositesed, 
+  #          aes(x=till, y=mean), stat="identity", 
+  #          position=position_dodge(), color=NA, fill=NA) +
+  # geom_text(data=wdat_nositesed, 
+  #           aes(x=till, label=cld, y=mean), vjust=-2,
+  #           position=position_dodge(0.9), color="gray20", size=4, fontface="bold") +
   xlab("Tillage") +
-  ylab(expression(bold('2022-72 mean annual sediment yield (kg ha'^-1*')'))) +
+  ylab('2022-72 mean annual sediment loss (lb per ac)') +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
@@ -316,7 +320,7 @@ ggplot(data=wpyrlong[wpyrlong$variable %in% c("sed"),], aes(x=till, y=mean)) +
     strip.text=element_text(face="bold", size=11))
 # # strip.background=element_rect(fill="lightblue", color="black", size=1) 
 
-ggsave("plots/water, nitrate, sediments/IL_sediments mean annual barsRCP60_withletters.png", width=5, height=4.5, dpi=300)
+ggsave("plots/water, nitrate, sediments/IL_sediments mean annual barsRCP60_no letters.png", width=5, height=3.5, dpi=300)
 
 
 
