@@ -377,7 +377,51 @@ ggsave("plots/ghgs/IL_simulation mean (crop, site, nfert, all yrs) annual em RCP
 
 
 
+# Same graph as above but SOC only and average across N treatments for farmer report:
 
+ghgsum_noN <- dplyr::select(ghgsummary, cc, till, mean.soc.ac, se.soc.ac) %>%
+  group_by(cc, till) %>%
+  summarize(Nmean.soc.ac = mean(mean.soc.ac), 
+            Nse.soc.ac = mean(se.soc.ac)) %>%
+  mutate(dummy = rep("a", 2))
+
+
+
+ggplot(data=ghgsum_noN, aes(x=dummy)) +
+
+  # dsoc bars, error bars, letters
+  geom_bar(aes(y=Nmean.soc.ac*-1),  
+           stat="identity", position=position_dodge(), fill="#C2e4ef", width=0.6) + #, color="gray20") +
+  geom_errorbar(aes(ymin= (-1*Nmean.soc.ac)-Nse.soc.ac, ymax=(-1*Nmean.soc.ac)+Nse.soc.ac),  
+                width=0.2, position=position_dodge(0.9), color="#20243d") +
+  # geom_text(data=ghgsummary, aes(x=nfert, label=cldsoc, 
+  #                                y=ifelse(mean.soc>-1, mean.soc + 0.5*mean.soc, mean.soc+0.35*mean.soc)), 
+  #           vjust=-0.5, color="#0077BB", size=4, fontface="bold") +
+  
+  # zero-line
+  # geom_hline(yintercept=0, color="#20243d", linewidth=0.5) +
+  
+
+  # make it pretty
+  facet_grid(cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
+             # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
+             labeller = as_labeller(
+               c("NC"="No Cover Crop", "CC"="Has Cover Crop",
+                 "CT" = "Conventional Till", "NT" = "No Till"))) +  #, "RT"="Reduced Till"))) +
+  #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recomm. N"))) +
+  # scale_fill_manual(values=c("#eaeccc", "#FEDA8B", "#FDB366", "#F67E4B", "#DD3D2D", "#A50026"),
+  #                   name="Decade")+ #, name="N management") +
+  
+  ylab(expression('Mean annual change in SOC (tonnes CO'[2]*'e per acre)')) +
+  
+  # scale_y_continuous(breaks=seq(-6,5,1), limits=c(-6,5)) +
+  
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'))
+
+ggsave("plots/ghgs/IL_simulation mean annual SOC buildup_no letters.png", width=5, height=3, dpi=300)
 
 
 

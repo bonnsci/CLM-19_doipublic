@@ -9,13 +9,15 @@ library(MASS) # for boxcox
 se <- function(x) sd(x) / sqrt(length(x))
 
 # load data
-ghgdat <- read.csv("data/simulations/un-weighted_resultsNY.csv")
+ghgdat <- read.csv("data/simulations/un-weighted_resultsNY.csv") # keep the "corn-grain"  "corn-silage" "corn-soy"    "soy-corn"   from this one
+ghgdat2 <- read.csv("data/simulations/un-weighted_resultsNYalf_20240220.csv") # new alfalfa rotation data -- removed irrigation and now have 5 rotations rather than 3 so all crops growing every year
 # as.data.frame(names(ghgdat))
 # names(ghgdat) - all are calendar year sums
 # 1         site_name
 # 2       region_name
 # 3         crop_name  #### this is actually the ROTATION And not the crop grown that year necessarily, see ghgdat$crop made below
 unique(ghgdat$crop_name) # "alfalfa-act" "alfalfa-cta" "alfalfa-tac" "corn-grain"  "corn-silage" "corn-soy"    "soy-corn"  
+unique(ghgdat2$crop_name) # "alfalfa-act"  "alfalfa-act2" "alfalfa-act3" "alfalfa-cta"  "alfalfa-cta2"
 # 4        management 
 unique(ghgdat$management) # "ct-cc" "ct-nc" "nt-cc" "nt-nc" "rt-cc" "rt-nc"
 # 5  climate_scenario
@@ -31,6 +33,14 @@ unique(ghgdat$management) # "ct-cc" "ct-nc" "nt-cc" "nt-nc" "rt-cc" "rt-nc"
 # 15          ghg_n2o sum of DIRECT n2o em in tonne co2e/ha
 # 16 ghg_indirect_n2o sum of indirect n2o em in tonne co2e/ha
 # 17    ghg_total_n2o total n2o em in tonne co2e/ha
+
+
+
+# combine the two datasets
+ghgdat <- ghgdat[ghgdat$crop_name %in% c("corn-grain" , "corn-silage" ,"corn-soy"  ,  "soy-corn"),]
+ghgdat2 <- ghgdat2[,-1]
+ghgdat <- rbind(ghgdat, ghgdat2)
+rm(ghgdat2)
 
 
 ghgdat <- ghgdat[ghgdat$year>2021 & ghgdat$year<2073& ghgdat$climate_scenario=="rcp60",c(1,3:6, 10, 13, 17)]
@@ -71,36 +81,50 @@ ghgdat$decade <- ifelse(ghgdat$year <2031, "2020s",
 
 actcorn <- seq(2017,2072, 5)
 ctacorn <- seq(2013, 2072, 5)
-taccorn <- seq(2018, 2072, 5)
+cta2corn <- seq(2014, 2072, 5)
+act2corn <- seq(2015, 2072, 5)
+act3corn <- seq(2016, 2072, 5)
 
 actalf <- sort(c(seq(2014,2072, 5), seq(2015,2072,5), seq(2016,2072,5)))
 ctaalf <- sort(c(seq(2015,2072, 5), seq(2016,2072,5), seq(2017,2072,5)))
-tacalf <- sort(c(seq(2015,2072, 5), seq(2016,2072,5), seq(2017,2072,5)))
+cta2alf <- sort(c(seq(2016, 2072, 5), seq(2017, 2072, 5), seq(2018, 2072, 5)))
+act2alf <- sort(c(2013, 2014, seq(2017, 2072, 5), seq(2018, 2072, 5), seq(2019, 2072, 5)))
+act3alf <- sort(c(2013, 2014, 2015, seq(2018, 2072, 5), seq(2019, 2072, 5), seq(2020, 2072, 5)))
+
 
 acttri <- seq(2018,2072, 5)
 ctatri <- seq(2019, 2072, 5)
-tactri <- seq(2019, 2072, 5)
+cta2tri <- seq(2015, 2072, 5)
+act2tri <- seq(2016, 2072, 5)
+act3tri <- seq(2017, 2072, 5)
+
 
 
 # label data for the crop they are (depends on the rotation and the year)
-ghgdat$crop <- ifelse(ghgdat$crop=="corn-soy" & ghgdat$year%%2 ==0, "soy cs",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
-                      ifelse(ghgdat$crop=="corn-soy" & !ghgdat$year%%2 ==0, "corn grain cs",  # cs= to indicate corn-soy rotation
-                             ifelse(ghgdat$crop=="soy-corn" & ghgdat$year%%2 ==0, "corn grain cs",
-                                    ifelse(ghgdat$crop=="soy-corn" & !ghgdat$year%%2 ==0, "soy cs", 
-                                           ifelse(ghgdat$crop=="corn-grain", "corn grain mono",
-                                                  ifelse(ghgdat$crop=="corn-silage", "corn silage mono",
+ghgdat$crop <- ifelse(ghgdat$crop_name=="corn-soy" & ghgdat$year%%2 ==0, "soy cs",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
+                      ifelse(ghgdat$crop_name=="corn-soy" & !ghgdat$year%%2 ==0, "corn grain cs",  # cs= to indicate corn-soy rotation
+                             ifelse(ghgdat$crop_name=="soy-corn" & ghgdat$year%%2 ==0, "corn grain cs",
+                                    ifelse(ghgdat$crop_name=="soy-corn" & !ghgdat$year%%2 ==0, "soy cs", 
+                                           ifelse(ghgdat$crop_name=="corn-grain", "corn grain mono",
+                                                  ifelse(ghgdat$crop_name=="corn-silage", "corn silage mono",
                                                         # corn in alfalfa rotation
-                                                          ifelse(ghgdat$crop=="alfalfa-act" & ghgdat$year %in% actcorn, "corn alf",
-                                                                ifelse(ghgdat$crop=="alfalfa-cta" & ghgdat$year %in% ctacorn, "corn alf",
-                                                                       ifelse(ghgdat$crop=="alfalfa-tac" & ghgdat$year %in% taccorn, "corn alf",
+                                                          ifelse(ghgdat$crop_name=="alfalfa-act" & ghgdat$year %in% actcorn, "corn alf",
+                                                                ifelse(ghgdat$crop_name=="alfalfa-cta" & ghgdat$year %in% ctacorn, "corn alf",
+                                                                       ifelse(ghgdat$crop_name=="alfalfa-cta2" & ghgdat$year %in% cta2corn, "corn alf",
+                                                                              ifelse(ghgdat$crop_name=="alfalfa-act2" & ghgdat$year %in% act2corn, "corn alf",
+                                                                                     ifelse(ghgdat$crop_name=="alfalfa-act3" & ghgdat$year %in% act3corn, "corn alf",
                                                                              # alf in alf rotation
-                                                                               ifelse(ghgdat$crop=="alfalfa-act" & ghgdat$year %in% actalf, "alf",
-                                                                                     ifelse(ghgdat$crop=="alfalfa-cta" & ghgdat$year %in% ctaalf, "alf",
-                                                                                            ifelse(ghgdat$crop=="alfalfa-tac" & ghgdat$year %in% tacalf, "alf",
+                                                                               ifelse(ghgdat$crop_name=="alfalfa-act" & ghgdat$year %in% actalf, "alf",
+                                                                                     ifelse(ghgdat$crop_name=="alfalfa-cta" & ghgdat$year %in% ctaalf, "alf",
+                                                                                            ifelse(ghgdat$crop_name=="alfalfa-cta2" & ghgdat$year %in% cta2alf, "alf",
+                                                                                                   ifelse(ghgdat$crop_name=="alfalfa-act2" & ghgdat$year %in% act2alf, "alf",
+                                                                                                          ifelse(ghgdat$crop_name=="alfalfa-act3" & ghgdat$year %in% act3alf, "alf",
                                                                                             # triticale in alf rotation
-                                                                                            ifelse(ghgdat$crop=="alfalfa-act" & ghgdat$year %in% acttri, "tri alf",
-                                                                                                   ifelse(ghgdat$crop=="alfalfa-cta" & ghgdat$year %in% ctatri, "tri alf",
-                                                                                                          ifelse(ghgdat$crop=="alfalfa-tac" & ghgdat$year %in% tactri, "tri alf", "X")))))))))))))))
+                                                                                            ifelse(ghgdat$crop_name=="alfalfa-act" & ghgdat$year %in% acttri, "tri alf",
+                                                                                                   ifelse(ghgdat$crop_name=="alfalfa-cta" & ghgdat$year %in% ctatri, "tri alf",
+                                                                                                          ifelse(ghgdat$crop_name=="alfalfa-cta2" & ghgdat$year %in% cta2tri, "tri alf", 
+                                                                                                                 ifelse(ghgdat$crop_name=="alfalfa-act2" & ghgdat$year %in% act2tri, "tri alf", 
+                                                                                                                        ifelse(ghgdat$crop_name=="alfalfa-act3" & ghgdat$year %in% act3tri, "tri alf",   "X")))))))))))))))))))))
                                              
 
  
@@ -447,7 +471,7 @@ ggplot(data=ghgsummary, aes(x=crop)) +
 
 
 
-ggsave("plots/ghgs/NY_mean em 2022-72 RCP60_no letters.png", width=10, height=8, dpi=300)
+ggsave("plots/ghgs/NY_mean em 2022-72 RCP60_no letters_20240312.png", width=10, height=8, dpi=300)
 
 
 

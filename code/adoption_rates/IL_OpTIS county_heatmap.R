@@ -32,17 +32,20 @@ means_county$county <- str_remove(means_county$county, " County")
 
 # define colors for YlOrBr by Paul Tol https://personal.sron.nl/~pault/
 # how many colors do we need? do they all work with 5?
-hist(means_county$mean.perc[means_county$variable %in% "perc_cc"]) # 0-30
-hist(means_county$mean.perc[means_county$variable %in% "perc_nt"]) # 10-80
-hist(means_county$mean.perc[means_county$variable %in% "perc_rt"]) # 15-55
-hist(means_county$mean.perc[means_county$variable %in% "perc_ct"]) # 0-50
-pal5 <- c("#ffffe5", "#fee391", "#fb9a29", "#cc4c02", "#662506", "#888888")
-pal6 <- c("#fee391", "#fec44f", "#fb9a29", "#ec7014", "#cc4c02", "#993404", "#888888")
-pal6b <- c(rev(pal6[1:6]), pal6[7])
-# scales::show_col(pal6b)
-pal7 <- c("#fff7bc", "#fee391", "#fec44f", "#fb9a29", "#ec7014", "#cc4c02", "#993404", "#888888")
-pal8 <- c("#fff7bc", "#fee391", "#fec44f", "#fb9a29", "#ec7014", "#cc4c02", "#993404", "#662506", "#888888")
-pal8b <- c(rev(pal8[1:8]), pal8[9])
+# hist(means_county$mean.perc[means_county$variable %in% "perc_cc"]) # 0-30
+# hist(means_county$mean.perc[means_county$variable %in% "perc_nt"]) # 10-80
+# hist(means_county$mean.perc[means_county$variable %in% "perc_rt"]) # 15-55
+# hist(means_county$mean.perc[means_county$variable %in% "perc_ct"]) # 0-50
+# pal5 <- c("#ffffe5", "#fee391", "#fb9a29", "#cc4c02", "#662506", "#888888")
+# pal6 <- c("#fee391", "#fec44f", "#fb9a29", "#ec7014", "#cc4c02", "#993404", "#888888")
+# pal6b <- c(rev(pal6[1:6]), pal6[7])
+# # scales::show_col(pal6b)
+# pal7 <- c("#fff7bc", "#fee391", "#fec44f", "#fb9a29", "#ec7014", "#cc4c02", "#993404", "#888888")
+# pal8 <- c("#fff7bc", "#fee391", "#fec44f", "#fb9a29", "#ec7014", "#cc4c02", "#993404", "#662506", "#888888")
+# pal8b <- c(rev(pal8[1:8]), pal8[9])
+pal6new <- c("#8c510a", "#bf812d", "#dfc27d", "#80cdc1", "#35978f", "#01665e")
+pal5new <- c("#bf812d", "#dfc27d", "#80cdc1", "#35978f", "#01665e")
+pal8new <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3","#c7eae5", "#80cdc1", "#35978f", "#01665e")
 
 
 # divide percents into bins
@@ -128,11 +131,11 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 pcc <- ggplot() +
   geom_polygon(data=ill[ill$variable %in% "perc_cc",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
-               color="black", linewidth=0.2) +
+               color="#20243d", linewidth=0.2) +
  coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
-  scale_fill_manual(values=pal6b,
-                    na.value = "#888888",
+  scale_fill_manual(values=pal6new,
+                    na.value = "white",
                     name= "Mean % Cover Crop\nAdoption 2018-2021") +
   scale_color_manual(values=NA) +
   theme_bw() +
@@ -153,11 +156,11 @@ ggsave("plots/maps/county_heatmap_ILcc.png")
 pnt <- ggplot() +
   geom_polygon(data=ill[ill$variable %in% "perc_nt",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
-               color="black", linewidth=0.2) +
+               color="#20243d", linewidth=0.2) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
-  scale_fill_manual(values=pal8b,
-                    na.value = "#888888",
+  scale_fill_manual(values=pal8new,
+                    na.value = "white",
                     name= "Mean % No-Till\nAdoption 2018-2021") +
   scale_color_manual(values=NA) +
   theme_bw() +
@@ -177,11 +180,11 @@ ggsave("plots/maps/county_heatmap_ILnt.png")
 prt <- ggplot() +
   geom_polygon(data=ill[ill$variable %in% "perc_rt",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
-               color="black", linewidth=0.2) +
+               color="#20243d", linewidth=0.2) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
-  scale_fill_manual(values=pal6b,
-                    na.value = "#888888",
+  scale_fill_manual(values=pal6new,
+                    na.value = "white",
                     name= "Mean % Reduced Till\nAdoption 2018-2021") +
   scale_color_manual(values=NA) +
   theme_bw() +
@@ -200,11 +203,11 @@ ggsave("plots/maps/county_heatmap_ILrt.png")
 pct <- ggplot() +
   geom_polygon(data=ill[ill$variable %in% "perc_ct",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
-               color="black",linewidth=0.2) +
+               color="#20243d",linewidth=0.2) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
-  scale_fill_manual(values=pal5,
-                    na.value = "#888888",
+  scale_fill_manual(values=rev(pal5new),
+                    na.value = "white",
                     name= "Mean % Conventional Till\nAdoption 2018-2021")+
   scale_color_manual(values=NA) +
   theme_bw() +
@@ -227,6 +230,8 @@ ggsave("plots/maps/county_heatmap_ILct.png")
 pcc + pnt + prt + pct + plot_layout(ncol=2)
 ggsave("plots/maps/county_heatmap_ILall4.png", width=6.5, height=6.5, units="in")
 
+pcc + pnt + pct + plot_layout(ncol=1)
+ggsave("plots/maps/county_heatmap_ILCC,CT,NTonly.png", width=3.25, height=6.5, units="in")
 
 
 # INCOMPLETE

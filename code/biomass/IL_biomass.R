@@ -53,18 +53,18 @@ bmil <- read.csv("data/biomass/biomass_IL.csv")
 
 # looks like all the cover crop biomass is in leaf and stem, zero grain
 
-# make dummy factor for CT, RT, NT
+# make factor for CT, RT, NT
 bmil$till <- ifelse(grepl("ct-", bmil$management_name), "CT", 
                     ifelse(grepl("rt-", bmil$management_name), "RT", "NT"))
 # # check
 # unique(bmil$till)
 
-# dummy for CC or NC
+# factor for CC or NC
 bmil$cc <- ifelse(grepl("-cc-", bmil$management_name), "CC", "NC")
 # # check
 # unique(bmil$cc)
 
-# dummy for N treatment
+# factor for N treatment
 bmil$nfert <- ifelse(grepl("-cn", bmil$management_name), "High N", 
                      ifelse(grepl("-fn", bmil$management_name), "Fall N","Recommended N"))
 # # check
@@ -105,6 +105,9 @@ biomass_summary <- bmil %>%
   group_by(climate_scenario,crop_name, cc, till, nfert, decade) %>%
   summarize(biomass_mean = mean(Grain.C.kgC.ha.), biomass_se = se(Grain.C.kgC.ha.))
 
+
+
+
 windows(xpinch=200, ypinch=200, width=5, height=5)
 ggplot(data=biomass_summary[#biomass_summary$till=="NT" & # just look at NT for simplicity sake for now
   biomass_summary$climate_scenario == "rcp60" &                            
@@ -128,7 +131,7 @@ ggplot(data=biomass_summary[#biomass_summary$till=="NT" & # just look at NT for 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/biomass/IL_corn_biomass_bars.png", width=12, height=8, dpi=300)
+# ggsave("plots/biomass/IL_corn_biomass_bars.png", width=12, height=8, dpi=300)
 
 
 
@@ -140,6 +143,7 @@ ggsave("plots/biomass/IL_corn_biomass_bars.png", width=12, height=8, dpi=300)
 #######################   
 
 corndat <- bmil[bmil$crop_name=="corn, grain" & bmil$climate_scenario=="rcp60",]
+
 
 Neffect <- aov(Grain.C.kgC.ha.~till*cc*nfert, data=corndat)
 summary(Neffect)
@@ -269,18 +273,18 @@ cornsum$cld <- cld$Letters
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
-cornsum$nfert 
+
 
 ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=mean, fill=nfert)) +
   geom_bar(stat="identity", position=position_dodge(), color="#332288", show.legend=F) +
   geom_errorbar(width=0.3, aes(ymin=mean-se, ymax=mean + se),  
                 position=position_dodge(0.9),
                 color="#332288") +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),  #"RT"))), 
+  facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))), 
              cols=vars(factor(cc, levels=c("NC", "CC"))), 
              labeller = as_labeller(
-               c(NC="No Cover Crop", CC="Has Cover Crop", 
-                 "CT" = "Conventional Till", "NT" = "No Till"))) + #, "RT"="Reduced Till"))) +
+               c(NC="No Cover Crop", CC="Rye Cover Crop", 
+                 "CT" = "Conventional Till", "NT" = "No Till"))) +
   xlab("N management") +
   ylab(expression(bold('2022-2072 mean corn grain biomass (kg C ha'^-1*')'))) + 
   scale_x_discrete(breaks=c("Fall N", "High N", "Recommended N"),
@@ -300,8 +304,118 @@ ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=mean, fill=
     strip.text=element_text(face="bold", size=11))
 # # strip.background=element_rect(fill="lightblue", color="black", size=1) 
 
-ggsave("plots/biomass/IL_corn_biomass_Neffect.png", width=5, height=5, dpi=300)
+# ggsave("plots/biomass/IL_corn_biomass_Neffect.png", width=5, height=5, dpi=300)
 
+
+# Same as graph above but shown as % difference from 2022 mean yield
+
+mn <- mean(cornsum$mean)
+
+cornsum$pdiff <- (cornsum$mean - mn)/cornsum$mean
+cornsum$pdiff.se <- (cornsum$se)/cornsum$mean
+
+# because it is percents we don't have to convert to lb / ac
+
+pal3 <- c("#20243d","#C2e4ef", "#669947")   # )
+
+ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=pdiff, fill=nfert)) +
+  geom_bar(stat="identity", position=position_dodge(), show.legend=F) +
+  geom_errorbar(width=0.3, aes(ymin=pdiff-pdiff.se, ymax=pdiff+pdiff.se),
+                position=position_dodge(0.9),
+                color="#20243d") +
+  facet_grid( # rows=vars(factor(till, levels=c("CT", "NT"))), 
+    cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
+    labeller = as_labeller(
+      c(NC="No Cover Crop", CC="Rye Cover Crop", 
+        "CT" = "Conventional Till", "NT" = "No Till"))) +
+  geom_hline(yintercept=0, color="#20243d") +
+  xlab("N management") +
+  ylab(expression(bold('Corn yield % difference from overall average corn yield'))) + 
+  scale_x_discrete(breaks=c("Fall N", "High N", "Recommended N"),
+                   labels = c("Fall N", "High N", "Recomm. N")) +
+  scale_y_continuous(labels=scales::percent_format()) +
+  # ylim(0,3800)+
+  # geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5,
+            # color="gray20", size=4, fontface="bold") +
+  scale_fill_manual(values=pal3) +  #c("#CC6677","#99DDFF", "#44AA99" )) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'),
+    axis.text.x=element_text(angle=-10, hjust=0, size=11),
+    axis.text.y=element_text(size=11),
+    plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=13, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+# # strip.background=element_rect(fill="lightblue", color="black", size=1) 
+
+ggsave("plots/biomass/IL_corn_biomass_percent diff global mean.png", width=6, height=3, dpi=300)
+
+
+# NC + CT + high N compared to CC + NT + recommended N
+(cornsum$mean[cornsum$cc=="NC" & cornsum$till=="CT" & cornsum$nfert=="High N"] -
+    cornsum$mean[cornsum$cc=="CC" & cornsum$till=="NT" & cornsum$nfert=="Recommended N"])/
+  cornsum$mean[cornsum$cc=="NC" & cornsum$till=="CT" & cornsum$nfert=="High N"]
+
+
+
+
+
+
+
+
+# same graph as above but expressed as % of Fall N
+
+# re-arrange data to calculate % of fall N yield
+falln <- filter(cornsum, nfert=="Fall N") %>%
+  rename("mean.falln" = "mean", "se.falln" = "se") %>%
+  select(cc, till, mean.falln, se.falln)
+
+springn <- filter(cornsum, !nfert=="Fall N")
+
+cornsum2 <- left_join(springn, falln)
+
+
+pal2 <- c("#004a23", "#669947")
+# pal2 <- c("#20243d", "#669947")
+
+# Calculate % difference from fall N. So fall N = 100%. how much bigger are the others?
+cornsum2$mean.pfalln <- (cornsum2$mean/cornsum2$mean.falln)-1
+cornsum2$se.pfalln <- (cornsum2$se/cornsum2$mean.falln)
+
+ggplot(data=cornsum2[cornsum2$till %in% c("CT", "NT") & 
+                       cornsum2$nfert %in% c("High N", "Recommended N"),],
+       aes(x=nfert, y=mean.pfalln, fill=nfert)) +
+  geom_bar(stat="identity", position=position_dodge(),  show.legend=F) +  # color="#20243d",
+  geom_errorbar(width=0.3, aes(ymin=mean.pfalln-se.pfalln, ymax=mean.pfalln + se.pfalln),  
+                position=position_dodge(0.9),
+                color="#20243d") +
+  facet_grid( # rows=vars(factor(till, levels=c("CT", "NT"))), 
+             cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
+             labeller = as_labeller(
+               c(NC="No Cover Crop", CC="Rye Cover Crop", 
+                 "CT" = "Conventional Till", "NT" = "No Till"))) +
+  xlab("N management") +
+  scale_y_continuous(labels=scales::percent_format()) +
+  ylab(expression(bold("Corn yield % difference from fall applied N"))) + 
+  scale_x_discrete(breaks=c("High N", "Recommended N"),
+                   labels = c("High N", "Recomm. N")) +
+  # ylim(0,3800)+
+  # geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5,
+            # color="gray20", size=4, fontface="bold") +
+  scale_fill_manual(values=pal2) +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'),
+    axis.text.x=element_text(angle=-10, hjust=0, size=11),
+    axis.text.y=element_text(size=11),
+    plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
+    axis.title=element_text(size=11, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+# # strip.background=element_rect(fill="lightblue", color="black", size=1) 
+
+ggsave("plots/biomass/IL_corn_biomass_percdiff from Fall N.png", width=6, height=3, dpi=300)
 
 
 
