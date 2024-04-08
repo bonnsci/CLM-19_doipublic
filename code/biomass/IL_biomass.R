@@ -338,6 +338,7 @@ cornsum
 # 17 CC    NT    Fall N        2284.  22.8 f     -0.277   0.0100 
 # 18 CC    RT    Fall N        2277.  25.6 f     -0.280   0.0112 
 
+
 # because it is percents we don't have to convert to lb / ac
 
 pal3 <- c("#20243d","#C2e4ef", "#669947")   # )
@@ -359,9 +360,8 @@ ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=pdiff, fill
                    labels = c("Fall N", "High N", "Recomm. N")) +
   scale_y_continuous(labels=scales::percent_format()) +
   # ylim(0,3800)+
-  geom_text(aes(label=cld, y=ifelse(pdiff>0, pdiff+0.02, pdiff-0.04)), 
-            vjust=-0.5,
-            color="gray20", size=4, fontface="bold") +
+  # geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5,
+            # color="gray20", size=4, fontface="bold") +
   scale_fill_manual(values=pal3) +  #c("#CC6677","#99DDFF", "#44AA99" )) +
   theme(
     panel.grid.minor=element_blank(), 
@@ -374,7 +374,8 @@ ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=pdiff, fill
     strip.text=element_text(face="bold", size=11))
 # # strip.background=element_rect(fill="lightblue", color="black", size=1) 
 
-ggsave("plots/biomass/IL_corn_biomass_percent diff global mean_with letters.png", width=6, height=4, dpi=300)
+
+ggsave("plots/biomass/IL_corn_biomass_percent diff global mean.png", width=6, height=3, dpi=300)
 
 
 # NC + CT + high N compared to CC + NT + recommended N

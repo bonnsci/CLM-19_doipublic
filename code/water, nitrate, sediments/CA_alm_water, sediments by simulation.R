@@ -28,98 +28,89 @@ se <- function(x) sd(x) / sqrt(length(x))
 
 wdatyr <- read.csv("data/water, nitrate, sediments/CA_alm_water,seds_annualtotals.csv")
 
-# colnames(wdatyr)[c(2,3,5)] <- c("crop", "management", "year") 
-# # unique(wdatyr$crop) # "almond-a" "almond-c"  -a is alley, -c is crop, alley is 55% and crop is 45% in weighting values together to come up with one value for the system
-# # unique(wdatyr$management) # "ct-bc" "ct-lc" "ct-nc" "nt-bc" "nt-lc" "nt-nc" "rt-bc" "rt-lc" "rt-nc" "cn"    "rn" 
-# # crop row: cn for conventional N and rn for reduced n
-# # alley area: ct- = conventional till, nt= no till, rt= reduced till
-#   # bc = triticale cover (basic cover), nc = no cover, lc=legume cover
+colnames(wdatyr)[c(2,3,5)] <- c("crop", "management", "year") 
+# unique(wdatyr$crop) # "almond-a" "almond-c"  -a is alley, -c is crop, alley is 55% and crop is 45% in weighting values together to come up with one value for the system
+# unique(wdatyr$management) # "ct-bc" "ct-lc" "ct-nc" "nt-bc" "nt-lc" "nt-nc" "rt-bc" "rt-lc" "rt-nc" "cn"    "rn" 
+# crop row: cn for conventional N and rn for reduced n
+# alley area: ct- = conventional till, nt= no till, rt= reduced till
+  # bc = triticale cover (basic cover), nc = no cover, lc=legume cover
+
+wdatyr <- wdatyr[wdatyr$year>2021 & wdatyr$year<2073 & wdatyr$climate_scenario=="rcp60",]
 # 
-# wdatyr <- wdatyr[wdatyr$year>2021 & wdatyr$year<2073 & wdatyr$climate_scenario=="rcp60",]
-# # 
-# wdatyr$till <- ifelse(grepl("ct-", wdatyr$management), "CT", 
-#                       ifelse(grepl("rt-", wdatyr$management), "RT", 
-#                              ifelse(grepl("nt-", wdatyr$management), "NT", "NA")))
-# # # check
-# # unique(wdatyr$till)  # there will be NA values for the "cn" and "rn" for crop areas
-# 
-# # dummy for CC or NC
-# wdatyr$cc <- ifelse(grepl("-nc", wdatyr$management), "NC", 
-#                     ifelse(grepl("-bc", wdatyr$management), "TC", 
-#                            ifelse(grepl("-lc", wdatyr$management), "LC", "NA")))  #triticale, legume
-# 
-# 
-# # # check
-# # unique(wdatyr$cc) # there will be NA values for the "cn" and "rn" for crop areas
-# 
-# # dummy for N treatment
-# wdatyr$nfert <- ifelse(grepl("cn", wdatyr$management), "Conventional N", 
-#                        ifelse(grepl("rn", wdatyr$management), "Reduced N", "NA"))
-# 
+wdatyr$till <- ifelse(grepl("ct-", wdatyr$management), "CT", 
+                      ifelse(grepl("rt-", wdatyr$management), "RT", 
+                             ifelse(grepl("nt-", wdatyr$management), "NT", "NA")))
 # # check
-# # unique(wdatyr$nfert) # there will be NA values for the alley areas
-# 
-# wdatyr$system <- ifelse(grepl("-a", wdatyr$crop), "alley", "crop")
-# # unique(wdatyr$system)
-# 
-# 
-# # dummy for decade
-# wdatyr$decade <- ifelse(wdatyr$year <2031, "2020s",
-#                         ifelse(wdatyr$year>=2031 & wdatyr$year <2041, "2030s",
-#                                ifelse(wdatyr$year>=2041 & wdatyr$year <2051, "2040s",
-#                                       ifelse(wdatyr$year>=2051 & wdatyr$year <2061, "2050s",
-#                                              ifelse(wdatyr$year>=2061 & wdatyr$year <2071, "2060s", "2070s")))))
-# # unique(wdatyr$decade)
-# 
-# wdatyr$et.yr <- wdatyr$evap.yr + wdatyr$trans.yr
-# 
-# # do calculations for alley + crop row proportions to get one value for the whole system
-# 
-# wdatyr.a <- wdatyr[wdatyr$system=="alley",]
-# colnames(wdatyr.a)[c(6:10, 16)] <- c("trans.yr.alley", "evap.yr.alley", "leach.yr.alley", "run.yr.alley", "sed.yr.alley", "et.yr.alley")
-# wdatyr.a <- wdatyr.a[,c(1,5:12,15, 16)]
-# 
-# wdatyr.c <- wdatyr[wdatyr$system=="crop",]
-# colnames(wdatyr.c)[c(6:10, 16)] <- c("trans.yr.crop", "evap.yr.crop", "leach.yr.crop", "run.yr.crop", "sed.yr.crop", "et.yr.crop")
-# wdatyr.c <- wdatyr.c[,c(1,5:10,13,15, 16)]
-# 
-# wdatyrw <- full_join(wdatyr.a, wdatyr.c, by=join_by(site_name, decade, year),
-#                      suffix=c(".x", ".y"),
-#                      multiple="all",
-#                      relationship="many-to-many")
-# 
-# # expect to have twice as many rows as wdatyr.a - basically need two copies of wdatyr.a - 
-# # one copy to combine with Conventional N and one copy to combine with Reduced N.
-# 
-# 
-# 
-# rm(wdatyr.a, wdatyr.c)
-# 
-# # do the math to combine alley and row nitrate losses to one system value
-# wdatyrw$trans.yrtot <- (0.45*wdatyrw$trans.yr.crop) + (0.55*wdatyrw$trans.yr.alley)
-# wdatyrw$evap.yrtot <- (0.45*wdatyrw$evap.yr.crop) + (0.55*wdatyrw$evap.yr.alley)
-# wdatyrw$leach.yrtot <- (0.45*wdatyrw$leach.yr.crop) + (0.55*wdatyrw$leach.yr.alley)
-# wdatyrw$run.yrtot <- (0.45*wdatyrw$run.yr.crop) + (0.55*wdatyrw$run.yr.alley)
-# wdatyrw$sed.yrtot <- (0.45*wdatyrw$sed.yr.crop) + (0.55*wdatyrw$sed.yr.alley)
-# wdatyrw$et.yrtot <- (0.45*wdatyrw$et.yr.crop) + (0.55*wdatyrw$et.yr.alley)
-# 
-# # convert mm to inches (except sediments are in kg/ha  to lb/ac)
-# wdatyrw$trans.yrtot.in <- wdatyrw$trans.yrtot/25.4
-# wdatyrw$evap.yrtot.in <- wdatyrw$evap.yrtot/25.4
-# wdatyrw$leach.yrtot.in <- wdatyrw$leach.yrtot/25.4
-# wdatyrw$run.yrtot.in <- wdatyrw$run.yrtot/25.4
-# wdatyrw$sed.yrtot.lbac <- wdatyrw$sed.yrtot/(0.4536*2.471)
-# wdatyrw$et.yrtot.in <- wdatyrw$et.yrtot/25.4
-# 
-# wdatyrw$grtot.in <- wdatyrw$trans.yrtot.in + wdatyrw$evap.yrtot.in + wdatyrw$leach.yrtot.in + wdatyrw$run.yrtot.in
-# 
-# wdatyrw <- wdatyrw[,c(1,2,8:10, 17, 25:31)]
+# unique(wdatyr$till)  # there will be NA values for the "cn" and "rn" for crop areas
 
-# write.csv(wdatyrw, "data/water, nitrate, sediments/CA_alm_wdatyr.csv", row.names=F)
+# dummy for CC or NC
+wdatyr$cc <- ifelse(grepl("-nc", wdatyr$management), "NC", 
+                    ifelse(grepl("-bc", wdatyr$management), "TC", 
+                           ifelse(grepl("-lc", wdatyr$management), "LC", "NA")))  #triticale, legume
 
-wdatyrw <- read.csv("data/water, nitrate, sediments/CA_alm_wdatyr.csv")
+
+# # check
+# unique(wdatyr$cc) # there will be NA values for the "cn" and "rn" for crop areas
+
+# dummy for N treatment
+wdatyr$nfert <- ifelse(grepl("cn", wdatyr$management), "Conventional N", 
+                       ifelse(grepl("rn", wdatyr$management), "Reduced N", "NA"))
+
+# check
+# unique(wdatyr$nfert) # there will be NA values for the alley areas
+
+wdatyr$system <- ifelse(grepl("-a", wdatyr$crop), "alley", "crop")
+# unique(wdatyr$system)
+
+
+# do calculations for alley + crop row proportions to get one value for the whole system
+
+wdatyr.a <- wdatyr[wdatyr$system=="alley",]
+colnames(wdatyr.a)[c(6:10, 16)] <- c("trans.yr.alley", "evap.yr.alley", "leach.yr.alley", "run.yr.alley", "sed.yr.alley", "et.yr.alley")
+wdatyr.a <- wdatyr.a[,c(1,5:12,15, 16)]
+
+wdatyr.c <- wdatyr[wdatyr$system=="crop",]
+colnames(wdatyr.c)[c(6:10, 16)] <- c("trans.yr.crop", "evap.yr.crop", "leach.yr.crop", "run.yr.crop", "sed.yr.crop", "et.yr.crop")
+wdatyr.c <- wdatyr.c[,c(1,5:10,13,15, 16)]
+
+wdatyrw <- full_join(wdatyr.a, wdatyr.c, by=join_by(site_name, decade, year),
+                     suffix=c(".x", ".y"),
+                     multiple="all",
+                     relationship="many-to-many")
+
+# expect to have twice as many rows as wdatyr.a - basically need two copies of wdatyr.a - 
+# one copy to combine with Conventional N and one copy to combine with Reduced N.
+
+
+
+rm(wdatyr.a, wdatyr.c)
+
+# do the math to combine alley and row nitrate losses to one system value
+wdatyrw$trans.yrtot <- (0.45*wdatyrw$trans.yr.crop) + (0.55*wdatyrw$trans.yr.alley)
+wdatyrw$evap.yrtot <- (0.45*wdatyrw$evap.yr.crop) + (0.55*wdatyrw$evap.yr.alley)
+wdatyrw$leach.yrtot <- (0.45*wdatyrw$leach.yr.crop) + (0.55*wdatyrw$leach.yr.alley)
+wdatyrw$run.yrtot <- (0.45*wdatyrw$run.yr.crop) + (0.55*wdatyrw$run.yr.alley)
+wdatyrw$sed.yrtot <- (0.45*wdatyrw$sed.yr.crop) + (0.55*wdatyrw$sed.yr.alley)
+wdatyrw$et.yrtot <- (0.45*wdatyrw$et.yr.crop) + (0.55*wdatyrw$et.yr.alley)
+
+# convert mm to inches (except sediments are in kg/ha  to lb/ac)
+wdatyrw$trans.yrtot.in <- wdatyrw$trans.yrtot/25.4
+wdatyrw$evap.yrtot.in <- wdatyrw$evap.yrtot/25.4
+wdatyrw$leach.yrtot.in <- wdatyrw$leach.yrtot/25.4
+wdatyrw$run.yrtot.in <- wdatyrw$run.yrtot/25.4
+wdatyrw$sed.yrtot.lbac <- wdatyrw$sed.yrtot/(0.4536*2.471)
+wdatyrw$et.yrtot.in <- wdatyrw$et.yrtot/25.4
+
+wdatyrw$grtot.in <- wdatyrw$trans.yrtot.in + wdatyrw$evap.yrtot.in + wdatyrw$leach.yrtot.in + wdatyrw$run.yrtot.in
+
+wdatyrw <- wdatyrw[,c(1,2,8:10, 17, 25:31)]
+
+write.csv(wdatyrw, "data/water, nitrate, sediments/CA_alm_wdatyr.csv", row.names=F)
+
 
 # means across all years,
+
+wdatyr <- read.csv("data/water, nitrate, sediments/CA_alm_wdatyr.csv")
 
 wmeaninch <- wdatyrw %>%
   group_by(cc, nfert) %>%  ### till,  the results do not differ greatly between tillage treatments so I'm coming back here and averaging across tillage
@@ -414,7 +405,6 @@ sed$se.tac <- sed$se/2000
 # 2 TC    Conventional N sed       3627. 130.     14 b          1.81  0.0648
 # 3 LC    Conventional N sed       1686.  64.0    15 c          0.843 0.0320
 
-windows(xpinch=200, ypinch=200, width=5, height=5)
 
 
 ggplot(data=sed, aes(x=component, y=mean.tac)) +

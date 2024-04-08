@@ -57,7 +57,11 @@ bm <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/Ame
 # bm <- read.csv("data/biomass.csv")
 bm <- bm %>%
   arrange(site_name, Year, crop_name)
-
+# new alf biomass 3/12/2024
+bmalf <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/2024 Reruns (Almonds, Hops, Vineyards, NY Alfalfa)/Alfalfa 2024-03-04/max_biomass_summary-alfalfa-2024-03-04.csv")
+bmalf <- bmalf %>%
+  arrange(site_name, Year, crop_name) 
+write.csv(bmalf, "data/biomass/biomass_NYalf.csv")  # 3/12/2024
 
 # FILE TOO BIG TO PUSH TO GITHUB
 # save site data to separate csvs

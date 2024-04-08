@@ -678,6 +678,7 @@ mean(c(0.11, 0.07))  # -0.09
 mean(c(0.66, 0.62)) #0.64
 mean(c(1.45, 1.66)) # 1.56
 
+
 effectsoc <- aov(ghg_dsoc ~till*cc, data=ghgdat[ghgdat$till %in% c("NT", "CT") & ghgdat$nfert=="50 N",])  # 
 summary(effectsoc)
 #               Df Sum Sq Mean Sq  F value   Pr(>F)    
@@ -731,7 +732,6 @@ ggplot(ghgann, aes(x=till, y=-1*mean.ac)) +
     plot.margin = unit(c(0.1,1,0.1,0.1), "cm"),
     axis.title=element_text(size=13, face="bold"),
     strip.text=element_text(face="bold", size=11))
-
 
 
 ggsave("plots/ghgs/CA_alm_simulation mean dSOC 2022-72 RCP60_no letters.png", width=7, height=4, dpi=300)

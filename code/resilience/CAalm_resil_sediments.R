@@ -115,10 +115,12 @@ sum(is.na(spsed))
 # check
 unique(spsed$spcat12mossn)
 
+
 # print(aggregate(year~spcat12mossn + season + site, data=spei, FUN="length") %>%
 #   group_by(spcat12mossn, season) %>%
 #   summarize(mean(year)) %>%
 #     arrange(season, spcat12mossn), n=42)
+
 # mostly only 1 or no cases of exceptional or extreme drought or wet
 # A tibble: 42 × 3
 # Groups:   spcat12mossn [11]
@@ -167,6 +169,7 @@ unique(spsed$spcat12mossn)
 # 41 Severe Drought      Winter         2.23
 # 42 Severely Wet        Winter         2.56
 
+<<<<<<< HEAD
 # test that data make same chart as in "CA_alm_water, sediments by simulation.R"
 # doing this because chart below with sediments by SPEI cat for summer show strange results --
 # low sediments in wet summmers.
@@ -182,71 +185,50 @@ check <- group_by(spsed, site_name, Year, till, cc, nfert) %>%
 
 
 
+
 # make a subset for the report
-spsedrep <- filter(spsed, season== "Spring", 
-                    spcat12mossn %in% c("Abnormally Dry", "Abnormally Wet", "Moderate Drought", "Normal", "Moderately Wet"),
-                   !till=="RT") %>%
+spsedrep <- filter(spsed, season== "Summer", 
+                    spcat12mossn %in% c("Abnormally Dry", "Abnormally Wet", "Moderate Drought", "Normal", "Moderately Wet")) %>%
   drop_na(spcat12mossn)
 
 
-  
+
 # test for sig. differences
 
-sedlm <- lm(sed.ssntot~cc:till:spcat12mossn, data=spsedrep)
+sedlm <- lm(sed.ssntot~spcat12mossn, data=spsedrep)
 summary(sedlm)
-
 # Call:
 #   lm(formula = sed.ssntot ~ cc:till:spcat12mossn, data = spsedrep)
+# Residual standard error: 236.4 on 11637 degrees of freedom
+# Multiple R-squared:  0.004273,	Adjusted R-squared:  0.0005079 
+# F-statistic: 1.135 on 44 and 11637 DF,  p-value: 0.2498
+# Call:
+#   lm(formula = sed.ssntot ~ spcat12mossn, data = spsedrep)
 # 
 # Residuals:
-#   Min      1Q  Median      3Q     Max 
-# -1316.4  -675.2  -384.6    35.8 11573.0 
+#   Min     1Q Median     3Q    Max 
+# -35.4  -35.4   -4.4   -3.7 6698.1 
 # 
-# Coefficients: (1 not defined because of singularities)
-# Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                                839.66      66.31  12.663  < 2e-16 ***
-#   ccLC:tillCT:spcat12mossnAbnormally Dry    -671.43     126.25  -5.318 1.08e-07 ***
-#   ccNC:tillCT:spcat12mossnAbnormally Dry    -359.57     126.25  -2.848 0.004410 ** 
-#   ccTC:tillCT:spcat12mossnAbnormally Dry    -443.57     126.25  -3.513 0.000445 ***
-#   ccLC:tillNT:spcat12mossnAbnormally Dry    -713.34     126.25  -5.650 1.66e-08 ***
-#   ccNC:tillNT:spcat12mossnAbnormally Dry    -363.42     126.25  -2.879 0.004005 ** 
-#   ccTC:tillNT:spcat12mossnAbnormally Dry    -491.54     126.25  -3.893 9.97e-05 ***
-#   ccLC:tillCT:spcat12mossnAbnormally Wet    -312.40     148.02  -2.111 0.034839 *  
-#   ccNC:tillCT:spcat12mossnAbnormally Wet     341.28     148.02   2.306 0.021155 *  
-#   ccTC:tillCT:spcat12mossnAbnormally Wet     192.14     148.02   1.298 0.194288    
-# ccLC:tillNT:spcat12mossnAbnormally Wet    -508.88     148.02  -3.438 0.000589 ***
-#   ccNC:tillNT:spcat12mossnAbnormally Wet     334.75     148.02   2.262 0.023752 *  
-#   ccTC:tillNT:spcat12mossnAbnormally Wet      58.63     148.02   0.396 0.692056    
-# ccLC:tillCT:spcat12mossnModerate Drought  -577.41     105.05  -5.497 3.99e-08 ***
-#   ccNC:tillCT:spcat12mossnModerate Drought  -277.69     105.05  -2.643 0.008224 ** 
-#   ccTC:tillCT:spcat12mossnModerate Drought  -387.49     105.05  -3.689 0.000227 ***
-#   ccLC:tillNT:spcat12mossnModerate Drought  -689.47     105.05  -6.563 5.58e-11 ***
-#   ccNC:tillNT:spcat12mossnModerate Drought  -281.20     105.05  -2.677 0.007448 ** 
-#   ccTC:tillNT:spcat12mossnModerate Drought  -432.43     105.05  -4.116 3.89e-05 ***
-#   ccLC:tillCT:spcat12mossnModerately Wet    -164.48     103.85  -1.584 0.113288    
-# ccNC:tillCT:spcat12mossnModerately Wet     476.76     103.85   4.591 4.48e-06 ***
-#   ccTC:tillCT:spcat12mossnModerately Wet     365.49     103.85   3.519 0.000435 ***
-#   ccLC:tillNT:spcat12mossnModerately Wet    -288.94     103.85  -2.782 0.005410 ** 
-#   ccNC:tillNT:spcat12mossnModerately Wet     468.33     103.85   4.510 6.58e-06 ***
-#   ccTC:tillNT:spcat12mossnModerately Wet     226.25     103.85   2.179 0.029390 *  
-#   ccLC:tillCT:spcat12mossnNormal            -290.89      93.78  -3.102 0.001929 ** 
-#   ccNC:tillCT:spcat12mossnNormal             241.71      93.78   2.578 0.009968 ** 
-#   ccTC:tillCT:spcat12mossnNormal             114.04      93.78   1.216 0.223999    
-# ccLC:tillNT:spcat12mossnNormal            -489.82      93.78  -5.223 1.80e-07 ***
-#   ccNC:tillNT:spcat12mossnNormal             234.94      93.78   2.505 0.012255 *  
-#   ccTC:tillNT:spcat12mossnNormal                 NA         NA      NA       NA    
-# ---
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)                    21.050      5.536   3.802 0.000144 ***
+#   spcat12mossnAbnormally Wet    -20.962      8.448  -2.481 0.013108 *  
+#   spcat12mossnModerate Drought  -16.629      7.285  -2.283 0.022474 *  
+#   spcat12mossnModerately Wet    -17.336      7.355  -2.357 0.018441 *  
+#   spcat12mossnNormal             14.328      6.780   2.113 0.034604 *  
+#   ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 1425 on 8238 degrees of freedom
-# Multiple R-squared:  0.05996,	Adjusted R-squared:  0.05665 
-# F-statistic: 18.12 on 29 and 8238 DF,  p-value: < 2.2e-16
+# Residual standard error: 236 on 11677 degrees of freedom
+# Multiple R-squared:  0.003751,	Adjusted R-squared:  0.00341 
+# F-statistic: 10.99 on 4 and 11677 DF,  p-value: 6.765e-09
 
-sedaov <- aov(sed.ssntot~cc:till:spcat12mossn, data=spsedrep)
+sedaov <- aov(sed.ssn~cc:till:spcat12mossn, data=spsedrep)
 summary(sedaov)
-# Df    Sum Sq  Mean Sq F value Pr(>F)    
-# cc:till:spcat12mossn   29 1.067e+09 36805436   18.12 <2e-16 ***
-#   Residuals            8238 1.673e+10  2031429                   
+# > summary(sedaov)
+# Df   Sum Sq Mean Sq F value Pr(>F)    
+# cc:till:spcat12mossn    11 15913738 1446703   310.1 <2e-16 ***
+#   Residuals            11856 55312548    4665                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
@@ -258,6 +240,7 @@ cld <- as.data.frame.list(cld$`cc:till:spcat12mossn`)
 # get means and SEs summary  #season, nfert, and management-name are now moot
 spsedrep.sum <-  
   dplyr::select(spsedrep, !c(sed.ssn.alley, -sed.ssn.row)) %>%
+  filter(!till=="RT") %>%
   group_by(spcat12mossn, till, cc) %>%  # get the mean sed loss across all sites, across all years of each spcat
   summarize(sed.ssnmn = mean(sed.ssntot),
             sed.ssnse = se(sed.ssntot))  %>%  
@@ -266,6 +249,7 @@ spsedrep.sum <-
 spsedrep.sum$cld <- cld$Letters
 
 # convert kg/ha to lb per acre
+
 spsedrep.sum$sed.ssnmn.tac <- spsedrep.sum$sed.ssnmn/(2.471*907.1847)
 spsedrep.sum$sed.ssnse.tac <- spsedrep.sum$sed.ssnse/(2.471*907.1847)
 
@@ -310,6 +294,10 @@ print(arrange(spsedrep.sum, spcat12mossn, till, cc), n=nrow(spsedrep.sum))
 (0.583 - 0.246)/0.583 # 57%
 mean(c(0.49, 0.57))  #0.53
 
+spsedrep.sum$sed.ssnmn.lbac <- spsedrep.sum$sed.ssnmn*2.20462/2.47105
+spsedrep.sum$sed.ssnse.lbac <- spsedrep.sum$sed.ssnse*2.20462/2.47105
+
+
 ####################################  sed ~ cc*till*spei plot
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
@@ -322,33 +310,29 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 pal2 <- c( "#669947", "#004a23")
 pal5 <- c( "#f67e4b","#FEDa8B", "#eaeccc", "#C2e4ef","#6ea6cd")
 
-ggplot(data=spsedrep.sum, aes(x=till, 
-                           y=sed.ssnmn.tac, fill=till)) + # 
+
+ggplot(data=spsedrep.sum, aes(x=cc, 
+                           y=sed.ssnmn.lbac, fill=till)) + # 
   geom_bar(stat="identity", position=position_dodge(), width=0.7) + 
   # geom_col_pattern(aes(pattern_density=till, fill=cc), pattern="stripe", alpha=0.7,
                    # pattern_fill="white", pattern_colour="white", color="white", #width=0.7,
                    # show.legend=F) +
   # scale_pattern_density_manual(values=c(0.05, 0)) +
   scale_fill_manual(values=pal2) +
-  geom_errorbar(aes( ymin=sed.ssnmn.tac-sed.ssnse.tac, 
-                     ymax=sed.ssnmn.tac + sed.ssnse.tac), 
+  geom_errorbar(aes( ymin=sed.ssnmn.lbac-sed.ssnse.lbac, 
+                     ymax=sed.ssnmn.lbac + sed.ssnse.lbac), 
                 width=0.2, linewidth=0.8, color="#20243d",
                 position=position_dodge(0.7)) +
   facet_grid2(rows=vars(factor(spcat12mossn, levels=c( "Moderate Drought", "Abnormally Dry", "Normal", "Abnormally Wet", "Moderately Wet"))), # rows=vars(factor(till, levels=c("CT", "NT")), factor(cc, levels=c("NC", "CC"))),
-              cols=vars(factor(cc, levels=c("NC", "TC", "LC"))),
               labeller = as_labeller(
-                c("Moderate Drought" = "Moderate\nDrought", 
-                   "Abnormally Dry" = "Abnormally\nDry", 
-                  "Normal" = "Normal" ,
-                   "Abnormally Wet" = "Abnormally\nWet" , 
-                  "Moderately Wet" = "Moderately\nWet",
-               "NC"= "No cover","TC" = "Triticale cover", "LC" = "Legume cover")),
+                c("Moderately Wet" = "Moderately\nWet")),
+              # "NC"= "Without cover crops","CC" = "With cover crops",
               # "CT" = "Conventional Till", "NT" = "No Till")), 
               strip = strip_themed(background_y = elem_list_rect(fill = pal5), #,  # cool stuff from ggh4x package!
                                    text_y = elem_list_text(col="black"))) +          #color= c("white", rep("black", 5), "white")))) +
   ylab("2022-2072 mean sediment yield (pounds per acre)") +
   xlab("Management") +
-  geom_text(aes(y=sed.ssnmn.tac + 0.3, label=cld), size=5) + 
+  # geom_text(aes(y=sed.ssnmn.lbac + 20, label=cld), size=5) + 
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),

@@ -477,6 +477,7 @@ ggsave("plots/ghgs/NY_mean em 2022-72 RCP60_no letters_20240312.png", width=10, 
 
 
 
+
 # Same graph as above but SOC only and average across N treatments for farmer report:
 
 effectsoc <- aov(ghg_dsoc ~till*cc, data=ghgdat[ghgdat$till %in% c("NT", "CT"),])  # ghgdat$crop=="corn" &
@@ -553,11 +554,6 @@ ggplot(data=ghgsocsum, aes(x=dummy)) +
     panel.background = element_rect(fill = 'gray95'))
 
 ggsave("plots/ghgs/NY_simulation mean annual SOC buildup_with letters.png", width=5, height=3, dpi=300)
-
-
-
-
-
 
 
 
