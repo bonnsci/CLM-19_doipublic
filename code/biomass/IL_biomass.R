@@ -314,6 +314,31 @@ mn <- mean(cornsum$mean)
 cornsum$pdiff <- (cornsum$mean - mn)/cornsum$mean
 cornsum$pdiff.se <- (cornsum$se)/cornsum$mean
 
+cornsum
+# # A tibble: 18 × 8
+# # Groups:   cc, till [6]
+# cc    till  nfert          mean    se cld     pdiff pdiff.se
+# <fct> <fct> <fct>         <dbl> <dbl> <chr>   <dbl>    <dbl>
+#   1 CC    NT    High N        3362.  27.7 a      0.133   0.00823
+# 2 CC    NT    Recommended N 3361.  25.5 a      0.132   0.00759
+# 3 NC    NT    High N        3164.  27.4 b      0.0785  0.00867
+# 4 CC    RT    High N        3155.  27.3 bc     0.0757  0.00865
+# 5 NC    NT    Recommended N 3141.  26.4 bc     0.0717  0.00841
+# 6 CC    RT    Recommended N 3070.  23.7 bcd    0.0502  0.00772
+# 7 CC    CT    High N        3062.  26.8 bcd    0.0477  0.00875
+# 8 NC    RT    High N        3029.  27.4 cd     0.0372  0.00903
+# 9 NC    CT    High N        3005.  27.3 d      0.0296  0.00909
+# 10 NC    RT    Recommended N 2995.  26.6 d      0.0263  0.00887
+# 11 NC    CT    Recommended N 2975.  26.7 d      0.0200  0.00899
+# 12 CC    CT    Recommended N 2975.  23.8 d      0.0199  0.00798
+# 13 NC    CT    Fall N        2772.  27.7 e     -0.0520  0.00998
+# 14 NC    RT    Fall N        2764.  27.5 e     -0.0550  0.00994
+# 15 NC    NT    Fall N        2759.  27.1 e     -0.0567  0.00982
+# 16 CC    CT    Fall N        2336.  26.8 f     -0.248   0.0115 
+# 17 CC    NT    Fall N        2284.  22.8 f     -0.277   0.0100 
+# 18 CC    RT    Fall N        2277.  25.6 f     -0.280   0.0112 
+
+
 # because it is percents we don't have to convert to lb / ac
 
 pal3 <- c("#20243d","#C2e4ef", "#669947")   # )
@@ -348,6 +373,7 @@ ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=pdiff, fill
     axis.title=element_text(size=13, face="bold"),
     strip.text=element_text(face="bold", size=11))
 # # strip.background=element_rect(fill="lightblue", color="black", size=1) 
+
 
 ggsave("plots/biomass/IL_corn_biomass_percent diff global mean.png", width=6, height=3, dpi=300)
 

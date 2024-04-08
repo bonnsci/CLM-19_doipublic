@@ -115,10 +115,12 @@ sum(is.na(spsed))
 # check
 unique(spsed$spcat12mossn)
 
-print(aggregate(year~spcat12mossn + season + site, data=spei, FUN="length") %>%
-  group_by(spcat12mossn, season) %>%
-  summarize(mean(year)) %>%
-    arrange(season, spcat12mossn), n=42)
+
+# print(aggregate(year~spcat12mossn + season + site, data=spei, FUN="length") %>%
+#   group_by(spcat12mossn, season) %>%
+#   summarize(mean(year)) %>%
+#     arrange(season, spcat12mossn), n=42)
+
 # mostly only 1 or no cases of exceptional or extreme drought or wet
 # A tibble: 42 × 3
 # Groups:   spcat12mossn [11]
@@ -166,6 +168,23 @@ print(aggregate(year~spcat12mossn + season + site, data=spei, FUN="length") %>%
 # 40 Normal              Winter        21.9 
 # 41 Severe Drought      Winter         2.23
 # 42 Severely Wet        Winter         2.56
+
+<<<<<<< HEAD
+# test that data make same chart as in "CA_alm_water, sediments by simulation.R"
+# doing this because chart below with sediments by SPEI cat for summer show strange results --
+# low sediments in wet summmers.
+check <- group_by(spsed, site_name, Year, till, cc, nfert) %>%
+  summarize(sed.yr.tot = sum(sed.ssntot)) %>%
+  group_by(cc) %>%
+  summarize(sed.yr.tot = mean(sed.yr.tot)) %>% # mean annual sediments for 3 cover crops averaged across tillage, nfert, site, year
+  mutate(sed.yr.tot.tac = sed.yr.tot/(2.471*907.1847))
+# yes these values match the chart.
+# plotting the below chart for Spring the data look more as expected. So perhaps
+# the spei and sediment data are off for Summer because an abnormally wet summer
+# is not actually all that wet compared to an abnormally wet spring?
+
+
+
 
 # make a subset for the report
 spsedrep <- filter(spsed, season== "Summer", 
@@ -230,8 +249,54 @@ spsedrep.sum <-
 spsedrep.sum$cld <- cld$Letters
 
 # convert kg/ha to lb per acre
+
+spsedrep.sum$sed.ssnmn.tac <- spsedrep.sum$sed.ssnmn/(2.471*907.1847)
+spsedrep.sum$sed.ssnse.tac <- spsedrep.sum$sed.ssnse/(2.471*907.1847)
+
+print(arrange(spsedrep.sum, spcat12mossn, till, cc), n=nrow(spsedrep.sum))
+# A tibble: 30 × 8
+# Groups:   spcat12mossn, till [10]
+# spcat12mossn     till  cc    sed.ssnmn sed.ssnse cld      sed.ssnmn.tac sed.ssnse.tac
+# <chr>            <chr> <chr>     <dbl>     <dbl> <chr>            <dbl>         <dbl>
+#   1 Abnormally Dry   CT    LC         168.      35.3 ij              0.0750        0.0157
+# 2 Abnormally Dry   CT    NC         480.      78.6 fghij           0.214         0.0350
+# 3 Abnormally Dry   CT    TC         396.      68.1 fghij           0.177         0.0304
+# 4 Abnormally Dry   NT    LC         126.      24.8 ij              0.0564        0.0111
+# 5 Abnormally Dry   NT    NC         476.      78.5 fghij           0.212         0.0350
+# 6 Abnormally Dry   NT    TC         348.      62.8 ghij            0.155         0.0280
+# 7 Abnormally Wet   CT    LC         527.      89.6 cdefghij        0.235         0.0400
+# 8 Abnormally Wet   CT    NC        1181.     166.  abcd            0.527         0.0742
+# 9 Abnormally Wet   CT    TC        1032.     150.  abcdef          0.460         0.0670
+# 10 Abnormally Wet   NT    LC         331.      55.7 fghij           0.148         0.0248
+# 11 Abnormally Wet   NT    NC        1174.     167.  abcd            0.524         0.0744
+# 12 Abnormally Wet   NT    TC         898.     138.  abcdefg         0.401         0.0615
+# 13 Moderate Drought CT    LC         262.      46.2 hij             0.117         0.0206
+# 14 Moderate Drought CT    NC         562.      80.0 efghij          0.251         0.0357
+# 15 Moderate Drought CT    TC         452.      61.6 fghij           0.202         0.0275
+# 16 Moderate Drought NT    LC         150.      26.2 j               0.0670        0.0117
+# 17 Moderate Drought NT    NC         558.      79.7 fghij           0.249         0.0355
+# 18 Moderate Drought NT    TC         407.      55.8 ghij            0.182         0.0249
+# 19 Moderately Wet   CT    LC         675.      73.8 defgh           0.301         0.0329
+# 20 Moderately Wet   CT    NC        1316.     119.  a               0.587         0.0530
+# 21 Moderately Wet   CT    TC        1205.     114.  ab              0.538         0.0509
+# 22 Moderately Wet   NT    LC         551.      64.4 fghij           0.246         0.0288
+# 23 Moderately Wet   NT    NC        1308.     119.  a               0.583         0.0530
+# 24 Moderately Wet   NT    TC        1066.     104.  abcd            0.476         0.0464
+# 25 Normal           CT    LC         549.      49.9 fghi            0.245         0.0222
+# 26 Normal           CT    NC        1081.      86.4 abc             0.482         0.0385
+# 27 Normal           CT    TC         954.      77.5 abcde           0.425         0.0346
+# 28 Normal           NT    LC         350.      31.6 ghij            0.156         0.0141
+# 29 Normal           NT    NC        1075.      86.3 abc             0.479         0.0385
+# 30 Normal           NT    TC         840.      71.2 bcdef           0.375         0.0317
+# moderately wet summer: CT NC - CT LC
+(0.587-0.301)/0.587 # 49%
+# mod wet: NT NC - NT LC
+(0.583 - 0.246)/0.583 # 57%
+mean(c(0.49, 0.57))  #0.53
+
 spsedrep.sum$sed.ssnmn.lbac <- spsedrep.sum$sed.ssnmn*2.20462/2.47105
 spsedrep.sum$sed.ssnse.lbac <- spsedrep.sum$sed.ssnse*2.20462/2.47105
+
 
 ####################################  sed ~ cc*till*spei plot
 windows(xpinch=200, ypinch=200, width=5, height=5)
@@ -244,6 +309,7 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 # pal2 <- c("#6f3112","#dfb1a3")
 pal2 <- c( "#669947", "#004a23")
 pal5 <- c( "#f67e4b","#FEDa8B", "#eaeccc", "#C2e4ef","#6ea6cd")
+
 
 ggplot(data=spsedrep.sum, aes(x=cc, 
                            y=sed.ssnmn.lbac, fill=till)) + # 
@@ -259,11 +325,7 @@ ggplot(data=spsedrep.sum, aes(x=cc,
                 position=position_dodge(0.7)) +
   facet_grid2(rows=vars(factor(spcat12mossn, levels=c( "Moderate Drought", "Abnormally Dry", "Normal", "Abnormally Wet", "Moderately Wet"))), # rows=vars(factor(till, levels=c("CT", "NT")), factor(cc, levels=c("NC", "CC"))),
               labeller = as_labeller(
-                c("Moderate Drought" = "Moderate\nDrought", 
-                   "Abnormally Dry" = "Abnormally\nDry", 
-                  "Normal" = "Normal" ,
-                   "Abnormally Wet" = "Abnormally\nWet" , 
-                  "Moderately Wet" = "Moderately\nWet")),
+                c("Moderately Wet" = "Moderately\nWet")),
               # "NC"= "Without cover crops","CC" = "With cover crops",
               # "CT" = "Conventional Till", "NT" = "No Till")), 
               strip = strip_themed(background_y = elem_list_rect(fill = pal5), #,  # cool stuff from ggh4x package!

@@ -15,24 +15,26 @@ se <- function(x) sd(x) / sqrt(length(x))
 # if you only need annual totals skip to ndatyr below
 
 # # if you need daily estimates use this:
-# # data in the folder data/large_data/ are too big to share in github repo
-# # only saved to Bonnie's computer (backed up by onedrive)
-# ndat <- read.csv("data/large_data/daily N/CA_vineyards_day_soil_n.csv")
+# # # data in the folder data/large_data/ are too big to share in github repo
+# # # only saved to Bonnie's computer (backed up by onedrive)
+# ndat <- read.csv("data/large_data/daily N/CA_vineyards_day_soil_n20240220.csv")
 # beepr::beep(sound=8)
 # # N UNITS are in kg N / ha per day
 # 
-# unique(ndat$crop_system_name) # [1] "grape-a" "grape-c"
-# unique(ndat$management_name) #  [1] "ct-bc" "cn"    "ct-lc" "ct-nc" "nt-nc" "rn"    "rt-lc" "rt-nc" "nt-lc" "rt-bc" "nt-bc"
+# # unique(ndat$crop_system_name)  # "grape-a" "grape-c"
+# # unique(ndat$management_name)  #  "ct-bc" "cn"    "ct-lc" "ct-nc" "nt-nc" "rn"    "rt-lc" "rt-nc" "nt-lc" "rt-bc" "nt-bc"
 # 
-# # sum data by year
+# # # sum data by year
 # ndatyr <- ndat %>%
 #   group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
 #   summarize(NO3.yr = sum(NO3.leach))
-# #
+# 
+# 
+# 
 # # # # clean up
 # rm(ndat)
 # #
-# colnames(ndatyr)[c(2,3,5)] <- c("crop", "management", "year")
+# colnames(ndatyr)[c(3,5)] <- c("management", "year")
 # 
 # write.csv(ndatyr, "data/water, nitrate, sediments/CA_grape_nitrate_annualtotals.csv", row.names=F)
 
@@ -46,27 +48,27 @@ ndatyr$till <- ifelse(grepl("ct-", ndatyr$management), "CT",
                      ifelse(grepl("rt-", ndatyr$management), "RT", 
                             ifelse(grepl("nt-", ndatyr$management), "NT", "NA")))
 # # check
-# unique(ndatyr$till)
+# unique(ndatyr$till)  # NA is correct for row areas, till and cover crop only apply to alleys
 
-# dummy for CC or NC
+# factor for cover crops
 ndatyr$cc <- ifelse(grepl("-nc", ndatyr$management), "NC", 
-                   ifelse(grepl("-bc", ndatyr$management), "BarC",  # Barley
-                          ifelse(grepl("-lc", ndatyr$management), "LegC", "NA")))  #Legume - Faba Bean
+                   ifelse(grepl("-bc", ndatyr$management), "BarC",  # "basic cover" was barley not to be confused with bean cover
+                          ifelse(grepl("-lc", ndatyr$management), "LegC", "NA")))  # legume cover (Faba bean)
 
 
 # # check
-# unique(ndatyr$cc)
+# unique(ndatyr$cc)   # NA is correct for row areas, till and cover crop only apply to alleys
 
 # dummy for N treatment
 ndatyr$nfert <- ifelse(grepl("cn", ndatyr$management), "Conventional N", 
                       ifelse(grepl("rn", ndatyr$management), "Reduced N", "NA"))
 
-ndatyr$system <- ifelse(grepl("-a", ndatyr$crop), "alley", "crop")
+ndatyr$system <- ifelse(grepl("-a", ndatyr$crop_system_name), "alley", "crop")
 
 
 
 # # check
-# unique(ndatyr$nfert)
+# unique(ndatyr$nfert)  # NA is correct for alleys
 # unique(ndatyr$system)
 
 
@@ -78,6 +80,10 @@ ndatyr$decade <- ifelse(ndatyr$year <2031, "2020s",
                                              ifelse(ndatyr$year>=2061 & ndatyr$year <2071, "2060s", "2070s")))))
 # unique(ndatyr$decade)
 
+
+# check that all levels present:
+# check <- aggregate(year ~ climate_scenario + system + site_name + till + cc + nfert, data=ndatyr, FUN="length")
+# looks correct!
 
 
 ################ put alleys and crop rows together for per ha estimates
@@ -94,20 +100,20 @@ ndatyr$decade <- ifelse(ndatyr$year <2031, "2020s",
 # rn-rt-bc, rn-rt-lc, rn-rt,nc
 
 # math:
-# cn-ct-bc = 0.15(NO3- from CN crop row) + 0.85(NO3- from ct-bc alley)
+# cn-ct-bc = 0.45(NO3- from CN crop row) + 0.55(NO3- from ct-bc alley)
 
 # re-arrange data to do math
 # split up data by system # i don't think rcast or pivot_wider works here but maybe I'm thinking about it wrong
 
 ndatyr.a <- ndatyr[ndatyr$system=="alley",]
 colnames(ndatyr.a)[6] <- "NO3.yr.alley"
-ndatyr.a <- ndatyr.a[,c(1,4:8,11)]
+ndatyr.a <- ndatyr.a[,c(1,5:8,11)]  # don't need climate_scenario because filtered to only RCP60
 
 ndatyr.c <- ndatyr[ndatyr$system=="crop",]
 colnames(ndatyr.c)[6] <- "NO3.yr.crop"
-ndatyr.c <- ndatyr.c[,c(1,4:6,9,11)]
+ndatyr.c <- ndatyr.c[,c(1,5:6,9,11)]
 
-ndatyrw <- full_join(ndatyr.a, ndatyr.c, by=join_by(site_name, climate_scenario, year, decade),
+ndatyrw <- full_join(ndatyr.a, ndatyr.c, by=join_by(site_name, year, decade),
                      suffix=c(".x", ".y"),
                      multiple="all",
                      relationship="many-to-many")
@@ -119,38 +125,39 @@ rm(ndatyr.a, ndatyr.c)
 
 # do the math to combine alley and row nitrate losses
 ndatyrw$NO3.yrtot <- (0.15*ndatyrw$NO3.yr.crop) + (0.85*ndatyrw$NO3.yr.alley)
-ndatyrw$NO3.yrtot.lbac <- ndatyrw$NO3.yrtot * 2.47105/2.20462
+# convert kg N / ha*yr to lb N / ac*yr
+ndatyrw$NO3.yrtot.lbac <- ndatyrw$NO3.yrtot * 1/(2.471*0.4536)
 
 
 
 ################ calculate means across sites
 
 
-# ANNUAL MEANS ACROSS ALL YEARS for rotation
-ndat_50yr.site <- ndatyrw %>%  # for stats
-  group_by(site_name, till, cc, nfert) %>%
+# Annual mean ACROSS ALL YEARS 
+ndat.site <- ndatyrw[ndatyrw$till %in% c("CT", "NT") & ndatyrw$nfert=="Conventional N",] %>%  # for stats
+  group_by(site_name, cc) %>%  # not significant effect of tillage and N level (N levels not very different)
   summarize(NO3.sitemean = mean(NO3.yrtot.lbac)) # mean annual N loss per site (mean across 50 years at each site)
 
-ndat_50yr.global <- ndat_50yr.site %>%    # for plotting means
-  group_by(till, cc, nfert) %>%  # drop sitename to get mean across sites
-  summarize(NO3.mean = mean(NO3.sitemean),# mean of the site means in each treatment combo
-             NO3.se = se(NO3.sitemean)) %>%# variability across sites in each treatment combo
-  arrange(desc(NO3.mean))
+ndat_mean <- ndatyrw[ndatyrw$till %in% c("CT", "NT") & ndatyrw$nfert=="Conventional N",] %>%    # for plotting means
+  group_by(cc) %>%  # drop sitename to get mean across sites,  # not significant effect of tillage and N level (N levels not very different)
+  summarize(NO3.mean.lbac = mean(NO3.yrtot.lbac),# mean of the site means in each treatment combo
+             NO3.se.lbac = se(NO3.yrtot.lbac)) %>%# variability across sites and years in each treatment combo
+  arrange(desc(NO3.mean.lbac))
             
             
 
-# ANNUAL MEANS BY DECADE for rotation
-ndat_dec.site <- ndatyrw %>%  # site means
-  group_by(site_name, till, cc, nfert, decade) %>%
-  summarize(NO3.sitemean = mean(NO3.yrtot.lbac))  # mean annual N loss per site per decade per treatment combo
-
-ndat_dec.global <- ndat_dec.site %>%  # for plotting means  
-  group_by(till, cc, nfert, decade) %>%  # drop sitename to get means across sites 
-  summarize(NO3.mean = mean(NO3.sitemean), # mean across sites in each treatment combo
-            NO3.se = se(NO3.sitemean)) # variability across sites in each treatment combo
+# # ANNUAL MEANS BY DECADE
+# ndat_dec.site <- ndatyrw %>%  # site means
+#   group_by(site_name, till, cc, nfert, decade) %>%
+#   summarize(NO3.sitemean = mean(NO3.yrtot.lbac))  # mean annual N loss per site per decade per treatment combo
+# 
+# ndat_dec.global <- ndat_dec.site %>%  # for plotting means  
+#   group_by(till, cc, nfert, decade) %>%  # drop sitename to get means across sites 
+#   summarize(NO3.mean = mean(NO3.sitemean), # mean across sites in each treatment combo
+#             NO3.se = se(NO3.sitemean)) # variability across sites in each treatment combo
             
             
-rm(ndatyr, ndatyrw)
+# rm(ndatyr, ndatyrw)
 
 
 ############################### NO3- losses average 2022-2072
@@ -160,90 +167,163 @@ rm(ndatyr, ndatyrw)
 
 
 
-no3aov <- aov(NO3.sitemean ~ till:cc:nfert, data=ndat_50yr.site)  # means are already in lb/ac
-no3lm <- lm(NO3.sitemean~ till:cc:nfert, data=ndat_50yr.site)
+# no3aov <- aov(NO3.sitemean ~ cc:till:nfert, data=ndat.site)  # & ndat.site$nfert=="Conventional N",])  #  till:cc:nfert
+# no3lm <- lm(NO3.sitemean~ cc:till:nfert, data=ndat.site)
+
+no3aov <- aov(NO3.sitemean ~ cc, data=ndat.site)  # & ndat.site$nfert=="Conventional N",])  #  till:cc:nfert
+no3lm <- lm(NO3.sitemean~ cc, data=ndat.site)
 
 summary(no3lm)
 # Call:
-#   lm(formula = NO3.sitemean ~ till:cc:nfert, data = ndat_50yr.site)
+#   lm(formula = NO3.sitemean ~ cc, data = ndat.site)  # filtered ndat.site for CT, NT, and Conventional N
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -79.950  -6.717  -2.112  11.541  71.493 
+# -59.536  -5.263  -1.079   9.584  54.200 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)   23.097      5.552   4.160 0.000141 ***
+#   ccLegC       125.762      7.851  16.018  < 2e-16 ***
+#   ccNC          27.573      7.851   3.512 0.001025 ** 
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 22.21 on 45 degrees of freedom
+# Multiple R-squared:  0.863,	Adjusted R-squared:  0.8569 
+# F-statistic: 141.8 on 2 and 45 DF,  p-value: < 2.2e-16
+
+# Call:
+#   lm(formula = NO3.sitemean ~ cc:till:nfert, data = ndat.site)
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -64.157  -5.394  -1.660   9.311  56.835 
 # 
 # Coefficients: (1 not defined because of singularities)
 # Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                        55.8056     6.8490   8.148 1.39e-14 ***
-#   tillCT:ccBarC:nfertConventional N -21.7506     9.6860  -2.246 0.025540 *  
-#   tillNT:ccBarC:nfertConventional N -30.9755     9.6860  -3.198 0.001549 ** 
-#   tillRT:ccBarC:nfertConventional N -34.8526     9.6860  -3.598 0.000381 ***
-#   tillCT:ccLegC:nfertConventional N 139.7517     9.6860  14.428  < 2e-16 ***
-#   tillNT:ccLegC:nfertConventional N 121.3946     9.6860  12.533  < 2e-16 ***
-#   tillRT:ccLegC:nfertConventional N 122.1979     9.6860  12.616  < 2e-16 ***
-#   tillCT:ccNC:nfertConventional N    15.1242     9.6860   1.561 0.119587    
-# tillNT:ccNC:nfertConventional N     0.7327     9.6860   0.076 0.939760    
-# tillRT:ccNC:nfertConventional N     0.9798     9.6860   0.101 0.919501    
-# tillCT:ccBarC:nfertReduced N      -22.7304     9.6860  -2.347 0.019662 *  
-#   tillNT:ccBarC:nfertReduced N      -31.9553     9.6860  -3.299 0.001100 ** 
-#   tillRT:ccBarC:nfertReduced N      -35.8324     9.6860  -3.699 0.000262 ***
-#   tillCT:ccLegC:nfertReduced N      138.7719     9.6860  14.327  < 2e-16 ***
-#   tillNT:ccLegC:nfertReduced N      120.4148     9.6860  12.432  < 2e-16 ***
-#   tillRT:ccLegC:nfertReduced N      121.2181     9.6860  12.515  < 2e-16 ***
-#   tillCT:ccNC:nfertReduced N         14.1444     9.6860   1.460 0.145370    
-# tillNT:ccNC:nfertReduced N         -0.2471     9.6860  -0.026 0.979663    
-# tillRT:ccNC:nfertReduced N              NA         NA      NA       NA    
+# (Intercept)                         44.164      5.575   7.922 2.34e-13 ***
+#   ccBarC:tillCT:nfertConventional N  -17.331      7.884  -2.198  0.02921 *  
+#   ccLegC:tillCT:nfertConventional N  111.435      7.884  14.134  < 2e-16 ***
+#   ccNC:tillCT:nfertConventional N     12.233      7.884   1.552  0.12250    
+# ccBarC:tillNT:nfertConventional N  -24.804      7.884  -3.146  0.00194 ** 
+#   ccLegC:tillNT:nfertConventional N   97.954      7.884  12.424  < 2e-16 ***
+#   ccNC:tillNT:nfertConventional N      0.778      7.884   0.099  0.92150    
+# ccBarC:tillCT:nfertReduced N       -18.109      7.884  -2.297  0.02278 *  
+#   ccLegC:tillCT:nfertReduced N       110.657      7.884  14.035  < 2e-16 ***
+#   ccNC:tillCT:nfertReduced N          11.456      7.884   1.453  0.14797    
+# ccBarC:tillNT:nfertReduced N       -25.582      7.884  -3.245  0.00140 ** 
+#   ccLegC:tillNT:nfertReduced N        97.176      7.884  12.325  < 2e-16 ***
+#   ccNC:tillNT:nfertReduced N              NA         NA      NA       NA    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 27.4 on 270 degrees of freedom
-# Multiple R-squared:  0.8668,	Adjusted R-squared:  0.8584 
-# F-statistic: 103.4 on 17 and 270 DF,  p-value: < 2.2e-16
+# Residual standard error: 22.3 on 180 degrees of freedom
+# Multiple R-squared:  0.8633,	Adjusted R-squared:  0.8549 
+# F-statistic: 103.3 on 11 and 180 DF,  p-value: < 2.2e-16
+
+
+
 summary(no3aov)
-# Df  Sum Sq Mean Sq F value Pr(>F)    
-# till:cc:nfert  17 1319084   77593   103.4 <2e-16 ***
-#   Residuals     270  202647     751                   
+# Df Sum Sq Mean Sq F value Pr(>F)         # filtered ndat.site for CT, NT, and Conventional N
+# cc           2 139826   69913   141.8 <2e-16 ***
+#   Residuals   45  22192     493                   
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+# Df Sum Sq Mean Sq F value Pr(>F)    
+# cc:till:nfert  11 565236   51385   103.3 <2e-16 ***
+#   Residuals     180  89511     497                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 Tukout <- TukeyHSD(no3aov)
+Tukout
+# Tukey multiple comparisons of means
+# Tukey multiple comparisons of means
+# 95% family-wise confidence level
+# 
+# Fit: aov(formula = NO3.sitemean ~ cc, data = ndat.site)
+# 
+# $cc
+# diff         lwr       upr     p adj
+# LegC-BarC 125.76213  106.733537 144.79073 0.0000000
+# NC-BarC    27.57315    8.544556  46.60174 0.0028911
+# NC-LegC   -98.18898 -117.217575 -79.16039 0.0000000
 cld <- multcompView::multcompLetters4(no3aov, Tukout)
-cld <- as.data.frame.list(cld$`till:cc:nfert`)
-ndat_50yr.global$cld <- cld$Letters
+cld <- as.data.frame.list(cld$cc)  # `cc:till:nfert`
+
+ndat_mean$cld <- cld$Letters
+ndat_mean
+# # A tibble: 3 × 4
+# cc    NO3.mean.lbac NO3.se.lbac cld  
+# <chr>         <dbl>       <dbl> <chr>
+#   1 LegC          149.        2.32  a    
+# 2 NC             50.7       0.547 b    
+# 3 BarC           23.1       0.457 c
+# NC - BarC
+(50.7-23.1)/50.7  # 54% or 27.6 units
+27.6*0.6
+# NC - LegC
+(23.1 - 149)/23.1  # 545% or 125.9 units
+
+
+# # A tibble: 12 × 6
+# # Groups:   till, cc [6]
+# till  cc    nfert          NO3.mean.lbac NO3.se.lbac cld  
+# <chr> <chr> <chr>                  <dbl>       <dbl> <chr>
+#   1 CT    LegC  Conventional N         156.        3.31  a    
+# 2 CT    LegC  Reduced N              155.        3.30  a    
+# 3 NT    LegC  Conventional N         142.        3.24  a    
+# 4 NT    LegC  Reduced N              141.        3.23  a    
+# 5 CT    NC    Conventional N          56.4       0.820 b    
+# 6 CT    NC    Reduced N               55.6       0.810 b    
+# 7 NT    NC    Conventional N          44.9       0.669 bc   
+# 8 NT    NC    Reduced N               44.2       0.659 bcd  
+# 9 CT    BarC  Conventional N          26.8       0.658 cd   
+# 10 CT    BarC  Reduced N               26.1       0.650 cd   
+# 11 NT    BarC  Conventional N          19.4       0.607 cd   
+# 12 NT    BarC  Reduced N               18.6       0.601 d 
+
+
 
 #N treatment rates in lb/ac
 # Conventional
-50*2.20462/2.47105 # 44.6 lb/ac
+(2*25)*2.20462/2.47105 # 47 lb/ac
 # Reduced
-40*2.20462/2.47105 # 35.7 lb/ac
+(2*20)*2.20462/2.47105 # 36 lb/ac
 
 ############ make graph
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
 
-ggplot(data=ndat_50yr.global, 
-       aes(x=nfert, y=NO3.mean, fill=nfert)) +   # fill=variable
-  geom_bar(stat="identity", position=position_dodge(), show.legend=F) + # color="#332288", 
-  geom_errorbar(aes(ymin=NO3.mean-NO3.se, ymax=NO3.mean+NO3.se), width=0.3, position=position_dodge(0.9)) +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))), 
-             cols=vars(factor(cc, levels=c("NC", "BarC", "LegC"))), 
-             #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
-             labeller = as_labeller(
-               c(NC="No Cover Crop",BarC="Barley Cover", LegC="Legume Cover", 
-                 "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
-                 # "Fall N" = "Fall\nN", "High N" = "High\nN", "Recommended N"="Recm'd\nN"))) +
-  scale_fill_manual(values=c("#20243d", "#C2e4ef")) +
+ggplot(data=ndat_mean, 
+       aes(x=cc, y=NO3.mean.lbac)) +   # fill=variable
+  geom_bar(stat="identity", position=position_dodge(), fill="#669947", width=0.7) + # color="#332288", 
+  geom_errorbar(aes(ymin = NO3.mean.lbac - NO3.se.lbac, 
+                    ymax = NO3.mean.lbac + NO3.se.lbac), 
+                width=0.2, position=position_dodge(0.9)) +
+  #  facet_grid(# rows=vars(factor(till, levels=c("CT", "RT", "NT"))), 
+  #            # cols=vars(factor(cc, levels=c("NC", "TC", "LC"))), 
+  #    cols=vars(factor(cc, levels=c("NC", "BarC", "LegC"))),  #factor(till, levels=c("CT", "NT"))), 
+  #            labeller = as_labeller(
+  #              c(NC="No Cover Crop",BarC="Barley Cover", LegC="Legume Cover"))) +
+  #                #"CT" = "Conventional Till", "NT" = "No Till"))) +
+  #                # "Fall N" = "Fall\nN", "High N" = "High\nN", "Recommended N"="Recm'd\nN"))) +
+  # scale_fill_manual(values=c("#C2e4ef", "#669947")) +
   xlab("N management") +
   ylab("Mean annual nitrate loss (lb N per ac) 2022 to 2072") +
-  scale_x_discrete(breaks=c("Conventional N", "Reduced N"),
-                    labels=c("50 lb N\nper acre", "40 lb N\nper acre")) +
-  geom_text(aes(x=nfert, y=NO3.mean+30, label=cld), size=5, fontface="bold") +
+  scale_x_discrete(limits=c("NC", "BarC", "LegC"),
+                    labels=c("No cover", "Barley cover", "Faba bean cover")) +
+  # geom_text(aes(x=cc, y=NO3.mean.lbac+5, label=cld),
+  #           position=position_dodge(width=1), size=5, fontface="bold") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/water, nitrate, sediments/CA_grape_NO3 losses 22-72 mean bars lbac.png", width=7, height=6, dpi=300)
+ggsave("plots/water, nitrate, sediments/CA_grape_NO3 losses mean annual bars by cc lbac_no letters.png", width=4, height=3, dpi=300)
 
 
 
@@ -254,7 +334,7 @@ ggsave("plots/water, nitrate, sediments/CA_grape_NO3 losses 22-72 mean bars lbac
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
 
-# pal6 <- c("#eaeccc", "#FEDa8B", "#FDb366", "#f67e4b","#dd3d2d", "#a50026")   
+pal6 <- c("#eaeccc", "#FEDa8B", "#FDb366", "#f67e4b","#dd3d2d", "#a50026")   
 pal6blue <- c("#ffffff", "#ceced5", "#9f9fac", "#727284", "#48495f", "#20233c")
                    
 
@@ -262,10 +342,10 @@ ggplot(data=ndat_dec.global, aes(x=nfert, y=NO3.mean, fill=decade)) +
   geom_bar(stat="identity", position=position_dodge(), color="#20233d") +
   geom_errorbar(aes(ymin=NO3.mean-NO3.se, ymax=NO3.mean+NO3.se), width=0.3, position=position_dodge(0.9)) +
   facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))), 
-             cols=vars(factor(cc, levels=c("NC", "BarC", "LegC"))), 
+             cols=vars(factor(cc, levels=c("NC", "TC", "LC"))), 
              #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
              labeller = as_labeller(
-               c(NC="No Cover Crop",BarC="Barley Cover", LegC="Legume Cover", 
+               c(NC="No Cover Crop",TC="Triticale Cover", LC="Legume Cover", 
                  "CT" = "Conventional Till", "NT" = "No Till", "RT"="Reduced Till"))) +
   # "Fall N" = "Fall\nN", "High N" = "High\nN", "Recommended N"="Recm'd\nN"))) +
   #"Fall N" = "Fall N", "High N" = "High N", "Recommended N"="Recommended N"))) 
@@ -273,11 +353,11 @@ ggplot(data=ndat_dec.global, aes(x=nfert, y=NO3.mean, fill=decade)) +
   xlab("N management") +
   ylab("Mean annual nitrate loss (lb N per acre) 2022 to 2072") +
   scale_x_discrete(breaks=c("Conventional N", "Reduced N"),
-                   labels=c("50 lb N\nper acre", "40 lb N\nper acre")) +
+                   labels=c("220 lb N\nper acre", "154 lb N\nper acre")) +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/water, nitrate, sediments/CA_grape_NO3 losses decadal mean bars blue.png", width=7, height=5, dpi=300)
+ggsave("plots/water, nitrate, sediments/CA_alm_NO3 losses mean annual bars blue.png", width=7, height=5, dpi=300)
 

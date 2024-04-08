@@ -641,7 +641,7 @@ ggplot() +
 
 
 
-ggsave("plots/ghgs/CA_simulation mean (crop, site, decade, no nfert) annual em by decadeRCP60_with letters.png", width=7, height=8, dpi=300)
+ggsave("plots/ghgs/CA_alm_simulation mean (crop, site, decade, no nfert) annual em by decadeRCP60_with letters.png", width=7, height=8, dpi=300)
 
 
 
@@ -666,6 +666,17 @@ ghgann <- ghgdat %>%
 
 ghgann$mean.ac <- ghgann$mean/2.471
 ghgann$se.ac <- ghgann$se/2.471
+
+# till cc    var2       mean         se     mean.ac       se.ac
+# 1   CT LC ghgdsoc -1.4508175 0.04014978 -0.58713782 0.016248392
+# 2   CT NC ghgdsoc  0.1107192 0.01079150  0.04480745 0.004367261
+# 3   CT TC ghgdsoc -0.6159672 0.01449961 -0.24927851 0.005867913
+# 4   NT LC ghgdsoc -1.6631133 0.04428232 -0.67305274 0.017920808
+# 5   NT NC ghgdsoc  0.0712666 0.01105457  0.02884120 0.004473725
+# 6   NT TC ghgdsoc -0.6649282 0.01626748 -0.26909276 0.006583358
+mean(c(0.11, 0.07))  # -0.09
+mean(c(0.66, 0.62)) #0.64
+mean(c(1.45, 1.66)) # 1.56
 
 
 effectsoc <- aov(ghg_dsoc ~till*cc, data=ghgdat[ghgdat$till %in% c("NT", "CT") & ghgdat$nfert=="50 N",])  # 
@@ -723,8 +734,7 @@ ggplot(ghgann, aes(x=till, y=-1*mean.ac)) +
     strip.text=element_text(face="bold", size=11))
 
 
-
-ggsave("plots/ghgs/CA_simulation mean dSOC 2022-72 RCP60_no letters.png", width=7, height=4, dpi=300)
+ggsave("plots/ghgs/CA_alm_simulation mean dSOC 2022-72 RCP60_no letters.png", width=7, height=4, dpi=300)
 
 
 
@@ -814,7 +824,7 @@ ggplot(data=ghgdatl_cropmean[ghgdatl_cropmean$till %in% c("CT", "NT") &
     legend.text.align=0,
     axis.text.x=element_text(angle=-20, hjust=0))
 
-ggsave("plots/ghgs/CA_simulations net annual em 2022.png", width=6, height=4, dpi=300)
+ggsave("plots/ghgs/CA_alm_simulations net annual em 2022.png", width=6, height=4, dpi=300)
 
 
 # are the net effects in the bars above significantly different?
@@ -989,7 +999,7 @@ ggplot() +
     axis.text=element_text(size=12, face="bold"),
     axis.title=element_text(size=12, face="bold"))
 
-ggsave("plots/ghgs/CA_simulations net annual em 2022 withletters.png", width=4, height=5, dpi=300)
+ggsave("plots/ghgs/CA_alm_simulations net annual em 2022 withletters.png", width=4, height=5, dpi=300)
 
 
 

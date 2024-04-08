@@ -42,6 +42,14 @@ write.csv(scenh, "data/scenarios/scenh_20240220.csv", row.names=F)
 
 rm(scenil, scena, sceng, scenh, scenny)
 
+# new alf biomass 3/12/2024
+bmalf <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/2024 Reruns (Almonds, Hops, Vineyards, NY Alfalfa)/Alfalfa 2024-03-04/max_biomass_summary-alfalfa-2024-03-04.csv")
+bmalf <- bmalf %>%
+  arrange(site_name, Year, crop_name) 
+write.csv(bmalf, "data/biomass/biomass_NYalf.csv")  # 3/12/2024
+
+
+
 # LOAD biomass # most recent download 8/2/23 on files dated 7/26/23 from Alex
 # bm <- read.csv("G:/.shortcut-targets-by-id/1RzGGwXFnsKjXPH17gQl345pZJAOV72w8/American Farmland Trust/DNDC Results/Data/max_biomass_summary.csv")
 # New almonds, grapes, hops biomass 3/12/2024

@@ -12,10 +12,13 @@ se <- function(x) sd(x) / sqrt(length(x))
 # Sediment yield is kg/ha.
 
 # # sum data by year
-# wdatyr <- wdat %>%
-#   group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
-#   summarize(trans.yr = sum(Transpiration.mm.), evap.yr = sum(Evaporation.mm.),
-#             leach.yr = sum(WaterLeaching), run.yr = sum(Runoff), sed.yr = sum(SedimentYield))
+wdatyr <- wdat %>%
+  group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
+  summarize(trans.yr = sum(Transpiration.mm.),
+            evap.yr = sum(Evaporation.mm.),
+            leach.yr = sum(WaterLeaching),
+            run.yr = sum(Runoff),
+            sed.yr = sum(SedimentYield))
 # beepr::beep(sound=8)
 # # 
 # # clean up
@@ -23,73 +26,73 @@ se <- function(x) sd(x) / sqrt(length(x))
 # 
 # colnames(wdatyr)[c(3,5)] <- c("management", "year")
 # 
-# write.csv(wdatyr, "data/water, nitrate, sediments/water,seds_IL_annualtotals.csv", row.names=F)
-
-wdatyr <- read.csv("data/water, nitrate, sediments/IL_water,seds_annualtotals.csv")
-
-
-wdatyr <- wdatyr[wdatyr$year>2021 & wdatyr$year<2073 & wdatyr$climate_scenario=="rcp60",]
-
-# make dummy variables
-wdatyr$till <- ifelse(grepl("ct-", wdatyr$management), "CT", 
-                      ifelse(grepl("rt-", wdatyr$management), "RT", "NT"))
-# # check
-# unique(wdatyr$till)
-
-# dummy for CC or NC
-wdatyr$cc <- ifelse(grepl("-cc-", wdatyr$management), "CC", "NC")
-# # check
-# unique(wdatyr$cc)
-
-# dummy for N treatment
-wdatyr$nfert <- ifelse(grepl("-cn", wdatyr$management), "High N", 
-                       ifelse(grepl("-fn", wdatyr$management), "Fall N","Recommended N"))
-# # check
-# unique(wdatyr$nfert)
-
-# dummy for decade
-wdatyr$decade <- ifelse(wdatyr$year <2031, "2020s",
-                        ifelse(wdatyr$year>=2031 & wdatyr$year <2041, "2030s",
-                               ifelse(wdatyr$year>=2041 & wdatyr$year <2051, "2040s",
-                                      ifelse(wdatyr$year>=2051 & wdatyr$year <2061, "2050s",
-                                             ifelse(wdatyr$year>=2061 & wdatyr$year <2071, "2060s", "2070s")))))
-# unique(wdatyr$decade)
-
-wdatyr$et.yr <- wdatyr$evap.yr + wdatyr$trans.yr
-
+# 
+# wdatyr <- wdatyr[wdatyr$year>2021 & wdatyr$year<2073 & wdatyr$climate_scenario=="rcp60",]
+# 
+# # make factor variables
+# wdatyr$till <- ifelse(grepl("ct-", wdatyr$management), "CT", 
+#                       ifelse(grepl("rt-", wdatyr$management), "RT", "NT"))
+# # # check
+# # unique(wdatyr$till)
+# 
+# # factor  for CC or NC
+# wdatyr$cc <- ifelse(grepl("-cc-", wdatyr$management), "CC", "NC")
+# # # check
+# # unique(wdatyr$cc)
+# 
+# #factor  for N treatment
+# wdatyr$nfert <- ifelse(grepl("-cn", wdatyr$management), "High N", 
+#                        ifelse(grepl("-fn", wdatyr$management), "Fall N","Recommended N"))
+# # # check
+# # unique(wdatyr$nfert)
+# 
+# # factor  for decade
+# wdatyr$decade <- ifelse(wdatyr$year <2031, "2020s",
+#                         ifelse(wdatyr$year>=2031 & wdatyr$year <2041, "2030s",
+#                                ifelse(wdatyr$year>=2041 & wdatyr$year <2051, "2040s",
+#                                       ifelse(wdatyr$year>=2051 & wdatyr$year <2061, "2050s",
+#                                              ifelse(wdatyr$year>=2061 & wdatyr$year <2071, "2060s", "2070s")))))
+# # unique(wdatyr$decade)
+# 
+# wdatyr$et.yr <- wdatyr$evap.yr + wdatyr$trans.yr
+# 
 # write.csv(wdatyr, "data/water, nitrate, sediments/IL_wdatyr.csv", row.names=F)
+
+wdatyr <- read.csv("data/water, nitrate, sediments/IL_wdatyr.csv")
+
+
 
 # first sum by site and crop name across all years, then calculate mean across crop types per site, 
 # Then mean and se across sites by treatments/management combinations
-
-wdat_tmttot <- wdatyr %>%
-  group_by(site_name, crop_system_name, till, cc, nfert) %>%
-  summarize(et.tot = sum(et.yr), 
-            evap.tot = sum(evap.yr),
-            trans.tot = sum(trans.yr),
-            leach.tot = sum(leach.yr),
-            run.tot = sum(run.yr),
-            sed.tot = sum(sed.yr)) %>%
-  group_by(site_name, till, cc, nfert) %>%
-  summarize(et.sitemean = mean(et.tot),  # mean of corn-soy and soy-corn per site
-            evap.sitemean = mean(evap.tot),
-            trans.sitemean = mean(trans.tot),
-            leach.sitemean = mean(leach.tot),
-            run.sitemean = mean(run.tot),
-            sed.sitemean = mean(sed.tot)) %>%
-  group_by(till, cc) %>%
-  summarize(et.mean = mean(et.sitemean), # mean across sites and N treatments in each treatment combo
-            et.se = se(et.sitemean), # variability across sites and N treatments in each treatment combo
-            evap.mean = mean(evap.sitemean), # (N treatments don't really affect water and sediment losses, I checked)
-            evap.se = se(evap.sitemean),
-            trans.mean = mean(trans.sitemean),
-            trans.se = se(trans.sitemean),
-            leach.mean = mean(leach.sitemean),
-            leach.se = se(leach.sitemean),
-            run.mean = mean(run.sitemean),
-            run.se = se(run.sitemean),
-            sed.mean = mean(sed.sitemean),
-            sed.se = se(sed.sitemean))
+# 
+# wdat_tmttot <- wdatyr %>%
+#   group_by(site_name, crop_system_name, till, cc, nfert) %>%
+#   summarize(et.tot = sum(et.yr), 
+#             evap.tot = sum(evap.yr),
+#             trans.tot = sum(trans.yr),
+#             leach.tot = sum(leach.yr),
+#             run.tot = sum(run.yr),
+#             sed.tot = sum(sed.yr)) %>%
+#   group_by(site_name, till, cc, nfert) %>%
+#   summarize(et.sitemean = mean(et.tot),  # mean of corn-soy and soy-corn per site
+#             evap.sitemean = mean(evap.tot),
+#             trans.sitemean = mean(trans.tot),
+#             leach.sitemean = mean(leach.tot),
+#             run.sitemean = mean(run.tot),
+#             sed.sitemean = mean(sed.tot)) %>%
+#   group_by(till, cc) %>%
+#   summarize(et.mean = mean(et.sitemean), # mean across sites and N treatments in each treatment combo
+#             et.se = se(et.sitemean), # variability across sites and N treatments in each treatment combo
+#             evap.mean = mean(evap.sitemean), # (N treatments don't really affect water and sediment losses, I checked)
+#             evap.se = se(evap.sitemean),
+#             trans.mean = mean(trans.sitemean),
+#             trans.se = se(trans.sitemean),
+#             leach.mean = mean(leach.sitemean),
+#             leach.se = se(leach.sitemean),
+#             run.mean = mean(run.sitemean),
+#             run.se = se(run.sitemean),
+#             sed.mean = mean(sed.sitemean),
+#             sed.se = se(sed.sitemean))
 
 
 wdat_tmtperyr <- wdatyr %>%
@@ -283,6 +286,25 @@ wdat_nositesed <- group_by(wdat_persite, till, cc, variable) %>%
 cldsed <- as.data.frame.list(cldsed$`till:cc`)
 wdat_nositesed$cld <- cldsed$Letters
 
+<<<<<<< HEAD
+# wdat_nositesed$mean.tac <- wdat_nositesed$mean/(907.1847*2.471)
+# wdat_nositesed$se.tac <- wdat_nositesed$se/(907.1847*2.471)
+
+wdat_nositesed$mean.lbac <- wdat_nositesed$mean/(0.4536*2.471)
+wdat_nositesed$se.lbac <- wdat_nositesed$se/(0.4536*2.471)
+
+wdat_nositesed
+# till  cc    variable  mean    se cld   mean.tac  se.tac mean.lbac se.lbac
+# <chr> <chr> <fct>    <dbl> <dbl> <chr>    <dbl>   <dbl>     <dbl>   <dbl>
+#   1 CT    NC    sed      254.  18.3  a       0.113  0.00818     227.    16.4 
+# 2 RT    NC    sed      229.  17.5  ab      0.102  0.00781     204.    15.6 
+# 3 CT    CC    sed      175.  12.7  bc      0.0781 0.00566     156.    11.3 
+# 4 RT    CC    sed      154.  12.7  cd      0.0686 0.00567     137.    11.3 
+# 5 NT    NC    sed      106.  11.1  de      0.0474 0.00497      94.9    9.95
+# 6 NT    CC    sed       73.4  7.34 e       0.0328 0.00327      65.5    6.55
+
+ggplot(data=wdat_nositesed[wdat_nositesed$till %in% c("CT", "NT"),], aes(x=variable, y=mean.lbac)) +
+=======
 wpyrlong$mean.tac <- wpyrlong$mean/(907.1847*2.471)
 wpyrlong$se.tac <- wpyrlong$se/(907.1847*2.471)
 
@@ -290,6 +312,7 @@ wpyrlong$mean.lbac <- wpyrlong$mean/(0.4536*2.471)
 wpyrlong$se.lbac <- wpyrlong$se/(0.4536*2.471)
 
 ggplot(data=wpyrlong[wpyrlong$variable =="sed" & wpyrlong$till %in% c("CT", "NT"),], aes(x=variable, y=mean.lbac)) +
+>>>>>>> 3925e9244927fb2ce651dd7e9347f16dd8fc1bae
   geom_bar(stat="identity", position=position_dodge(), width=0.6, fill="burlywood3") +
   geom_errorbar(aes(ymin=mean.lbac-se.lbac, ymax=mean.lbac+se.lbac), 
                 width=0.3, position=position_dodge(0.8),color="sienna4") +
@@ -304,9 +327,14 @@ ggplot(data=wpyrlong[wpyrlong$variable =="sed" & wpyrlong$till %in% c("CT", "NT"
   # geom_bar(data=wdat_nositesed, 
   #          aes(x=till, y=mean), stat="identity", 
   #          position=position_dodge(), color=NA, fill=NA) +
+<<<<<<< HEAD
+  geom_text(aes(x=variable, label=cld, y=mean), vjust=-2,
+            position=position_dodge(0.9), color="gray20", size=4, fontface="bold") +
+=======
   # geom_text(data=wdat_nositesed, 
   #           aes(x=till, label=cld, y=mean), vjust=-2,
   #           position=position_dodge(0.9), color="gray20", size=4, fontface="bold") +
+>>>>>>> 3925e9244927fb2ce651dd7e9347f16dd8fc1bae
   xlab("Tillage") +
   ylab('2022-72 mean annual sediment loss (lb per ac)') +
   theme(

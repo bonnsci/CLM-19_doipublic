@@ -63,16 +63,6 @@ wdatyr$system <- ifelse(grepl("-a", wdatyr$crop), "alley", "crop")
 # unique(wdatyr$system)
 
 
-# dummy for decade
-wdatyr$decade <- ifelse(wdatyr$year <2031, "2020s",
-                        ifelse(wdatyr$year>=2031 & wdatyr$year <2041, "2030s",
-                               ifelse(wdatyr$year>=2041 & wdatyr$year <2051, "2040s",
-                                      ifelse(wdatyr$year>=2051 & wdatyr$year <2061, "2050s",
-                                             ifelse(wdatyr$year>=2061 & wdatyr$year <2071, "2060s", "2070s")))))
-# unique(wdatyr$decade)
-
-wdatyr$et.yr <- wdatyr$evap.yr + wdatyr$trans.yr
-
 # do calculations for alley + crop row proportions to get one value for the whole system
 
 wdatyr.a <- wdatyr[wdatyr$system=="alley",]
@@ -119,6 +109,8 @@ write.csv(wdatyrw, "data/water, nitrate, sediments/CA_alm_wdatyr.csv", row.names
 
 
 # means across all years,
+
+wdatyr <- read.csv("data/water, nitrate, sediments/CA_alm_wdatyr.csv")
 
 wmeaninch <- wdatyrw %>%
   group_by(cc, nfert) %>%  ### till,  the results do not differ greatly between tillage treatments so I'm coming back here and averaging across tillage
@@ -407,7 +399,12 @@ sed <- wmeaninch2[wmeaninch2$component=="sed",]
 sed$mean.tac <- sed$mean/2000
 sed$se.tac <- sed$se/2000
 
-windows(xpinch=200, ypinch=200, width=5, height=5)
+# cc    nfert          component  mean    se    ID Letters mean.tac se.tac
+# <chr> <chr>          <chr>     <dbl> <dbl> <int> <chr>      <dbl>  <dbl>
+# 1 NC    Conventional N sed       4398. 149.     13 a          2.20  0.0743
+# 2 TC    Conventional N sed       3627. 130.     14 b          1.81  0.0648
+# 3 LC    Conventional N sed       1686.  64.0    15 c          0.843 0.0320
+
 
 
 ggplot(data=sed, aes(x=component, y=mean.tac)) +

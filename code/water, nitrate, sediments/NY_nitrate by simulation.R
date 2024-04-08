@@ -20,73 +20,98 @@ se <- function(x) sd(x) / sqrt(length(x))
 # # data in the folder data/large_data/ are too big to share in github repo
 # # only saved to Bonnie's computer (backed up by onedrive)
 # ndat <- read.csv("data/large_data/daily N/NY_forage_day_soil_n.csv")
+# ndatalf <- read.csv("data/large_data/daily N/NY_forage_day_soil_n_alf20240304.csv")
 # beepr::beep(sound=8)
 # # N UNITS are in kg N / ha per day
 # 
-# # sum data by year
+# sum data by year
 # ndatyr <- ndat %>%
 #   group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
-#   summarize(N2O.yr = sum(N2O.flux), 
-#             NO3.yr = sum(NO3.leach), 
-#             Nleachtot = sum(NO3.leach) + sum(Urea.leach) + sum(DON.leach))
+#   summarize(NO3.yr = sum(NO3.leach))
+# 
+# nrow(ndatyr)  # 81504
+# 
+# # new alfalfa rotation data to replace alfalfa rotation data in above
+# ndatyralf <- ndatalf %>%
+#   group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
+#   summarize(NO3.yr = sum(NO3.leach))
+# 
+# unique(ndatyr$crop_system_name)
+# ndatyr <- filter(ndatyr, !grepl("alfalfa-", crop_system_name))
+# unique(ndatyr$crop_system_name)
+# nrow(ndatyr) # 46464
+# ndatyr <- rbind(ndatyr, ndatyralf)
+# nrow(ndatyr)  # 105024, which is > 81504, because we have 5 alfalfa rotations this time not just 3 so that
+# # we have each crop growing each year
+# 
 # #
-# # # clean up
-# rm(ndat)
+# # # # clean up
+# rm(ndat, ndatalf, ndatyralf)
 # 
 # colnames(ndatyr)[c(1,3,5)] <- c("site", "management", "year")
+# 
+
+# ndatyr <- ndatyr[ndatyr$year>2021 & ndatyr$year<2073 & ndatyr$climate_scenario=="rcp60",]
+# 
+# ndatyr$till <- ifelse(grepl("ct-", ndatyr$management), "CT", 
+#                       ifelse(grepl("rt-", ndatyr$management), "RT", "NT"))
+# # # check
+# # unique(ndatyr$till)
+# 
+# # factor for CC or NC
+# ndatyr$cc <- ifelse(grepl("-cc", ndatyr$management), "CC", "NC")
+# # # check
+# # unique(ndatyr$cc)
+# 
+# # factor for N treatment -- for NY this is redundant with crop
+# 
+# 
+# # factor for decade
+# ndatyr$decade <- ifelse(ndatyr$year <2031, "2020s",
+#                         ifelse(ndatyr$year>=2031 & ndatyr$year <2041, "2030s",
+#                                ifelse(ndatyr$year>=2041 & ndatyr$year <2051, "2040s",
+#                                       ifelse(ndatyr$year>=2051 & ndatyr$year <2061, "2050s",
+#                                              ifelse(ndatyr$year>=2061 & ndatyr$year <2071, "2060s", "2070s")))))
+# # unique(ndatyr$decade)
+# 
 # 
 # write.csv(ndatyr, "data/water, nitrate, sediments/NY_nitrate_annualtotals.csv", row.names=F)
 
 ndatyr <- read.csv("data/water, nitrate, sediments/NY_nitrate_annualtotals.csv")
 
-
-ndatyr <- ndatyr[ndatyr$year>2021 & ndatyr$year<2073 & ndatyr$climate_scenario=="rcp60",]
-
-ndatyr$till <- ifelse(grepl("ct-", ndatyr$management), "CT", 
-                      ifelse(grepl("rt-", ndatyr$management), "RT", "NT"))
-# # check
-# unique(ndatyr$till)
-
-# factor for CC or NC
-ndatyr$cc <- ifelse(grepl("-cc", ndatyr$management), "CC", "NC")
-# # check
-# unique(ndatyr$cc)
-
-# factor for N treatment -- for NY this is redundant with crop
-
-
-# factor for decade
-ndatyr$decade <- ifelse(ndatyr$year <2031, "2020s",
-                        ifelse(ndatyr$year>=2031 & ndatyr$year <2041, "2030s",
-                               ifelse(ndatyr$year>=2041 & ndatyr$year <2051, "2040s",
-                                      ifelse(ndatyr$year>=2051 & ndatyr$year <2061, "2050s",
-                                             ifelse(ndatyr$year>=2061 & ndatyr$year <2071, "2060s", "2070s")))))
-# unique(ndatyr$decade)
-
+# not sure below is necessary if we focus on nitrate losses per rotation, but here it is
+# if someday we want nitrate losses by crop:
 
 # because crop_system_name - is soy-corn or corn-soy.
 # For the crop name "corn-soy" that means corn was planted first and corn is 
 # present in every odd year and soy is planted every even year, whereas in the 
 # "soy-corn" simulations, soy was planted in odd years and corn was planted in 
 # even years. 
+
 # if we want to know NO3 loss from corn per year or soy per year, need to split up data by odd and even years.
 
-
-
+# sequences of years for each crop (corn, alfalfa, triticale) in each of the 5 alfalfa rotations (act, cta, cta2, act2, act3)
 actcorn <- seq(2017,2072, 5)
 ctacorn <- seq(2013, 2072, 5)
-taccorn <- seq(2018, 2072, 5)
+cta2corn <- seq(2014, 2072, 5)
+act2corn <- seq(2015, 2072, 5)
+act3corn <- seq(2016, 2072, 5)
 
 actalf <- sort(c(seq(2014,2072, 5), seq(2015,2072,5), seq(2016,2072,5)))
 ctaalf <- sort(c(seq(2015,2072, 5), seq(2016,2072,5), seq(2017,2072,5)))
-tacalf <- sort(c(seq(2015,2072, 5), seq(2016,2072,5), seq(2017,2072,5)))
+cta2alf <- sort(c(seq(2016,2072, 5), seq(2017,2072,5), seq(2018,2072,5)))
+act2alf <- sort(c(seq(2017,2072, 5), seq(2018,2072,5), seq(2019,2072,5)))
+act3alf <- sort(c(seq(2018,2072, 5), seq(2019,2072,5), seq(2020,2072,5)))
 
 acttri <- seq(2018,2072, 5)
 ctatri <- seq(2019, 2072, 5)
-tactri <- seq(2019, 2072, 5)
+cta2tri <- seq(2020, 2072, 5)
+act2tri <- seq(2021, 2072, 5)
+act3tri <- seq(2022, 2072, 5)
 
 
 # label data for the crop they are (depends on the rotation and the year)
+# if we want to know NO3 loss from corn per year or soy per year, need to split up data by odd and even years.
 ndatyr$crop <- ifelse(ndatyr$crop=="corn-soy" & ndatyr$year%%2 ==0, "soy cs",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
                       ifelse(ndatyr$crop=="corn-soy" & !ndatyr$year%%2 ==0, "corn grain cs",  # cs= to indicate corn-soy rotation
                              ifelse(ndatyr$crop=="soy-corn" & ndatyr$year%%2 ==0, "corn grain cs",
@@ -94,182 +119,346 @@ ndatyr$crop <- ifelse(ndatyr$crop=="corn-soy" & ndatyr$year%%2 ==0, "soy cs",   
                                            ifelse(ndatyr$crop=="corn-grain", "corn grain mono",
                                                   ifelse(ndatyr$crop=="corn-silage", "corn silage mono",
                                                          # corn in alfalfa rotation
-                                                         ifelse(ndatyr$crop=="alfalfa-act" & ndatyr$year %in% actcorn, "corn alf",
-                                                                ifelse(ndatyr$crop=="alfalfa-cta" & ndatyr$year %in% ctacorn, "corn alf",
-                                                                       ifelse(ndatyr$crop=="alfalfa-tac" & ndatyr$year %in% taccorn, "corn alf",
-                                                                              # alf in alf rotation
-                                                                              ifelse(ndatyr$crop=="alfalfa-act" & ndatyr$year %in% actalf, "alf",
-                                                                                     ifelse(ndatyr$crop=="alfalfa-cta" & ndatyr$year %in% ctaalf, "alf",
-                                                                                            ifelse(ndatyr$crop=="alfalfa-tac" & ndatyr$year %in% tacalf, "alf",
-                                                                                                   # triticale in alf rotation
-                                                                                                   ifelse(ndatyr$crop=="alfalfa-act" & ndatyr$year %in% acttri, "tri alf",
-                                                                                                          ifelse(ndatyr$crop=="alfalfa-cta" & ndatyr$year %in% ctatri, "tri alf",
-                                                                                                                 ifelse(ndatyr$crop=="alfalfa-tac" & ndatyr$year %in% tactri, "tri alf", "X")))))))))))))))
+                                     ifelse(ndatyr$crop=="alfalfa-act" & ndatyr$year %in% actcorn, "corn alf",
+                                     ifelse(ndatyr$crop=="alfalfa-cta" & ndatyr$year %in% ctacorn, "corn alf",
+                                     ifelse(ndatyr$crop=="alfalfa-cta2" & ndatyr$year %in% cta2corn, "corn alf",
+                                      ifelse(ndatyr$crop=="alfalfa-act2" & ndatyr$year %in% act2corn, "corn alf",
+                                     ifelse(ndatyr$crop=="alfalfa-act3" & ndatyr$year %in% act3corn, "corn alf",
+                                                        # alf in alf rotation
+                                       ifelse(ndatyr$crop=="alfalfa-act" & ndatyr$year %in% actalf, "alf",
+                                       ifelse(ndatyr$crop=="alfalfa-cta" & ndatyr$year %in% ctaalf, "alf",
+                                       ifelse(ndatyr$crop=="alfalfa-cta2" & ndatyr$year %in% cta2alf, "alf",
+                                        ifelse(ndatyr$crop=="alfalfa-act2" & ndatyr$year %in% act2alf, "alf",
+                                       ifelse(ndatyr$crop=="alfalfa-act3" & ndatyr$year %in% act3alf, "alf",
+                                                        # triticale in alf rotation
+                                       ifelse(ndatyr$crop=="alfalfa-act" & ndatyr$year %in% acttri, "tri alf",
+                                       ifelse(ndatyr$crop=="alfalfa-cta" & ndatyr$year %in% ctatri, "tri alf",
+                                        ifelse(ndatyr$crop=="alfalfa-cta2" & ndatyr$year %in% cta2tri, "tri alf",
+                                         ifelse(ndatyr$crop=="alfalfa-act2" & ndatyr$year %in% act2tri, "tri alf",
+                                         ifelse(ndatyr$crop=="alfalfa-act3" & ndatyr$year %in% act3tri, "tri alf",  "X")))))))))))))))))))))
 
 
 
 # check no Xs
 # unique(ndatyr$crop)
-rm(actalf, actcorn,acttri,ctaalf, ctacorn, ctatri, tacalf, taccorn, tactri)
+rm(actalf, actcorn,acttri,
+   ctaalf, ctacorn, ctatri, 
+   cta2alf, cta2corn, cta2tri,
+   act2alf, act2corn, act2tri,
+   act3alf, act3corn, act3tri)
 
 
+# add simpler rotation factor to lump corn-soy and soy-corn together, and all the alfalfas (4 total rotations)
+ndatyr$rot <- ifelse(ndatyr$crop_system_name %in% c("corn-soy", "soy-corn"), "corn-soy",
+                     ifelse(grepl("alfalfa-", ndatyr$crop_system_name), "alf", 
+                            ifelse(ndatyr$crop_system_name == "corn-silage", "corn-silage", 
+                                 ifelse(ndatyr$crop_system_name == "corn-grain", "corn-grain", "X"))))
 
+# check no Xs
+unique(ndatyr$rot)
 
-
-
-
-
-
-
-
-
-# TOTALS BY DECADE - doesn't really work b/c 2020s and 2070s have fewer years
-# could do by 10 year intervals in the data if necessary
-# but I think annual means are where its at anyway
 
 # ANNUAL MEANS BY DECADE by crop
-ndat_dec <- ndatyr %>%
-  group_by(crop, till, cc, decade) %>%  # drop sitename and crop system name to get means across sites and rotations
-  summarize(NO3_mean = mean(NO3.yr),
-            NO3_se = se(NO3.yr)) %>%
-  pivot_longer(cols=-c("crop", "till", "cc", "decade"),
-             names_to=c("component", ".value"),
-             names_sep="_")  %>%
-  arrange(desc(mean))
+# ndat_dec <- ndatyr %>%
+#   group_by(crop, till, cc, decade) %>%  # drop sitename and crop system name to get means across sites and rotations
+#   summarize(NO3_mean = mean(NO3.yr),
+#             NO3_se = se(NO3.yr)) %>%
+#   pivot_longer(cols=-c("crop", "till", "cc", "decade"),
+#              names_to=c("component", ".value"),
+#              names_sep="_")  %>%
+#   arrange(desc(mean))
 
 
 
 
 
 
-############################### N LOSSES 50 year average
+############################### N LOSSES 50 year average by cc, till, and crop rotation
 
 
 ### get letters for the bars
 
-aovno3 <- aov(NO3.yr ~ till:cc:crop, data=ndatyr)
-lmno3 <- lm(NO3.yr~ till:cc:crop, data=ndatyr)
-summary(lmno3)
+ndatyr2 <- filter(ndatyr, !till=="RT", grepl("corn", crop))  # for simplicity in the farmer report,
+# also the cover crop doesn't really apply to alfalfa or triticale (only after 4 years of alfalfa, and triticale has no cover)
+# unique(ndatyr$crop)
+# which is better - rotation or crop as a predictor?
+lmno3_rot <- lm(NO3.yr ~till*cc*rot, data=ndatyr2)
+summary(lmno3_rot)
+# Call:   (all crops)
+#   lm(formula = NO3.yr ~ till * cc * rot, data = ndatyr2)
+# 
+# Residuals:
+#   Min     1Q Median     3Q    Max 
+# -72.04 -29.11 -12.24  10.17 357.10 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)                 64.4230     0.8020  80.325  < 2e-16 ***
+#   tillNT                       0.7415     1.1342   0.654  0.51327    
+# ccNC                         6.0374     1.1342   5.323 1.03e-07 ***
+#   rotcorn-grain                6.4001     1.9646   3.258  0.00112 ** 
+#   rotcorn-silage              -9.6088     1.9646  -4.891 1.01e-06 ***
+#   rotcorn-soy                -22.7728     1.5005 -15.177  < 2e-16 ***
+#   tillNT:ccNC                  1.5080     1.6041   0.940  0.34715    
+# tillNT:rotcorn-grain         1.4830     2.7783   0.534  0.59351    
+# tillNT:rotcorn-silage      -34.6895     2.7783 -12.486  < 2e-16 ***
+#   tillNT:rotcorn-soy          -5.6120     2.1220  -2.645  0.00818 ** 
+#   ccNC:rotcorn-grain           2.9076     2.7783   1.047  0.29533    
+# ccNC:rotcorn-silage         21.4059     2.7783   7.705 1.35e-14 ***
+#   ccNC:rotcorn-soy             4.4678     2.1220   2.105  0.03526 *  
+#   tillNT:ccNC:rotcorn-grain    0.3912     3.9291   0.100  0.92068    
+# tillNT:ccNC:rotcorn-silage  -4.2251     3.9291  -1.075  0.28223    
+# tillNT:ccNC:rotcorn-soy      0.5164     3.0009   0.172  0.86337    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 51.23 on 29360 degrees of freedom
+# Multiple R-squared:  0.06943,	Adjusted R-squared:  0.06895    # R2 only 7% with rotation
+# F-statistic:   146 on 15 and 29360 DF,  p-value: < 2.2e-16
+
+
+# corn only results: (now rotation is same as crop, with other crops filtered out)
 # Call:
-#   lm(formula = NO3.yr ~ till:cc:crop, data = ndatyr)
+#   lm(formula = NO3.yr ~ till * cc * rot, data = ndatyr2)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -44.091  -8.374  -0.740   7.492  85.502 
+# -44.091  -9.943  -0.671   8.542  85.502 
 # 
-# Coefficients: (1 not defined because of singularities)
-# Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                       16.7741     0.6703  25.026  < 2e-16 ***
-#   tillCT:ccCC:cropalf               16.1989     0.7718  20.988  < 2e-16 ***
-#   tillNT:ccCC:cropalf               28.4735     0.7718  36.891  < 2e-16 ***
-#   tillRT:ccCC:cropalf               22.0018     0.7718  28.506  < 2e-16 ***
-#   tillCT:ccNC:cropalf               20.6424     0.7718  26.745  < 2e-16 ***
-#   tillNT:ccNC:cropalf               33.2221     0.7718  43.043  < 2e-16 ***
-#   tillRT:ccNC:cropalf               27.0874     0.7718  35.095  < 2e-16 ***
-#   tillCT:ccCC:cropcorn alf          20.5450     0.9402  21.852  < 2e-16 ***
-#   tillNT:ccCC:cropcorn alf           7.8515     0.9402   8.351  < 2e-16 ***
-#   tillRT:ccCC:cropcorn alf          15.9442     0.9402  16.958  < 2e-16 ***
-#   tillCT:ccNC:cropcorn alf          48.1280     0.9402  51.189  < 2e-16 ***
-#   tillNT:ccNC:cropcorn alf          38.5268     0.9402  40.977  < 2e-16 ***
-#   tillRT:ccNC:cropcorn alf          44.9876     0.9402  47.849  < 2e-16 ***
-#   tillCT:ccCC:cropcorn grain cs     50.6925     0.8447  60.013  < 2e-16 ***
-#   tillNT:ccCC:cropcorn grain cs     44.1485     0.8447  52.266  < 2e-16 ***
-#   tillRT:ccCC:cropcorn grain cs     47.7365     0.8447  56.514  < 2e-16 ***
-#   tillCT:ccNC:cropcorn grain cs     64.1294     0.8447  75.921  < 2e-16 ***
-#   tillNT:ccNC:cropcorn grain cs     58.1279     0.8447  68.816  < 2e-16 ***
-#   tillRT:ccNC:cropcorn grain cs     61.0923     0.8447  72.325  < 2e-16 ***
-#   tillCT:ccCC:cropcorn grain mono   54.0491     0.8447  63.987  < 2e-16 ***
-#   tillNT:ccCC:cropcorn grain mono   56.2735     0.8447  66.621  < 2e-16 ***
-#   tillRT:ccCC:cropcorn grain mono   53.8745     0.8447  63.780  < 2e-16 ***
-#   tillCT:ccNC:cropcorn grain mono   62.9940     0.8447  74.577  < 2e-16 ***
-#   tillNT:ccNC:cropcorn grain mono   67.1178     0.8447  79.459  < 2e-16 ***
-#   tillRT:ccNC:cropcorn grain mono   63.5414     0.8447  75.225  < 2e-16 ***
-#   tillCT:ccCC:cropcorn silage mono  38.0402     0.8447  45.035  < 2e-16 ***
-#   tillNT:ccCC:cropcorn silage mono   4.0922     0.8447   4.845 1.27e-06 ***
-#   tillRT:ccCC:cropcorn silage mono  29.3340     0.8447  34.728  < 2e-16 ***
-#   tillCT:ccNC:cropcorn silage mono  65.4835     0.8447  77.524  < 2e-16 ***
-#   tillNT:ccNC:cropcorn silage mono  28.8184     0.8447  34.117  < 2e-16 ***
-#   tillRT:ccNC:cropcorn silage mono  58.7421     0.8447  69.543  < 2e-16 ***
-#   tillCT:ccCC:cropsoy cs            -0.9400     0.8447  -1.113   0.2658    
-# tillNT:ccCC:cropsoy cs            -4.1371     0.8447  -4.898 9.74e-07 ***
-#   tillRT:ccCC:cropsoy cs            -1.6751     0.8447  -1.983   0.0474 *  
-#   tillCT:ccNC:cropsoy cs             6.6335     0.8447   7.853 4.18e-15 ***
-#   tillNT:ccNC:cropsoy cs             6.9427     0.8447   8.219  < 2e-16 ***
-#   tillRT:ccNC:cropsoy cs             7.2295     0.8447   8.559  < 2e-16 ***
-#   tillCT:ccCC:croptri alf           12.1101     0.9479  12.776  < 2e-16 ***
-#   tillNT:ccCC:croptri alf           -6.0374     0.9479  -6.369 1.92e-10 ***
-#   tillRT:ccCC:croptri alf            3.9778     0.9479   4.197 2.72e-05 ***
-#   tillCT:ccNC:croptri alf            6.5373     0.9479   6.897 5.41e-12 ***
-#   tillNT:ccNC:croptri alf           -7.2168     0.9479  -7.614 2.73e-14 ***
-#   tillRT:ccNC:croptri alf                NA         NA      NA       NA    
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)                 37.8630     0.5741  65.951  < 2e-16 ***
+#   tillNT                     -12.3205     0.8119 -15.175  < 2e-16 ***
+#   ccNC                        28.5328     0.8119  35.143  < 2e-16 ***
+#   rotcorn-grain               32.9601     0.8119  40.596  < 2e-16 ***
+#   rotcorn-silage              16.9512     0.8119  20.878  < 2e-16 ***
+#   rotcorn-soy                 29.6035     0.8119  36.462  < 2e-16 ***
+#   tillNT:ccNC                  3.3260     1.1482   2.897 0.003778 ** 
+#   tillNT:rotcorn-grain        14.5450     1.1482  12.667  < 2e-16 ***
+#   tillNT:rotcorn-silage      -21.6274     1.1482 -18.836  < 2e-16 ***
+#   tillNT:rotcorn-soy           5.7766     1.1482   5.031 4.95e-07 ***
+#   ccNC:rotcorn-grain         -19.5878     1.1482 -17.059  < 2e-16 ***
+#   ccNC:rotcorn-silage         -1.0895     1.1482  -0.949 0.342716    
+# ccNC:rotcorn-soy           -15.0959     1.1482 -13.147  < 2e-16 ***
+#   tillNT:ccNC:rotcorn-grain   -1.4267     1.6238  -0.879 0.379643    
+# tillNT:ccNC:rotcorn-silage  -6.0430     1.6238  -3.721 0.000199 ***
+#   tillNT:ccNC:rotcorn-soy     -2.7834     1.6238  -1.714 0.086532 .  
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 14.68 on 34230 degrees of freedom
-# Multiple R-squared:  0.7022,	Adjusted R-squared:  0.7018 
-# F-statistic:  1968 on 41 and 34230 DF,  p-value: < 2.2e-16
+# Residual standard error: 16.4 on 13040 degrees of freedom
+# Multiple R-squared:  0.5793,	Adjusted R-squared:  0.5789 
+# F-statistic:  1197 on 15 and 13040 DF,  p-value: < 2.2e-16
+
+lmno3_crop <- lm(NO3.yr ~till*cc*crop, data=ndatyr2)
+summary(lmno3_crop)
+
+# Call:   (all crops)
+#   lm(formula = NO3.yr ~ till * cc * crop, data = ndatyr2)
+# 
+# Residuals:
+#   Min       1Q   Median       3Q      Max 
+# -148.312  -12.634   -2.027    9.676  284.514 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)                       44.5305     0.8318  53.534  < 2e-16 ***
+#   tillNT                             9.6450     1.1764   8.199 2.52e-16 ***
+#   ccNC                               3.1042     1.1764   2.639  0.00833 ** 
+#   cropcorn alf                      -6.6675     1.6636  -4.008 6.14e-05 ***
+#   cropcorn grain cs                 22.9360     1.6636  13.787  < 2e-16 ***
+#   cropcorn grain mono               26.2926     1.6636  15.804  < 2e-16 ***
+#   cropcorn silage mono              10.2837     1.6636   6.181 6.43e-10 ***
+#   cropsoy cs                       -28.6964     1.6636 -17.249  < 2e-16 ***
+#   croptri alf                      106.1303     1.6636  63.794  < 2e-16 ***
+#   tillNT:ccNC                        0.1493     1.6636   0.090  0.92847    
+# tillNT:cropcorn alf              -21.9655     2.3527  -9.336  < 2e-16 ***
+#   tillNT:cropcorn grain cs         -16.1889     2.3527  -6.881 6.07e-12 ***
+#   tillNT:cropcorn grain mono        -7.4205     2.3527  -3.154  0.00161 ** 
+#   tillNT:cropcorn silage mono      -43.5929     2.3527 -18.529  < 2e-16 ***
+#   tillNT:cropsoy cs                -12.8421     2.3527  -5.458 4.85e-08 ***
+#   tillNT:croptri alf               -22.5518     2.3527  -9.585  < 2e-16 ***
+#   ccNC:cropcorn alf                 25.4286     2.3527  10.808  < 2e-16 ***
+#   ccNC:cropcorn grain cs            10.3327     2.3527   4.392 1.13e-05 ***
+#   ccNC:cropcorn grain mono           5.8408     2.3527   2.483  0.01305 *  
+#   ccNC:cropcorn silage mono         24.3391     2.3527  10.345  < 2e-16 ***
+#   ccNC:cropsoy cs                    4.4693     2.3527   1.900  0.05749 .  
+# ccNC:croptri alf                 -10.7624     2.3527  -4.574 4.80e-06 ***
+#   tillNT:ccNC:cropcorn alf           3.1766     3.3273   0.955  0.33973    
+# tillNT:ccNC:cropcorn grain cs      0.3932     3.3273   0.118  0.90593    
+# tillNT:ccNC:cropcorn grain mono    1.7499     3.3273   0.526  0.59894    
+# tillNT:ccNC:cropcorn silage mono  -2.8664     3.3273  -0.861  0.38897    
+# tillNT:ccNC:cropsoy cs             3.3570     3.3273   1.009  0.31301    
+# tillNT:ccNC:croptri alf            3.6169     3.3273   1.087  0.27703    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 41.16 on 29348 degrees of freedom
+# Multiple R-squared:  0.3996,	Adjusted R-squared:  0.3991         # BOOM R2 is 40% crop is better than rotation as a predictor
+# F-statistic: 723.6 on 27 and 29348 DF,  p-value: < 2.2e-16
+
+# corn only
+# Call:
+#   lm(formula = NO3.yr ~ till * cc * crop, data = ndatyr2)
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -44.091  -9.943  -0.671   8.542  85.502 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)                       37.8630     0.5741  65.951  < 2e-16 ***
+#   tillNT                           -12.3205     0.8119 -15.175  < 2e-16 ***
+#   ccNC                              28.5328     0.8119  35.143  < 2e-16 ***
+#   cropcorn grain cs                 29.6035     0.8119  36.462  < 2e-16 ***
+#   cropcorn grain mono               32.9601     0.8119  40.596  < 2e-16 ***
+#   cropcorn silage mono              16.9512     0.8119  20.878  < 2e-16 ***
+#   tillNT:ccNC                        3.3260     1.1482   2.897 0.003778 ** 
+#   tillNT:cropcorn grain cs           5.7766     1.1482   5.031 4.95e-07 ***
+#   tillNT:cropcorn grain mono        14.5450     1.1482  12.667  < 2e-16 ***
+#   tillNT:cropcorn silage mono      -21.6274     1.1482 -18.836  < 2e-16 ***
+#   ccNC:cropcorn grain cs           -15.0959     1.1482 -13.147  < 2e-16 ***
+#   ccNC:cropcorn grain mono         -19.5878     1.1482 -17.059  < 2e-16 ***
+#   ccNC:cropcorn silage mono         -1.0895     1.1482  -0.949 0.342716    
+# tillNT:ccNC:cropcorn grain cs     -2.7834     1.6238  -1.714 0.086532 .  
+# tillNT:ccNC:cropcorn grain mono   -1.4267     1.6238  -0.879 0.379643    
+# tillNT:ccNC:cropcorn silage mono  -6.0430     1.6238  -3.721 0.000199 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 16.4 on 13040 degrees of freedom
+# Multiple R-squared:  0.5793,	Adjusted R-squared:  0.5789 
+# F-statistic:  1197 on 15 and 13040 DF,  p-value: < 2.2e-16
+
+aovno3 <- aov(NO3.yr ~ till*cc*crop, data=ndatyr2)
 
 summary(aovno3)
-# Df   Sum Sq Mean Sq F value Pr(>F)
-# till:cc:nfert    11 13587543 1235231    2143 <2e-16 ***
-#   Residuals     39156 22573096     576
+# Df   Sum Sq Mean Sq  F value   Pr(>F)    
+# till             1    95010   95010   56.091 7.11e-14 ***
+#   cc               1   783692  783692  462.672  < 2e-16 ***
+#   crop             6 29944242 4990707 2946.389  < 2e-16 ***
+#   till:cc          1     2630    2630    1.553    0.213    
+# till:crop        6  1387317  231220  136.506  < 2e-16 ***
+#   cc:crop          6   871702  145284   85.772  < 2e-16 ***
+#   till:cc:crop     6     7344    1224    0.723    0.631    
+# Residuals    29348 49710779    1694                      
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
+# Corn only:
+# Df  Sum Sq Mean Sq  F value  Pr(>F)    
+# till             1  491057  491057 1825.805 < 2e-16 ***
+#   cc               1 1301794 1301794 4840.216 < 2e-16 ***
+#   crop             3 2143035  714345 2656.016 < 2e-16 ***
+#   till:cc          1     475     475    1.765 0.18405    
+# till:crop        3  659141  219714  816.920 < 2e-16 ***
+#   cc:crop          3  230667   76889  285.882 < 2e-16 ***
+#   till:cc:crop     3    4084    1361    5.062 0.00167 ** 
+#   Residuals    13040 3507155     269                     
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 Tukout <- TukeyHSD(aovno3)
 cld <- multcompView::multcompLetters4(aovno3, Tukout)
 
 
 # ANNUAL MEANS ACROSS ALL YEARS 
-ndat_gmean <- ndatyr %>%
+ndat_gmean <- ndatyr2 %>%
   group_by(crop, till, cc) %>%
   summarize(NO3_mean = mean(NO3.yr),
             NO3_se = se(NO3.yr)) %>%
-  pivot_longer(cols=-c("crop", "till", "cc"),
-               names_to=c("component", ".value"),
-               names_sep="_") %>%
-  arrange(desc(mean))
+  # pivot_longer(cols=-c("crop", "till", "cc"),
+  #              names_to=c("component", ".value"),
+  #              names_sep="_") %>%
+  arrange(desc(NO3_mean))
 
 
 cld <- as.data.frame.list(cld$`till:cc:crop`)
 ndat_gmean$cld <- cld$Letters
 
 
+# convert kg/ha to lb/ac
+ndat_gmean$meanlbac <- ndat_gmean$NO3_mean*2.20462/2.47105
+ndat_gmean$selbac <- ndat_gmean$NO3_se*2.20462/2.47105
+
+ndat_gmean$cctill <- paste0(ndat_gmean$till, "-", ndat_gmean$cc)
+
+arrange(ndat_gmean, crop, till, cc)
+# # A tibble: 16 × 9
+# # Groups:   crop, till [8]
+# crop             till  cc    NO3_mean NO3_se cld   meanlbac selbac cctill
+# <chr>            <chr> <chr>    <dbl>  <dbl> <chr>    <dbl>  <dbl> <chr> 
+#   1 corn alf         CT    CC        37.9  0.476 i         33.8  0.425 CT-CC 
+# 2 corn alf         CT    NC        66.4  0.455 e         59.2  0.406 CT-NC 
+# 3 corn alf         NT    CC        25.5  0.309 j         22.8  0.276 NT-CC 
+# 4 corn alf         NT    NC        57.4  0.437 g         51.2  0.390 NT-NC 
+# 5 corn grain cs    CT    CC        67.5  0.722 e         60.2  0.644 CT-CC 
+# 6 corn grain cs    CT    NC        80.9  0.631 b         72.2  0.563 CT-NC 
+# 7 corn grain cs    NT    CC        60.9  0.667 f         54.4  0.595 NT-CC 
+# 8 corn grain cs    NT    NC        74.9  0.621 c         66.8  0.554 NT-NC 
+# 9 corn grain mono  CT    CC        70.8  0.747 d         63.2  0.666 CT-CC 
+# 10 corn grain mono  CT    NC        79.8  0.679 b         71.2  0.606 CT-NC 
+# 11 corn grain mono  NT    CC        73.0  0.697 cd        65.2  0.622 NT-CC 
+# 12 corn grain mono  NT    NC        83.9  0.642 a         74.8  0.572 NT-NC 
+# 13 corn silage mono CT    CC        54.8  0.524 g         48.9  0.468 CT-CC 
+# 14 corn silage mono CT    NC        82.3  0.536 ab        73.4  0.478 CT-NC 
+# 15 corn silage mono NT    CC        20.9  0.384 k         18.6  0.342 NT-CC 
+# 16 corn silage mono NT    NC        45.6  0.422 h         40.7  0.376 NT-NC 
+# > 
+
+# 80 ac field of corn silage NC, CT
+73.4*80 #5,872
+73.4*80*0.6 # 3523.2
+18.6/73.4
+
+# "adding rye cover crop to CT reduces nitrate loss by about X%" CTNC - CTCC
+(59.2-33.8)/59.2  # 43%
+(72.2-60.2)/72.2  # 17%
+(79.8-70.8)/79.8  # 11%
+(73.4-48.9)/73.4  # 33%
+mean(c(43, 17, 11, 33))  # 26%
+
+# combining rye cover with no-till reduced nitrate loss by another X%" CTCC - NTCC
+(33.8-22.8)/33.8  # 33%
+(60.2-54.4)/60.2  # 10%
+(63.2-65.2)/63.2  # -3%
+(48.9-18.6)/48.9  # 62%
+mean(c(33, 10, -3, 62))
+
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
-# convert kg/ha to lb/ac
-ndat_gmean$meanlbac <- ndat_gmean$mean*2.20462/2.47105
-ndat_gmean$selbac <- ndat_gmean$se*2.20462/2.47105
+# length(unique(ndat_gmean$crop))  # need 7 colors
 
-
+pal4 <- c("#c44f2d","#20243d", "#C2e4ef", "#669947")   
 
 
 ggplot(data=ndat_gmean, 
-       aes(x=crop, y=meanlbac, fill=crop)) +   # fill=variable
-  geom_bar(stat="identity", position=position_dodge(), show.legend=F) + # color="#332288", 
+       aes(x=cctill, y=meanlbac, fill=cctill)) +   # fill=variable
+  geom_bar(stat="identity", position=position_dodge(), show.legend=F, width=0.7) + # color="#332288", 
   geom_errorbar(aes(ymin=meanlbac-selbac, ymax=meanlbac+selbac), width=0.3, position=position_dodge(0.9)) +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))), 
-             cols=vars(factor(cc, levels=c("NC", "CC"))), 
+  facet_grid(cols=vars(factor(crop, levels=c("corn grain mono", "corn grain cs", "corn silage mono", "corn alf")))) + 
+     #cols=vars(factor(cc, levels=c("NC", "CC")), factor(till, levels=c("CT","NT"))), 
              #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
-             labeller = as_labeller(
-               c(NC="No Cover Crop",CC="Rye Cover Crop", 
-                 "CT" = "Conventional Till", "RT"="Reduced Till","NT" = "No Till"))) +
-                 # "Fall N" = "Fall\nN", "High N" = "High\nN", "Recommended N"="Recm'd\nN"))) +
-  # scale_fill_manual(values=c("#c44f2d","#20243d", "#C2e4ef")) +
-  xlab("Crop") +
+             # labeller = as_labeller(
+             #   c(NC="No Cover Crop",CC="Rye Cover Crop", 
+             #     "CT" = "Conventional Till", "NT" = "No Till"))) +
+                
+  scale_fill_manual(values=pal4, breaks=c("CT-NC", "CT-CC", "NT-NC", "NT-CC")) + # color order matches biomass chart
+  xlab("Practice combination") +
   ylab("Mean annual nitrate loss (lb N per ac) 2022 to 2072") +
-  scale_x_discrete(breaks=c("alf", "soy cs", "tri alf", "corn grain mono", "corn silage mono",
-                            "corn grain cs", "corn alf"),
-                   labels=c("alfalfa", "soy", "triticale", "corn grain\nmonoculture", 
-                            "corn silage\nmonoculture", "corn grain\nc-s rotation", "corn grain\nalf rotation")) +
-  geom_text(aes(x=crop, y=meanlbac+10, label=cld), size=4, fontface="bold") +
+  scale_x_discrete(limits=c("CT-NC", "CT-CC", "NT-NC", "NT-CC")) +
+                   #   c("alf", "soy cs", "tri alf", "corn grain mono", "corn silage mono",
+                   #          "corn grain cs", "corn alf"),
+                   # labels=c("alfalfa", "soy", "triticale", "corn grain\nmonoculture", 
+                   #          "corn silage\nmonoculture", "corn grain\nc-s rotation", "corn grain\nalf rotation")) +
+  scale_y_continuous(breaks=seq(0, 80, 20), limits=c(0,80)) +
+  # geom_text(aes(x=cctill, y=meanlbac+4, label=cld), size=4, fontface="bold") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'),
     axis.text.x=element_text(angle=-30, hjust=0, size=11))
 
-ggsave("plots/water, nitrate, sediments/NY_NO3 losses 22-72 mean bars lbac.png", width=8, height=5, dpi=300)
+ggsave("plots/water, nitrate, sediments/NY_NO3 losses 22-72 mean bars lbac CORN ONLY_no letters.png", width=8, height=3, dpi=300)
 
 
 

@@ -17,26 +17,57 @@ se <- function(x) sd(x) / sqrt(length(x))
 # # if you need daily estimates use this:
 # # data in the folder data/large_data/ are too big to share in github repo
 # # only saved to Bonnie's computer (backed up by onedrive)
+
 # ndat <- read.csv("data/large_data/daily N/CA_almonds_day_soil_n_20240220.csv")
 # beepr::beep(sound=8)
+
 # N UNITS are in kg N / ha per day
 
 # unique(ndat$crop_system_name)  # "almond-a" "almond-c"
 # unique(ndat$management_name)  #  "nt-nc" "cn"    "ct-nc" "rt-nc" "rt-bc" "ct-lc" "nt-lc" "nt-bc" "rt-lc" "ct-bc" "rn"  
 # 
 # # sum data by year
-# ndatyr <- ndat %>%
+ndatyr <- ndat %>%
+  group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
+  summarize(NO3.yr = sum(NO3.leach))
+
+# are nt-bc and nt-lc showing same values? 
+# testy <- ndat %>%
 #   group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
-#   summarize(NO3.yr = sum(NO3.leach))
+#   summarize(NO3.yr = sum(NO3.leach)) %>%
+#   filter(climate_scenario=="rcp26",
+#                   management_name %in% c("nt-bc", "nt-lc"),
+#                   site_name=="a_1",
+#                   Year >=2060) %>%
+#   arrange(Year, management_name)
+# print(testy, n=nrow(testy))
+# 
+# testy2 <- filter(ndatyr, climate_scenario=="rcp26",
+#                  management_name %in% c("nt-bc", "nt-lc"),
+#                  site_name=="a_1",
+#                  Year >=2060) %>%
+#   arrange(Year, management_name)
+# testy2
+
+
 # 
 # # # clean up
+
 # rm(ndat)
 # #
 # colnames(ndatyr)[c(3,5)] <- c("management", "year")
 # 
 # write.csv(ndatyr, "data/water, nitrate, sediments/CA_alm_nitrate_annualtotals.csv", row.names=F)
 
+
 ndatyr <- read.csv("data/water, nitrate, sediments/CA_alm_nitrate_annualtotals.csv")
+
+# testy3 <- filter(ndatyr, climate_scenario=="rcp26",
+#                 management %in% c("nt-bc", "nt-lc"),
+#                 site_name=="a_1",
+#                 year >=2060) %>%
+#   arrange(year, management)
+# testy3
 
 
 ndatyr <- ndatyr[ndatyr$year>2021 & ndatyr$year<2073 & ndatyr$climate_scenario=="rcp60",]
@@ -57,7 +88,7 @@ ndatyr$cc <- ifelse(grepl("-nc", ndatyr$management), "NC",
 # # check
 # unique(ndatyr$cc)   # NA is correct for row areas, till and cover crop only apply to alleys
 
-# dummy for N treatment
+# factor for N treatment
 ndatyr$nfert <- ifelse(grepl("cn", ndatyr$management), "Conventional N", 
                       ifelse(grepl("rn", ndatyr$management), "Reduced N", "NA"))
 
@@ -70,7 +101,7 @@ ndatyr$system <- ifelse(grepl("-a", ndatyr$crop_system), "alley", "crop")
 # unique(ndatyr$system)
 
 
-# dummy for decade
+# factor for decade
 ndatyr$decade <- ifelse(ndatyr$year <2031, "2020s",
                         ifelse(ndatyr$year>=2031 & ndatyr$year <2041, "2030s",
                                ifelse(ndatyr$year>=2041 & ndatyr$year <2051, "2040s",
@@ -129,16 +160,31 @@ ndatyrw$NO3.yrtot.lbac <- ndatyrw$NO3.yrtot * 1/(2.471*0.4536)
 
 # Annual mean ACROSS ALL YEARS 
 ndat.site <- ndatyrw[ndatyrw$till %in% c("CT", "NT"),] %>%  # for stats
-  group_by(site_name, cc, nfert) %>%  # tillage does not have an effect on N losses so averaging across tillage
+  group_by(site_name,  cc, nfert) %>%  # tillage does not have an effect on N losses so averaging across tillage
   summarize(NO3.sitemean = mean(NO3.yrtot.lbac)) # mean annual N loss per site (mean across 50 years at each site)
 
 ndat_mean <- ndatyrw[ndatyrw$till %in% c("CT", "NT"),] %>%    # for plotting means
-  group_by( cc, nfert) %>%  # drop sitename to get mean across sites, # tillage does not have an effect on N losses so averaging across tillage
+  group_by(cc, nfert) %>%  # drop sitename to get mean across sites, # tillage does not have an effect on N losses so averaging across tillage
   summarize(NO3.mean.lbac = mean(NO3.yrtot.lbac),# mean of the site means in each treatment combo
              NO3.se.lbac = se(NO3.yrtot.lbac)) %>%# variability across sites and years in each treatment combo
   arrange(desc(NO3.mean.lbac))
-            
-            
+
+# ndat_mean            
+# till  cc    nfert          NO3.mean.lbac NO3.se.lbac
+# <chr> <chr> <chr>                  <dbl>       <dbl>
+#   1 CT    LC    Conventional N          79.4       2.06 
+# 2 NT    LC    Conventional N          69.6       1.87 
+# 3 CT    LC    Reduced N               60.8       1.78 
+# 4 NT    LC    Reduced N               51.0       1.59 
+# 5 CT    NC    Conventional N          43.4       0.868
+# 6 NT    NC    Conventional N          42.7       0.854
+# 7 CT    TC    Conventional N          38.2       0.754
+# 8 NT    TC    Conventional N          37.7       0.743
+# 9 CT    NC    Reduced N               24.8       0.535
+# 10 NT    NC    Reduced N               24.1       0.521
+# 11 CT    TC    Reduced N               19.6       0.422
+# 12 NT    TC    Reduced N               19.2       0.409         
+
 
 # # ANNUAL MEANS BY DECADE
 # ndat_dec.site <- ndatyrw %>%  # site means
@@ -166,6 +212,62 @@ no3lm <- lm(NO3.sitemean~ cc:nfert, data=ndat.site)
 
 summary(no3lm)
 # Call:
+#   lm(formula = NO3.sitemean ~ cc:nfert, data = ndat.site)    ### cc:nfert results
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -50.905 -12.674   3.959  10.297  62.667 
+# 
+# Coefficients: (1 not defined because of singularities)
+# Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)                19.403      5.574   3.481 0.000772 ***
+#   ccLC:nfertConventional N   55.100      7.882   6.991 4.63e-10 ***
+#   ccNC:nfertConventional N   23.642      7.882   2.999 0.003497 ** 
+#   ccTC:nfertConventional N   18.578      7.882   2.357 0.020593 *  
+#   ccLC:nfertReduced N        36.522      7.882   4.634 1.21e-05 ***
+#   ccNC:nfertReduced N         5.064      7.882   0.643 0.522182    
+# ccTC:nfertReduced N            NA         NA      NA       NA    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 22.29 on 90 degrees of freedom
+# Multiple R-squared:  0.427,	Adjusted R-squared:  0.3952 
+# F-statistic: 13.42 on 5 and 90 DF,  p-value: 8.995e-10
+
+
+
+# Call:
+#   lm(formula = NO3.sitemean ~ cc:till:nfert, data = ndat.site)          # cc:till:nfert results
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -54.085 -12.632   4.346  10.227  64.311 
+# 
+# Coefficients: (1 not defined because of singularities)
+# Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)                      19.1626     5.5814   3.433  0.00074 ***
+#   ccLC:tillCT:nfertConventional N  60.2370     7.8933   7.631 1.31e-12 ***
+#   ccNC:tillCT:nfertConventional N  24.2083     7.8933   3.067  0.00250 ** 
+#   ccTC:tillCT:nfertConventional N  19.0593     7.8933   2.415  0.01675 *  
+#   ccLC:tillNT:nfertConventional N  50.4445     7.8933   6.391 1.37e-09 ***
+#   ccNC:tillNT:nfertConventional N  23.5576     7.8933   2.985  0.00324 ** 
+#   ccTC:tillNT:nfertConventional N  18.5780     7.8933   2.354  0.01967 *  
+#   ccLC:tillCT:nfertReduced N       41.6590     7.8933   5.278 3.73e-07 ***
+#   ccNC:tillCT:nfertReduced N        5.6303     7.8933   0.713  0.47658    
+# ccTC:tillCT:nfertReduced N        0.4813     7.8933   0.061  0.95145    
+# ccLC:tillNT:nfertReduced N       31.8665     7.8933   4.037 7.99e-05 ***
+#   ccNC:tillNT:nfertReduced N        4.9795     7.8933   0.631  0.52894    
+# ccTC:tillNT:nfertReduced N            NA         NA      NA       NA    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 22.33 on 180 degrees of freedom
+# Multiple R-squared:  0.432,	Adjusted R-squared:  0.3972 
+# F-statistic: 12.44 on 11 and 180 DF,  p-value: < 2.2e-16
+
+
+
+
 #   lm(formula = NO3.sitemean ~ cc:nfert, data = ndat.site)
 # 
 # Residuals:
@@ -247,6 +349,7 @@ summary(no3lm)
 # Multiple R-squared:  0.4775,	Adjusted R-squared:  0.4446 
 # F-statistic: 14.51 on 17 and 270 DF,  p-value: < 2.2e-16
 
+
 #### Excluding RT
 # Call:
 #   lm(formula = NO3.sitemean ~ till:cc:nfert, data = ndat.site[ndat.site$till %in% 
@@ -282,92 +385,66 @@ summary(no3lm)
 
 
 summary(no3aov)
-# Df Sum Sq Mean Sq F value   Pr(>F)    
-# cc:nfert     5  15798  3159.6    12.3 4.24e-09 ***
-#   Residuals   90  23112   256.8                     
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-#             Df Sum Sq Mean Sq F value  Pr(>F)    
-# till:cc      5  21224    4245    11.1 2.4e-08 ***
-#   Residuals   90  34412     382                    
+
+# Df Sum Sq Mean Sq F value Pr(>F)                           # cc:nfert results
+# cc:nfert     5  33341    6668   13.42  9e-10 ***
+#   Residuals   90  44732     497                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-# including RT
-# Df Sum Sq Mean Sq F value Pr(>F)
-# till:cc:nfert  17 141879    8346   14.51 <2e-16 ***
-#   Residuals     270 155271     575
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-#excluding RT
+# formula = NO3.sitemean ~ cc:till:nfert, data = ndat.site)          # cc:till:nfert results
 # Df Sum Sq Mean Sq F value Pr(>F)    
-# till:cc:nfert  11  59332    5394   17.36 <2e-16 ***
-#   Residuals     180  55939     311                   
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# cc:till:nfert  11  68226    6202   12.44 <2e-16 ***
+#   Residuals     180  89718     498                   
+
+
 
 Tukout <- TukeyHSD(no3aov)
 cld <- multcompView::multcompLetters4(no3aov, Tukout)
 cld <- as.data.frame.list(cld$`cc:nfert`)
-# ndat_mean_ctnt <- filter(ndat_mean)   #, nfert=="Conventional N")
-# ndat_mean_ctnt$cld <- cld$Letters
+
+
 ndat_mean$cld <- cld$Letters
-# > ndat_mean
-# A tibble: 6 × 5
+ndat_mean
+# # A tibble: 6 × 5                                               # cc:nfert results
 # # Groups:   cc [3]
 # cc    nfert          NO3.mean.lbac NO3.se.lbac cld  
 # <chr> <chr>                  <dbl>       <dbl> <chr>
-#   1 LC    Conventional N          58.9       1.21  a    
-# 2 NC    Conventional N          43.4       0.613 ab   
-# 3 LC    Reduced N               40.2       1.05  bc   
-# 4 TC    Conventional N          38.3       0.533 bc   
-# 5 NC    Reduced N               24.6       0.376 cd   
-# 6 TC    Reduced N               19.6       0.297 d    
+#   1 LC    Conventional N          74.5       1.40  a    
+# 2 LC    Reduced N               55.9       1.20  ab   
+# 3 NC    Conventional N          43.0       0.609 bc   
+# 4 TC    Conventional N          38.0       0.529 bcd  
+# 5 NC    Reduced N               24.5       0.373 cd   
+# 6 TC    Reduced N               19.4       0.294 d  
 # LC conv N - Reduced N 
-(58.9-40.2)/58.2  # 32% or 18.7 units
+(74.5-55.9)/74.5 # 25% or 18.6 units
 # TC conv - reduced
-(38.3-19.6)/38.3  # 49% or 18.7 units
+(38.0-19.4)/38.0  # 49% or 18.6 units
 # NC conv - reduced
-(43.4 - 24.6)/43.4  # 43% or 18.8 units
-mean(c(0.32, 0.49, 0.43))  # 0.41
-mean(c(18.7, 18.7, 18.8))  # 18.7
-18.7*0.6
+(43.0 - 24.5)/43.0  # 43% or 18.5 units
+mean(c(0.25, 0.49, 0.43))  # 0.39
+mean(c(18.6, 18.6, 18.5))  # 18.6
+18.6*0.6   # $0.60 average cost of N fert per lb N
 
-# N fert comparisons: 
-# A tibble: 12 × 6
+# A tibble: 12 × 6                                                # cc:till:nfert results
 # Groups:   till, cc [6]
 # till  cc    nfert          NO3.mean.lbac NO3.se.lbac cld  
 # <chr> <chr> <chr>                  <dbl>       <dbl> <chr>
-#   1 CT    LC    Conventional N          79.7       2.07  a    
-# 2 CT    LC    Reduced N               61.0       1.78  ab   
-# 3 CT    NC    Conventional N          43.7       0.874 bc   
-# 4 NT    NC    Conventional N          43.1       0.859 bc   
-# 5 CT    TC    Conventional N          38.6       0.760 cd   
-# 6 NT    LC    Conventional N          38.1       0.749 cd   
-# 7 NT    TC    Conventional N          38.1       0.749 cd   
-# 8 CT    NC    Reduced N               25.0       0.539 cd   
-# 9 NT    NC    Reduced N               24.3       0.525 cd   
-# 10 CT    TC    Reduced N               19.8       0.426 d    
-# 11 NT    LC    Reduced N               19.3       0.413 d    
-# 12 NT    TC    Reduced N               19.3       0.413 d    
+#   1 CT    LC    Conventional N          79.4       2.06  a    
+# 2 NT    LC    Conventional N          69.6       1.87  ab   
+# 3 CT    LC    Reduced N               60.8       1.78  abc  
+# 4 NT    LC    Reduced N               51.0       1.59  bc   
+# 5 CT    NC    Conventional N          43.4       0.868 cd   
+# 6 NT    NC    Conventional N          42.7       0.854 cd   
+# 7 CT    TC    Conventional N          38.2       0.754 cd   
+# 8 NT    TC    Conventional N          37.7       0.743 cd   
+# 9 CT    NC    Reduced N               24.8       0.535 d    
+# 10 NT    NC    Reduced N               24.1       0.521 d    
+# 11 CT    TC    Reduced N               19.6       0.422 d    
+# 12 NT    TC    Reduced N               19.2       0.409 d  
+# LC CT - LC NT
 
-# NC CT conv N - Reduced N 
-(43.7-25.0)/43.7  # 0.43   # difference is 18.7
-# NC NT conv N- Reduced N
-(43.1-24.3)/43.1   # 0.44  # diff is 18.8
-# TC CT conv - red
-(38.6-19.8)/38.6   # 0.49  # diff is 18.8
-# TC NT conv - red
-(38.1 - 19.3)/38.1  # 0.49  # 18.8
-# LC CT conv - red
-(79.7 - 61)/79.7  # 0.23  # 18.7
-# LC NT conv- red
-(38.1-19.3)/38.1  # 0.49 <<--- double check these with Alex, they match TC NT
-mean(c(0.43, 0.44, 0.49, 0.49, 0.23))  # 0.42
-mean(c(18.7, 18.8, 18.8, 18.8, 18.7))  # 18.76
 
-18.76*0.60
 
 
 
@@ -384,7 +461,7 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 
 ggplot(data=ndat_mean, 
        aes(x=nfert, y=NO3.mean.lbac, fill=nfert)) +   # fill=variable
-  geom_bar(stat="identity", position=position_dodge()) + # color="#332288", 
+  geom_bar(stat="identity", position=position_dodge(), width=0.7) + # color="#332288", 
   geom_errorbar(aes(ymin = NO3.mean.lbac - NO3.se.lbac, 
                     ymax = NO3.mean.lbac + NO3.se.lbac), 
                 width=0.3, position=position_dodge(0.9)) +
@@ -400,14 +477,17 @@ ggplot(data=ndat_mean,
   ylab("Mean annual nitrate loss (lb N per ac) 2022 to 2072") +
   # scale_x_discrete(breaks=c("Conventional N", "Reduced N"),
   #                   labels=c("220 lb N\nper acre", "154 lb N\nper acre")) +
-  # geom_text(aes(x=nfert, y=NO3.mean.lbac+5, label=cld), 
+  # geom_text(aes(x=nfert, y=NO3.mean.lbac+5, label=cld),
+
   #           position=position_dodge(width=1), size=5, fontface="bold") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
+
 ggsave("plots/water, nitrate, sediments/CA_alm_NO3 losses mean annual bars by nfert and cc, lbac_no letters.png", width=8, height=3.5, dpi=300)
+
 
 
 
