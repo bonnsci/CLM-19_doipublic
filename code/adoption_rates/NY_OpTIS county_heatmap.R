@@ -3,6 +3,7 @@
 # excludes counties whose harvested cropland acres in 2017 census is in the 
 # lowest 10th percentile for the state and counties for which OpTIS evaluated
 # < 50% of 2017 harvested cropland acres.See "OpTIS adoption rates IL.R" for details.
+# adoption on just corn (silage and grain) and soybean acres only
 # 
 
 library(tidyverse)
@@ -42,10 +43,11 @@ pal3new <- c("#8c510a", "#bf812d", "#dfc27d")
 pal6new <- c("#8c510a", "#bf812d", "#dfc27d", "#80cdc1", "#35978f", "#01665e")
 pal5new <- c("#bf812d", "#dfc27d", "#80cdc1", "#35978f", "#01665e")
 pal8new <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3","#c7eae5", "#80cdc1", "#35978f", "#01665e")
-palcc <- c("#ffffcc", "#d9f0a3", "#addd8e", "#78c679","#41ab5d", "#238443", "#005a32")
+palcc <- c("#ffffcc", "#d9f0a3", "#addd8e", "#78c679","#41ab5d", "#238443", "#005a32") # From https://colorbrewer2.org/#type=sequential&scheme=YlGn&n=7
 # palcc <- c("#FFFFE5", "#F7FCB9", "#D9F0A3", "#ADDD8E", "#78C679", "#41AB5D", "#004529")
-palnt <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
-palct <- c("#fff7bc", "#fec44f", "#d95f0e")
+palnt <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837") # From https://colorbrewer2.org/#type=sequential&scheme=YlGn&n=5
+palct <- c("#fff7bc", "#fec44f", "#d95f0e")  # From https://colorbrewer2.org/#type=sequential&scheme=YlOrBr&n=3
+palrt <- c("#ffffe5", "#f7fcb9", "#d9f0a3", "#addd8e", "#78c679", "#41ab5d", "#238443", "#005a32")  # From https://colorbrewer2.org/#type=sequential&scheme=YlGn&n=8
 
 
 # divide percents into bins
@@ -134,14 +136,15 @@ pcc <- ggplot() +
  coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palcc,
-                    na.value = "gray90",
+                    na.value = "gray80",
                     name= "Mean % Cover Crop\nAdoption 2018-2021") +
   scale_color_manual(values=NA) +
   theme_bw() +
   ditch_the_axes +
   theme(legend.title=element_text(size=10, face="bold"),
         legend.text=element_text(size=10),
-        legend.key.size=unit(0.4, "cm"))
+        legend.key.size=unit(0.4, "cm"),
+        plot.margin = unit(c(1, 0, 1,0 ), "cm"))
 
 pcc
 
@@ -159,14 +162,15 @@ pnt <- ggplot() +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palnt,
-                    na.value = "white",
+                    na.value = "gray80",
                     name= "Mean % No-Till\nAdoption 2018-2021") +
   scale_color_manual(values=NA) +
   theme_bw() +
   ditch_the_axes +
   theme(legend.title=element_text(size=10, face="bold"),
         legend.text=element_text(size=10),
-        legend.key.size=unit(0.4, "cm"))
+        legend.key.size=unit(0.4, "cm"),
+        plot.margin = unit(c(1, 0, 0,0 ), "cm"))
 
 pnt
 
@@ -175,22 +179,23 @@ ggsave("plots/maps/county_heatmap_NYnt.png")
 
 
 
-# plot for reduced-tny
+# plot for reduced-till
 prt <- ggplot() +
   geom_polygon(data=ny[ny$variable %in% "perc_rt",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
                color="#20243d", linewidth=0.2) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
-  scale_fill_manual(values=pal8new,
-                    na.value = "white",
-                    name= "Mean % Reduced Tny\nAdoption 2018-2021") +
+  scale_fill_manual(values=palrt,
+                    na.value = "gray80",
+                    name= "Mean % Reduced Till\nAdoption 2018-2021") +
   scale_color_manual(values=NA) +
   theme_bw() +
   ditch_the_axes +
   theme(legend.title=element_text(size=10, face="bold"),
         legend.text=element_text(size=10),
-        legend.key.size=unit(0.4, "cm"))
+        legend.key.size=unit(0.4, "cm"),
+        plot.margin = unit(c(1, 0, 1,0 ), "cm"))
 
 prt
 
@@ -198,7 +203,7 @@ ggsave("plots/maps/county_heatmap_NYrt.png")
 
 
 
-# plot for conventional-tny
+# plot for conventional-till
 pct <- ggplot() +
   geom_polygon(data=ny[ny$variable %in% "perc_ct",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
@@ -206,14 +211,15 @@ pct <- ggplot() +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palct,
-                    na.value = "white",
-                    name= "Mean % Conventional Tny\nAdoption 2018-2021")+
+                    na.value = "gray80",
+                    name= "Mean % Conventional Till\nAdoption 2018-2021")+
   scale_color_manual(values=NA) +
   theme_bw() +
   ditch_the_axes +
   theme(legend.title=element_text(size=10, face="bold"),
         legend.text=element_text(size=10),
-        legend.key.size=unit(0.4, "cm"))
+        legend.key.size=unit(0.4, "cm"),
+        plot.margin = unit(c(1, 0, 0,0 ), "cm"))
 
 
 pct
@@ -227,10 +233,16 @@ ggsave("plots/maps/county_heatmap_NYct.png")
 # grid.arrange(pcc, pnt, prt, pct, nrow=2) # plot sizes vary because legend titles are different widths
 
 pcc + pnt + prt + pct + plot_layout(ncol=2)
-ggsave("plots/maps/county_heatmap_NYall4.png", width=6.5, height=6.5, units="in")
+ggsave("plots/maps/county_heatmap_NYall4_2x2.png", width=9, height=8, units="in")
 
-pcc + pnt + pct + plot_layout(ncol=3)
-ggsave("plots/maps/county_heatmap_NYCC,CT,NTonly.png", width=14, height=4, units="in")
+pcc + pnt + prt + pct + plot_layout(ncol=1)
+ggsave("plots/maps/county_heatmap_NYall4_1x4.png", width=4, height=9, units="in")
+
+pcc + pnt + pct + plot_layout(ncol=1)
+ggsave("plots/maps/county_heatmap_NYCC,CT,NTonly.png", width=4, height=7, units="in")
+
+
+
 
 
 # INCOMPLETE

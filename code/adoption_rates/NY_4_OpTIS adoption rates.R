@@ -100,7 +100,7 @@ ggplot(data=means_cropyear, aes(x=year, y=Mean, group=variable)) +
         legend.key.size = unit(0.4, "cm")
   )	 
 
-ggsave("plots/state_rates_15-21_NY.png")
+ggsave("plots/state_rates_15-21_NY.png", width=6, height=4, dpi=300)
 
 
 library(lme4)

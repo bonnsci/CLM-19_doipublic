@@ -51,6 +51,12 @@ ghgdat$cc <- ifelse(grepl("-nc", ghgdat$management),"NC",
 ghgdat$nfert <- ifelse(grepl("cn_", ghgdat$management), "50 N", "40 N")
 # # check
 # unique(ghgdat$nfert)
+# don't remember why I called these 50 N and 40 N --I think this is carryover from the grapes code
+# Conventional N is 82.2 kg N/ha *3 per year
+(82.2*3) # 246.6 kg/ha
+(82.2*3)*(2.20462/2.471) # 220 lb /ac
+82.2*(2.20462/2.471)
+52.5*(2.20462/2.471)
 
 # dummy for decade
 ghgdat$decade <- ifelse(ghgdat$year <2031, "2020s",

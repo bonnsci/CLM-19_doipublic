@@ -149,10 +149,10 @@ rm(actalf, actcorn,acttri,
 
 
 # add simpler rotation factor to lump corn-soy and soy-corn together, and all the alfalfas (4 total rotations)
-ndatyr$rot <- ifelse(ndatyr$crop_system_name %in% c("corn-soy", "soy-corn"), "corn-soy",
+ndatyr$rot <- ifelse(ndatyr$crop_system_name %in% c("corn-soy", "soy-corn"), "corn soy",
                      ifelse(grepl("alfalfa-", ndatyr$crop_system_name), "alf", 
-                            ifelse(ndatyr$crop_system_name == "corn-silage", "corn-silage", 
-                                 ifelse(ndatyr$crop_system_name == "corn-grain", "corn-grain", "X"))))
+                            ifelse(ndatyr$crop_system_name == "corn-silage", "corn silage", 
+                                 ifelse(ndatyr$crop_system_name == "corn-grain", "corn grain", "X"))))
 
 # check no Xs
 unique(ndatyr$rot)
@@ -177,186 +177,58 @@ unique(ndatyr$rot)
 
 
 ### get letters for the bars
+unique(ndatyr$crop)
 
-ndatyr2 <- filter(ndatyr, !till=="RT", grepl("corn", crop))  # for simplicity in the farmer report,
+ndatyr2 <- filter(ndatyr, !till=="RT", !rot=="alf", grepl("corn", crop))  # for simplicity in the farmer report,
 # also the cover crop doesn't really apply to alfalfa or triticale (only after 4 years of alfalfa, and triticale has no cover)
 # unique(ndatyr$crop)
 # which is better - rotation or crop as a predictor?
 lmno3_rot <- lm(NO3.yr ~till*cc*rot, data=ndatyr2)
 summary(lmno3_rot)
-# Call:   (all crops)
-#   lm(formula = NO3.yr ~ till * cc * rot, data = ndatyr2)
-# 
-# Residuals:
-#   Min     1Q Median     3Q    Max 
-# -72.04 -29.11 -12.24  10.17 357.10 
-# 
-# Coefficients:
-#   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                 64.4230     0.8020  80.325  < 2e-16 ***
-#   tillNT                       0.7415     1.1342   0.654  0.51327    
-# ccNC                         6.0374     1.1342   5.323 1.03e-07 ***
-#   rotcorn-grain                6.4001     1.9646   3.258  0.00112 ** 
-#   rotcorn-silage              -9.6088     1.9646  -4.891 1.01e-06 ***
-#   rotcorn-soy                -22.7728     1.5005 -15.177  < 2e-16 ***
-#   tillNT:ccNC                  1.5080     1.6041   0.940  0.34715    
-# tillNT:rotcorn-grain         1.4830     2.7783   0.534  0.59351    
-# tillNT:rotcorn-silage      -34.6895     2.7783 -12.486  < 2e-16 ***
-#   tillNT:rotcorn-soy          -5.6120     2.1220  -2.645  0.00818 ** 
-#   ccNC:rotcorn-grain           2.9076     2.7783   1.047  0.29533    
-# ccNC:rotcorn-silage         21.4059     2.7783   7.705 1.35e-14 ***
-#   ccNC:rotcorn-soy             4.4678     2.1220   2.105  0.03526 *  
-#   tillNT:ccNC:rotcorn-grain    0.3912     3.9291   0.100  0.92068    
-# tillNT:ccNC:rotcorn-silage  -4.2251     3.9291  -1.075  0.28223    
-# tillNT:ccNC:rotcorn-soy      0.5164     3.0009   0.172  0.86337    
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-# 
-# Residual standard error: 51.23 on 29360 degrees of freedom
-# Multiple R-squared:  0.06943,	Adjusted R-squared:  0.06895    # R2 only 7% with rotation
-# F-statistic:   146 on 15 and 29360 DF,  p-value: < 2.2e-16
-
-
-# corn only results: (now rotation is same as crop, with other crops filtered out)
 # Call:
 #   lm(formula = NO3.yr ~ till * cc * rot, data = ndatyr2)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -44.091  -9.943  -0.671   8.542  85.502 
+# -44.091 -10.834  -0.577   8.952  85.502 
 # 
 # Coefficients:
 #   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                 37.8630     0.5741  65.951  < 2e-16 ***
-#   tillNT                     -12.3205     0.8119 -15.175  < 2e-16 ***
-#   ccNC                        28.5328     0.8119  35.143  < 2e-16 ***
-#   rotcorn-grain               32.9601     0.8119  40.596  < 2e-16 ***
-#   rotcorn-silage              16.9512     0.8119  20.878  < 2e-16 ***
-#   rotcorn-soy                 29.6035     0.8119  36.462  < 2e-16 ***
-#   tillNT:ccNC                  3.3260     1.1482   2.897 0.003778 ** 
-#   tillNT:rotcorn-grain        14.5450     1.1482  12.667  < 2e-16 ***
-#   tillNT:rotcorn-silage      -21.6274     1.1482 -18.836  < 2e-16 ***
-#   tillNT:rotcorn-soy           5.7766     1.1482   5.031 4.95e-07 ***
-#   ccNC:rotcorn-grain         -19.5878     1.1482 -17.059  < 2e-16 ***
-#   ccNC:rotcorn-silage         -1.0895     1.1482  -0.949 0.342716    
-# ccNC:rotcorn-soy           -15.0959     1.1482 -13.147  < 2e-16 ***
-#   tillNT:ccNC:rotcorn-grain   -1.4267     1.6238  -0.879 0.379643    
-# tillNT:ccNC:rotcorn-silage  -6.0430     1.6238  -3.721 0.000199 ***
-#   tillNT:ccNC:rotcorn-soy     -2.7834     1.6238  -1.714 0.086532 .  
+# (Intercept)                 70.8231     0.6160 114.975  < 2e-16 ***
+#   tillNT                       2.2245     0.8711   2.554 0.010678 *  
+#   ccNC                         8.9450     0.8711  10.268  < 2e-16 ***
+#   rotcorn-silage             -16.0089     0.8711 -18.377  < 2e-16 ***
+#   rotcorn-soy                 -3.3566     0.8711  -3.853 0.000117 ***
+#   tillNT:ccNC                  1.8993     1.2320   1.542 0.123189    
+# tillNT:rotcorn-silage      -36.1725     1.2320 -29.361  < 2e-16 ***
+#   tillNT:rotcorn-soy          -8.7684     1.2320  -7.117 1.18e-12 ***
+#   ccNC:rotcorn-silage         18.4983     1.2320  15.015  < 2e-16 ***
+#   ccNC:rotcorn-soy             4.4919     1.2320   3.646 0.000268 ***
+#   tillNT:ccNC:rotcorn-silage  -4.6164     1.7423  -2.650 0.008071 ** 
+#   tillNT:ccNC:rotcorn-soy     -1.3568     1.7423  -0.779 0.436162    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 16.4 on 13040 degrees of freedom
-# Multiple R-squared:  0.5793,	Adjusted R-squared:  0.5789 
-# F-statistic:  1197 on 15 and 13040 DF,  p-value: < 2.2e-16
+# Residual standard error: 17.6 on 9780 degrees of freedom
+# Multiple R-squared:  0.5029,	Adjusted R-squared:  0.5023 
+# F-statistic: 899.4 on 11 and 9780 DF,  p-value: < 2.2e-16
 
-lmno3_crop <- lm(NO3.yr ~till*cc*crop, data=ndatyr2)
-summary(lmno3_crop)
 
-# Call:   (all crops)
-#   lm(formula = NO3.yr ~ till * cc * crop, data = ndatyr2)
-# 
-# Residuals:
-#   Min       1Q   Median       3Q      Max 
-# -148.312  -12.634   -2.027    9.676  284.514 
-# 
-# Coefficients:
-#   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                       44.5305     0.8318  53.534  < 2e-16 ***
-#   tillNT                             9.6450     1.1764   8.199 2.52e-16 ***
-#   ccNC                               3.1042     1.1764   2.639  0.00833 ** 
-#   cropcorn alf                      -6.6675     1.6636  -4.008 6.14e-05 ***
-#   cropcorn grain cs                 22.9360     1.6636  13.787  < 2e-16 ***
-#   cropcorn grain mono               26.2926     1.6636  15.804  < 2e-16 ***
-#   cropcorn silage mono              10.2837     1.6636   6.181 6.43e-10 ***
-#   cropsoy cs                       -28.6964     1.6636 -17.249  < 2e-16 ***
-#   croptri alf                      106.1303     1.6636  63.794  < 2e-16 ***
-#   tillNT:ccNC                        0.1493     1.6636   0.090  0.92847    
-# tillNT:cropcorn alf              -21.9655     2.3527  -9.336  < 2e-16 ***
-#   tillNT:cropcorn grain cs         -16.1889     2.3527  -6.881 6.07e-12 ***
-#   tillNT:cropcorn grain mono        -7.4205     2.3527  -3.154  0.00161 ** 
-#   tillNT:cropcorn silage mono      -43.5929     2.3527 -18.529  < 2e-16 ***
-#   tillNT:cropsoy cs                -12.8421     2.3527  -5.458 4.85e-08 ***
-#   tillNT:croptri alf               -22.5518     2.3527  -9.585  < 2e-16 ***
-#   ccNC:cropcorn alf                 25.4286     2.3527  10.808  < 2e-16 ***
-#   ccNC:cropcorn grain cs            10.3327     2.3527   4.392 1.13e-05 ***
-#   ccNC:cropcorn grain mono           5.8408     2.3527   2.483  0.01305 *  
-#   ccNC:cropcorn silage mono         24.3391     2.3527  10.345  < 2e-16 ***
-#   ccNC:cropsoy cs                    4.4693     2.3527   1.900  0.05749 .  
-# ccNC:croptri alf                 -10.7624     2.3527  -4.574 4.80e-06 ***
-#   tillNT:ccNC:cropcorn alf           3.1766     3.3273   0.955  0.33973    
-# tillNT:ccNC:cropcorn grain cs      0.3932     3.3273   0.118  0.90593    
-# tillNT:ccNC:cropcorn grain mono    1.7499     3.3273   0.526  0.59894    
-# tillNT:ccNC:cropcorn silage mono  -2.8664     3.3273  -0.861  0.38897    
-# tillNT:ccNC:cropsoy cs             3.3570     3.3273   1.009  0.31301    
-# tillNT:ccNC:croptri alf            3.6169     3.3273   1.087  0.27703    
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-# 
-# Residual standard error: 41.16 on 29348 degrees of freedom
-# Multiple R-squared:  0.3996,	Adjusted R-squared:  0.3991         # BOOM R2 is 40% crop is better than rotation as a predictor
-# F-statistic: 723.6 on 27 and 29348 DF,  p-value: < 2.2e-16
-
-# corn only
-# Call:
-#   lm(formula = NO3.yr ~ till * cc * crop, data = ndatyr2)
-# 
-# Residuals:
-#   Min      1Q  Median      3Q     Max 
-# -44.091  -9.943  -0.671   8.542  85.502 
-# 
-# Coefficients:
-#   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                       37.8630     0.5741  65.951  < 2e-16 ***
-#   tillNT                           -12.3205     0.8119 -15.175  < 2e-16 ***
-#   ccNC                              28.5328     0.8119  35.143  < 2e-16 ***
-#   cropcorn grain cs                 29.6035     0.8119  36.462  < 2e-16 ***
-#   cropcorn grain mono               32.9601     0.8119  40.596  < 2e-16 ***
-#   cropcorn silage mono              16.9512     0.8119  20.878  < 2e-16 ***
-#   tillNT:ccNC                        3.3260     1.1482   2.897 0.003778 ** 
-#   tillNT:cropcorn grain cs           5.7766     1.1482   5.031 4.95e-07 ***
-#   tillNT:cropcorn grain mono        14.5450     1.1482  12.667  < 2e-16 ***
-#   tillNT:cropcorn silage mono      -21.6274     1.1482 -18.836  < 2e-16 ***
-#   ccNC:cropcorn grain cs           -15.0959     1.1482 -13.147  < 2e-16 ***
-#   ccNC:cropcorn grain mono         -19.5878     1.1482 -17.059  < 2e-16 ***
-#   ccNC:cropcorn silage mono         -1.0895     1.1482  -0.949 0.342716    
-# tillNT:ccNC:cropcorn grain cs     -2.7834     1.6238  -1.714 0.086532 .  
-# tillNT:ccNC:cropcorn grain mono   -1.4267     1.6238  -0.879 0.379643    
-# tillNT:ccNC:cropcorn silage mono  -6.0430     1.6238  -3.721 0.000199 ***
-#   ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-# 
-# Residual standard error: 16.4 on 13040 degrees of freedom
-# Multiple R-squared:  0.5793,	Adjusted R-squared:  0.5789 
-# F-statistic:  1197 on 15 and 13040 DF,  p-value: < 2.2e-16
-
-aovno3 <- aov(NO3.yr ~ till*cc*crop, data=ndatyr2)
+aovno3 <- aov(NO3.yr ~ till*cc*rot, data=ndatyr2)
 
 summary(aovno3)
-# Df   Sum Sq Mean Sq  F value   Pr(>F)    
-# till             1    95010   95010   56.091 7.11e-14 ***
-#   cc               1   783692  783692  462.672  < 2e-16 ***
-#   crop             6 29944242 4990707 2946.389  < 2e-16 ***
-#   till:cc          1     2630    2630    1.553    0.213    
-# till:crop        6  1387317  231220  136.506  < 2e-16 ***
-#   cc:crop          6   871702  145284   85.772  < 2e-16 ***
-#   till:cc:crop     6     7344    1224    0.723    0.631    
-# Residuals    29348 49710779    1694                      
+# Df  Sum Sq Mean Sq  F value Pr(>F)    
+# till           1  401186  401186 1295.716 <2e-16 ***
+#   cc             1  671528  671528 2168.843 <2e-16 ***
+#   rot            2 1214978  607489 1962.016 <2e-16 ***
+#   till:cc        1       5       5    0.017 0.8974    
+# till:rot       2  656327  328164 1059.874 <2e-16 ***
+#   cc:rot         2  116917   58459  188.805 <2e-16 ***
+#   till:cc:rot    2    2297    1148    3.709 0.0245 *  
+#   Residuals   9780 3028132     310                    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-# Corn only:
-# Df  Sum Sq Mean Sq  F value  Pr(>F)    
-# till             1  491057  491057 1825.805 < 2e-16 ***
-#   cc               1 1301794 1301794 4840.216 < 2e-16 ***
-#   crop             3 2143035  714345 2656.016 < 2e-16 ***
-#   till:cc          1     475     475    1.765 0.18405    
-# till:crop        3  659141  219714  816.920 < 2e-16 ***
-#   cc:crop          3  230667   76889  285.882 < 2e-16 ***
-#   till:cc:crop     3    4084    1361    5.062 0.00167 ** 
-#   Residuals    13040 3507155     269                     
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 Tukout <- TukeyHSD(aovno3)
 cld <- multcompView::multcompLetters4(aovno3, Tukout)
 
@@ -365,64 +237,72 @@ cld <- multcompView::multcompLetters4(aovno3, Tukout)
 ndat_gmean <- ndatyr2 %>%
   group_by(crop, till, cc) %>%
   summarize(NO3_mean = mean(NO3.yr),
-            NO3_se = se(NO3.yr)) %>%
+            NO3_se = se(NO3.yr),
+            meanlbac = NO3_mean*2.20462/2.47105,
+            selbac = NO3_se*2.20462/2.47105) %>%
   # pivot_longer(cols=-c("crop", "till", "cc"),
   #              names_to=c("component", ".value"),
   #              names_sep="_") %>%
   arrange(desc(NO3_mean))
 
 
-cld <- as.data.frame.list(cld$`till:cc:crop`)
+cld <- as.data.frame.list(cld$`till:cc:rot`)
 ndat_gmean$cld <- cld$Letters
-
-
-# convert kg/ha to lb/ac
-ndat_gmean$meanlbac <- ndat_gmean$NO3_mean*2.20462/2.47105
-ndat_gmean$selbac <- ndat_gmean$NO3_se*2.20462/2.47105
 
 ndat_gmean$cctill <- paste0(ndat_gmean$till, "-", ndat_gmean$cc)
 
 arrange(ndat_gmean, crop, till, cc)
-# # A tibble: 16 × 9
-# # Groups:   crop, till [8]
-# crop             till  cc    NO3_mean NO3_se cld   meanlbac selbac cctill
-# <chr>            <chr> <chr>    <dbl>  <dbl> <chr>    <dbl>  <dbl> <chr> 
-#   1 corn alf         CT    CC        37.9  0.476 i         33.8  0.425 CT-CC 
-# 2 corn alf         CT    NC        66.4  0.455 e         59.2  0.406 CT-NC 
-# 3 corn alf         NT    CC        25.5  0.309 j         22.8  0.276 NT-CC 
-# 4 corn alf         NT    NC        57.4  0.437 g         51.2  0.390 NT-NC 
-# 5 corn grain cs    CT    CC        67.5  0.722 e         60.2  0.644 CT-CC 
-# 6 corn grain cs    CT    NC        80.9  0.631 b         72.2  0.563 CT-NC 
-# 7 corn grain cs    NT    CC        60.9  0.667 f         54.4  0.595 NT-CC 
-# 8 corn grain cs    NT    NC        74.9  0.621 c         66.8  0.554 NT-NC 
-# 9 corn grain mono  CT    CC        70.8  0.747 d         63.2  0.666 CT-CC 
-# 10 corn grain mono  CT    NC        79.8  0.679 b         71.2  0.606 CT-NC 
-# 11 corn grain mono  NT    CC        73.0  0.697 cd        65.2  0.622 NT-CC 
-# 12 corn grain mono  NT    NC        83.9  0.642 a         74.8  0.572 NT-NC 
-# 13 corn silage mono CT    CC        54.8  0.524 g         48.9  0.468 CT-CC 
-# 14 corn silage mono CT    NC        82.3  0.536 ab        73.4  0.478 CT-NC 
-# 15 corn silage mono NT    CC        20.9  0.384 k         18.6  0.342 NT-CC 
-# 16 corn silage mono NT    NC        45.6  0.422 h         40.7  0.376 NT-NC 
+# A tibble: 12 × 9
+# Groups:   crop, till [6]
+# crop             till  cc    NO3_mean NO3_se meanlbac selbac cld   cctill
+# <chr>            <chr> <chr>    <dbl>  <dbl>    <dbl>  <dbl> <chr> <chr> 
+#  1 corn grain cs    CT    CC        67.5  0.722     60.2  0.644 e     CT-CC 
+#  2 corn grain cs    CT    NC        80.9  0.631     72.2  0.563 b     CT-NC 
+#  3 corn grain cs    NT    CC        60.9  0.667     54.4  0.595 f     NT-CC 
+#  4 corn grain cs    NT    NC        74.9  0.621     66.8  0.554 c     NT-NC 
+#  5 corn grain mono  CT    CC        70.8  0.747     63.2  0.666 d     CT-CC 
+#  6 corn grain mono  CT    NC        79.8  0.679     71.2  0.606 b     CT-NC 
+#  7 corn grain mono  NT    CC        73.0  0.697     65.2  0.622 cd    NT-CC 
+#  8 corn grain mono  NT    NC        83.9  0.642     74.8  0.572 a     NT-NC 
+#  9 corn silage mono CT    CC        54.8  0.524     48.9  0.468 g     CT-CC 
+# 10 corn silage mono CT    NC        82.3  0.536     73.4  0.478 ab    CT-NC 
+# 11 corn silage mono NT    CC        20.9  0.384     18.6  0.342 i     NT-CC 
+# 12 corn silage mono NT    NC        45.6  0.422     40.7  0.376 h     NT-NC 
 # > 
 
 # 80 ac field of corn silage NC, CT
 73.4*80 #5,872
 73.4*80*0.6 # 3523.2
-18.6/73.4
+18.6/73.4  
 
-# "adding rye cover crop to CT reduces nitrate loss by about X%" CTNC - CTCC
-(59.2-33.8)/59.2  # 43%
+# 80 ac field of corn grain in corn-soybean NC, CT
+72.2*80 #5,776 lb NO3-N leached
+72.2*80*0.6 # $3465.60
+54.4/72.2 # CC, NT  
+(72.2-54.4)/72.2  # 25%
+# yield 14% better, see NY_biomass.R
+(2879-3301)/2879  # 14%
+
+# "adding rye cover crop to CT reduces nitrate loss by about X%" CTNC - CTCC (lbs)
 (72.2-60.2)/72.2  # 17%
-(79.8-70.8)/79.8  # 11%
+(71.2-63.2)/71.2  # 11%
 (73.4-48.9)/73.4  # 33%
-mean(c(43, 17, 11, 33))  # 26%
+mean(c( 17, 11, 33))  # 20.3%
 
-# combining rye cover with no-till reduced nitrate loss by another X%" CTCC - NTCC
-(33.8-22.8)/33.8  # 33%
+# combining rye cover with no-till reduced nitrate loss by another X%" CTCC - NTCC (lbs)
 (60.2-54.4)/60.2  # 10%
 (63.2-65.2)/63.2  # -3%
 (48.9-18.6)/48.9  # 62%
-mean(c(33, 10, -3, 62))
+mean(c(10, -3, 62)) # 23
+
+# rye cover and no till compared to no cover and conv till CTNC - NTCC
+(72.2-54.4)/72.2  # 25%
+(71.2-65.2)/71.2  # 8%
+(73.4-18.6)/73.4  # 75%
+mean(c(25, 8, 75))  # 36% total reduction
+
+(100-(0.26*100))-0.25*(100-(0.26*100))
+
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
@@ -435,7 +315,7 @@ ggplot(data=ndat_gmean,
        aes(x=cctill, y=meanlbac, fill=cctill)) +   # fill=variable
   geom_bar(stat="identity", position=position_dodge(), show.legend=F, width=0.7) + # color="#332288", 
   geom_errorbar(aes(ymin=meanlbac-selbac, ymax=meanlbac+selbac), width=0.3, position=position_dodge(0.9)) +
-  facet_grid(cols=vars(factor(crop, levels=c("corn grain mono", "corn grain cs", "corn silage mono", "corn alf")))) + 
+  facet_grid(cols=vars(factor(crop, levels=c("corn grain mono", "corn grain cs", "corn silage mono")))) + 
      #cols=vars(factor(cc, levels=c("NC", "CC")), factor(till, levels=c("CT","NT"))), 
              #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
              # labeller = as_labeller(
@@ -451,14 +331,14 @@ ggplot(data=ndat_gmean,
                    # labels=c("alfalfa", "soy", "triticale", "corn grain\nmonoculture", 
                    #          "corn silage\nmonoculture", "corn grain\nc-s rotation", "corn grain\nalf rotation")) +
   scale_y_continuous(breaks=seq(0, 80, 20), limits=c(0,80)) +
-  # geom_text(aes(x=cctill, y=meanlbac+4, label=cld), size=4, fontface="bold") +
+  geom_text(aes(x=cctill, y=meanlbac+4, label=cld), size=4, fontface="bold") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'),
     axis.text.x=element_text(angle=-30, hjust=0, size=11))
 
-ggsave("plots/water, nitrate, sediments/NY_NO3 losses 22-72 mean bars lbac CORN ONLY_no letters.png", width=8, height=3, dpi=300)
+ggsave("plots/water, nitrate, sediments/NY_NO3 losses 22-72 mean bars lbac CORN ONLY_with letters.png", width=6, height=3, dpi=300)
 
 
 

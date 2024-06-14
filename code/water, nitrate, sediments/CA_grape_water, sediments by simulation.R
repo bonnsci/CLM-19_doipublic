@@ -123,142 +123,187 @@ se <- function(x) sd(x) / sqrt(length(x))
 # 
 # write.csv(wdatyrw, "data/water, nitrate, sediments/CA_grape_wdatyr.csv", row.names=F)
 
+
+
+
+
+
+
+
+
+
 wdatyrw <- read.csv("data/water, nitrate, sediments/CA_grape_wdatyr.csv")
+
+
+
+
+
+
+
+
+
 
 
 
 # are the water components different among tillage and cover crop treatment groups??
 # probably a more efficient way to code this with fewer lines but didn't have time to think that through
+# 
+# effecttrans <- aov(trans.yrtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
+# summary(effecttrans)
+# # Df Sum Sq Mean Sq  F value Pr(>F)    
+# # cc             2  80205   40102 7776.797 <2e-16 ***
+# #   till           1      0       0    0.034  0.853    
+# # cc:till        2     11       6    1.067  0.344    
+# # Residuals   4890  25216       5                    
+# # ---
+# #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# Tukouttrans <- TukeyHSD(effecttrans)
+# cldtrans<- multcompView::multcompLetters4(effecttrans, Tukouttrans)
+# cldtrans<- as.data.frame.list(cldtrans$`cc:till`) # $`till:cc`
+# 
+# effectevap <- aov(evap.yrtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
+# summary(effectevap)
+# #               Df Sum Sq Mean Sq  F value  Pr(>F)    
+# # cc             2   5102  2551.1 2306.221 < 2e-16 ***
+# # till           1     11    11.4   10.321 0.00132 ** 
+# # cc:till        2     13     6.3    5.707 0.00334 ** 
+# # Residuals   4890   5409     1.1                     
+# # ---
+# # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# Tukoutevap <- TukeyHSD(effectevap)
+# cldevap<- multcompView::multcompLetters4(effectevap, Tukoutevap)
+# cldevap<- as.data.frame.list(cldevap$`cc:till`) # $`till:cc`
+# 
+# effectleach <- aov(leach.yrtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
+# summary(effectleach)
+# # Df Sum Sq Mean Sq F value   Pr(>F)    
+# # cc             2  28816   14408 138.934  < 2e-16 ***
+# #   till           1   1475    1475  14.221 0.000164 ***
+# #   cc:till        2    235     117   1.132 0.322357    
+# # Residuals   4890 507121     104                     
+# # ---
+# #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# Tukoutleach <- TukeyHSD(effectleach)
+# cldleach<- multcompView::multcompLetters4(effectleach, Tukoutleach)
+# cldleach<- as.data.frame.list(cldleach$`cc:till`)  # $`till:cc`
+# 
+# effectrun <- aov(run.yrtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
+# summary(effectrun)
+# # Df Sum Sq Mean Sq F value   Pr(>F)    
+# # cc             2   6923    3461  42.191  < 2e-16 ***
+# #   till           1   4118    4118  50.189 1.59e-12 ***
+# #   cc:till        2    287     144   1.749    0.174    
+# # Residuals   4890 401183      82                     
+# # ---
+# #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# Tukoutrun <- TukeyHSD(effectrun)
+# cldrun<- multcompView::multcompLetters4(effectrun, Tukoutrun)
+# cldrun<- as.data.frame.list(cldrun$`cc:till`)
+# 
+# effectsed <- aov(sed.yrtot.lbac ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # *till
+# summary(effectsed)
+# # Df    Sum Sq   Mean Sq F value Pr(>F)      
+# # cc             2 1.435e+10 7.174e+09  51.015 <2e-16 ***         # ~cc*till
+# #   till           1 2.548e+08 2.548e+08   1.812  0.178    
+# # cc:till        2 8.211e+07 4.105e+07   0.292  0.747    
+# # Residuals   4890 6.876e+11 1.406e+08                   
+# # ---
+# #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-effecttrans <- aov(trans.yrtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
-summary(effecttrans)
-# Df Sum Sq Mean Sq  F value Pr(>F)    
-# cc             2  80205   40102 7776.797 <2e-16 ***
-#   till           1      0       0    0.034  0.853    
-# cc:till        2     11       6    1.067  0.344    
-# Residuals   4890  25216       5                    
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-Tukouttrans <- TukeyHSD(effecttrans)
-cldtrans<- multcompView::multcompLetters4(effecttrans, Tukouttrans)
-cldtrans<- as.data.frame.list(cldtrans$`cc:till`) # $`till:cc`
 
-effectevap <- aov(evap.yrtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
-summary(effectevap)
-#               Df Sum Sq Mean Sq  F value  Pr(>F)    
-# cc             2   5102  2551.1 2306.221 < 2e-16 ***
-# till           1     11    11.4   10.321 0.00132 ** 
-# cc:till        2     13     6.3    5.707 0.00334 ** 
-# Residuals   4890   5409     1.1                     
-# ---
-# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-Tukoutevap <- TukeyHSD(effectevap)
-cldevap<- multcompView::multcompLetters4(effectevap, Tukoutevap)
-cldevap<- as.data.frame.list(cldevap$`cc:till`) # $`till:cc`
 
-effectleach <- aov(leach.yrtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
-summary(effectleach)
-# Df Sum Sq Mean Sq F value   Pr(>F)    
-# cc             2  28816   14408 138.934  < 2e-16 ***
-#   till           1   1475    1475  14.221 0.000164 ***
-#   cc:till        2    235     117   1.132 0.322357    
-# Residuals   4890 507121     104                     
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-Tukoutleach <- TukeyHSD(effectleach)
-cldleach<- multcompView::multcompLetters4(effectleach, Tukoutleach)
-cldleach<- as.data.frame.list(cldleach$`cc:till`)  # $`till:cc`
 
-effectrun <- aov(run.yrtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
-summary(effectrun)
-# Df Sum Sq Mean Sq F value   Pr(>F)    
-# cc             2   6923    3461  42.191  < 2e-16 ***
-#   till           1   4118    4118  50.189 1.59e-12 ***
-#   cc:till        2    287     144   1.749    0.174    
-# Residuals   4890 401183      82                     
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-Tukoutrun <- TukeyHSD(effectrun)
-cldrun<- multcompView::multcompLetters4(effectrun, Tukoutrun)
-cldrun<- as.data.frame.list(cldrun$`cc:till`)
-
-effectsed <- aov(sed.yrtot.lbac ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
+# OR # 
+effectsed <- aov(sed.yrtot.lbac ~cc, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # *till
 summary(effectsed)
+# > summary(effectsed)                                              # just cc
 # Df    Sum Sq   Mean Sq F value Pr(>F)    
-# cc             2 1.435e+10 7.174e+09  51.015 <2e-16 ***
-#   till           1 2.548e+08 2.548e+08   1.812  0.178    
-# cc:till        2 8.211e+07 4.105e+07   0.292  0.747    
-# Residuals   4890 6.876e+11 1.406e+08                   
+# cc             2 3.427e+10 1.713e+10   163.3 <2e-16 ***
+#   Residuals   4893 5.135e+11 1.049e+08                   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 Tukoutsed <- TukeyHSD(effectsed)
 cldsed<- multcompView::multcompLetters4(effectsed, Tukoutsed)
-cldsed<- as.data.frame.list(cldsed$`cc:till`)
-
-effectgr <- aov(grtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
-summary(effectgr)
-# Df  Sum Sq Mean Sq F value Pr(>F)
-# cc             2    1593   796.6   2.060  0.128
-# till           1     874   874.1   2.260  0.133
-# cc:till        2      50    25.1   0.065  0.937
-# Residuals   4890 1891163   386.7      
-Tukoutgr <- TukeyHSD(effectgr)
-cldgr<- multcompView::multcompLetters4(effectgr, Tukoutgr)
-cldgr<- as.data.frame.list(cldgr$`cc:till`)
+cldsed<- as.data.frame.list(cldsed$`cc`)
+cldsed$cc <- row.names(cldsed)
+# 
+sedmean <- wdatyrw %>%
+  filter(nfert=="Conventional N", !till=="RT") %>%
+  group_by(cc) %>%  ### tillage not having an effect here so averaging across CT and NT
+  summarize(sed_mean = mean(sed.yrtot.lbac),
+            sed_se = se(sed.yrtot.lbac)) %>%
+  arrange(desc(sed_mean)) %>%
+  left_join(., cldsed[, c(1,5)])
 
 
-cldtrans$component <- rep("trans", 6)  # ,3) if cc only, ,3) if till*cc 6
-cldevap$component <- rep("evap", 6)
-cldrun$component <- rep("run", 6)
-cldleach$component <- rep("leach", 6)
-cldsed$component <- rep("sed", 6)
-cldgr$component <- rep("grtot", 6)
 
 
-cldtrans <- cldtrans[,c("Letters", "component")]
-cldevap <- cldevap[,c("Letters", "component")]
-cldrun <- cldrun[,c("Letters", "component")]
-cldleach <- cldleach[,c("Letters", "component")]
-cldsed <- cldsed[,c("Letters", "component")]
-cldgr <- cldgr[,c("Letters", "component")]
 
-cld <- rbind(cldtrans, cldevap, cldrun, cldleach, cldsed, cldgr)
-cld <- group_by(cld, component) %>%
-  arrange(component, Letters) 
-cld$ID <- 1:nrow(cld)
+# effectgr <- aov(grtot.in ~cc*till, data=wdatyrw[wdatyrw$till %in% c("CT", "NT") & wdatyrw$nfert=="Conventional N",])  # 
+# summary(effectgr)
+# # Df  Sum Sq Mean Sq F value Pr(>F)
+# # cc             2    1593   796.6   2.060  0.128
+# # till           1     874   874.1   2.260  0.133
+# # cc:till        2      50    25.1   0.065  0.937
+# # Residuals   4890 1891163   386.7      
+# Tukoutgr <- TukeyHSD(effectgr)
+# cldgr<- multcompView::multcompLetters4(effectgr, Tukoutgr)
+# cldgr<- as.data.frame.list(cldgr$`cc:till`)
+# 
+# 
+# cldtrans$component <- rep("trans", 6)  # ,3) if cc only, ,3) if till*cc 6
+# cldevap$component <- rep("evap", 6)
+# cldrun$component <- rep("run", 6)
+# cldleach$component <- rep("leach", 6)
+# cldsed$component <- rep("sed", 6)
+# cldgr$component <- rep("grtot", 6)
+# 
+# 
+# cldtrans <- cldtrans[,c("Letters", "component")]
+# cldevap <- cldevap[,c("Letters", "component")]
+# cldrun <- cldrun[,c("Letters", "component")]
+# cldleach <- cldleach[,c("Letters", "component")]
+# cldsed <- cldsed[,c("Letters", "component")]
+# cldgr <- cldgr[,c("Letters", "component")]
+# 
+# cld <- rbind(cldtrans, cldevap, cldrun, cldleach, cldsed, cldgr)
+# cld <- group_by(cld, component) %>%
+#   arrange(component, Letters) 
+# cld$ID <- 1:nrow(cld)
 
 # means across all years for plotting and joining to cld info
 
-wmeaninch <- wdatyrw %>%
-  filter(nfert=="Conventional N", !till=="RT") %>%
-  group_by(till, cc, nfert) %>%  ### 
-  summarize(et_mean = mean(et.yrtot.in), 
-            evap_mean = mean(evap.yrtot.in),
-            trans_mean = mean(trans.yrtot.in),
-            leach_mean = mean(leach.yrtot.in),
-            run_mean = mean(run.yrtot.in),
-            sed_mean = mean(sed.yrtot.lbac),
-            grtot_mean = mean(grtot.in),
-            et_se = se(et.yrtot.in), 
-            evap_se = se(evap.yrtot.in),
-            trans_se = se(trans.yrtot.in),
-            leach_se = se(leach.yrtot.in),
-            run_se = se(run.yrtot.in),
-            sed_se = se(sed.yrtot.lbac),
-            grtot_se = se(grtot.in)) %>%
-  pivot_longer(cols= -c("till", "cc", "nfert"), # i.e., don't pivot these columns  # till, 
-               names_to=c("component", ".value"), # what we are calling the objects 
-               # there should be as many new columns as there are unique tags
-               # after the "_" separator (i.e., "_mean" and "_se")
-               names_sep="_") %>%  # note this type of pivot_longer doesn't work if you use a "." separator!
-  ungroup() %>%
-  filter(!component=="et") %>%
-  group_by(component) %>%
-  arrange(desc(mean), .by_group=T) %>%
-  ungroup() %>%
-  mutate(ID=c(1:length(component))) %>%
-  full_join(., cld)
+# wmeaninch <- wdatyrw %>%
+#   filter(nfert=="Conventional N", !till=="RT") %>%
+#   group_by(cc, nfert) %>%  ### tillage not having an effect here so averaging across CT and NT
+#   summarize(et_mean = mean(et.yrtot.in), 
+#             evap_mean = mean(evap.yrtot.in),
+#             trans_mean = mean(trans.yrtot.in),
+#             leach_mean = mean(leach.yrtot.in),
+#             run_mean = mean(run.yrtot.in),
+#             sed_mean = mean(sed.yrtot.lbac),
+#             grtot_mean = mean(grtot.in),
+#             et_se = se(et.yrtot.in), 
+#             evap_se = se(evap.yrtot.in),
+#             trans_se = se(trans.yrtot.in),
+#             leach_se = se(leach.yrtot.in),
+#             run_se = se(run.yrtot.in),
+#             sed_se = se(sed.yrtot.lbac),
+#             grtot_se = se(grtot.in)) %>%
+#   pivot_longer(cols= -c("cc", "nfert"), # i.e., don't pivot these columns  # till, 
+#                names_to=c("component", ".value"), # what we are calling the objects 
+#                # there should be as many new columns as there are unique tags
+#                # after the "_" separator (i.e., "_mean" and "_se")
+#                names_sep="_") %>%  # note this type of pivot_longer doesn't work if you use a "." separator!
+#   ungroup() %>%
+#   filter(!component=="et") %>%
+#   group_by(component) %>%
+#   arrange(desc(mean), .by_group=T) %>%
+#   ungroup() %>%
+#   mutate(ID=c(1:length(component))) %>%
+#   full_join(., cld)
 
+  
 # for stacked bar, want error bars, would need to make a new variable that is the sum of the variable mean + the means below it.
 
 
@@ -344,18 +389,59 @@ ggsave("plots/water, nitrate, sediments/CA_grape_water losses annual stacked bar
 
 # PLOT FOR SEDIMENTS
 
-sed <- wmeaninch[wmeaninch$component=="sed",]
-sed$mean.tac <- sed$mean/2000
-sed$se.tac <- sed$se/2000
+# sed <- wmeaninch[wmeaninch$component=="sed",]
+sedmean$mean.tac <- sedmean$sed_mean/2000
+sedmean$se.tac <- sedmean$sed_se/2000
 
-# cc    nfert          component  mean    se    ID Letters mean.tac se.tac
-# <chr> <chr>          <chr>     <dbl> <dbl> <int> <chr>      <dbl>  <dbl>
-# 1 NC    Conventional N sed       4398. 149.     13 a          2.20  0.0743
-# 2 TC    Conventional N sed       3627. 130.     14 b          1.81  0.0648
-# 3 LC    Conventional N sed       1686.  64.0    15 c          0.843 0.0320
+# # A tibble: 3 × 6
+# cc    sed_mean sed_se Letters mean.tac se.tac
+# <chr>    <dbl>  <dbl> <chr>      <dbl>  <dbl>
+#   1 NC       7783.   409. a           3.89 0.205 
+# 2 BarC     2277.   120. b           1.14 0.0601
+# 3 LegC     2070.   104. b           1.04 0.0522
+
+(3.89-1.14)/3.89 # 71%
+(3.89-1.04)/3.89 # 73%
+
+1.14/3.89 # 29%
+1.04/3.89 # 27%
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
+ggplot(data=sedmean, aes(x=cc, y=mean.tac)) +
+  geom_bar(stat="identity", position=position_dodge(), width=0.5, fill="burlywood3") +  # color="sienna4", 
+  geom_errorbar(aes(ymin = mean.tac - se.tac, ymax = mean.tac + se.tac), 
+                width=0.2, position = position_dodge(0.8), color="sienna4", linewidth=1) +
+  # facet_grid(cols=vars(factor(cc, levels=c("NC", "TC", "LC"))),  #  factor(till, levels=c("CT", "NT"))),  
+  #            # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
+  #            labeller = as_labeller(
+  #              c("NC"="No Cover Crop", "TC" = "Triticale Cover", "LC"="Legume Cover"))) +
+  # "CT" = "Conventional Till",  "NT" = "No Till"))) +  #, "RT"="Reduced Ti
+  # scale_y_continuous(breaks=seq(0,300, 50), limits=c(0,300)) +
+  scale_x_discrete(limits = c("NC", "BarC", "LegC")) +
+  xlab("Cover crop") +
+  ylab('2022-72 mean annual sediment yield (tons per acre)') +
+  theme(
+    panel.grid.minor=element_blank(), 
+    panel.grid.major=element_blank(),
+    panel.background = element_rect(fill = 'gray95'),
+    axis.text.x=element_text(size=11),  #angle=-10, hjust=0, 
+    axis.text.y=element_text(size=11),
+    plot.margin = unit(c(1,0.5,1,0.5), "cm"),
+    axis.title=element_text(size=13, face="bold"),
+    strip.text=element_text(face="bold", size=11))
+# # strip.background=element_rect(fill="lightblue", color="black", size=1) 
+
+ggsave("plots/water, nitrate, sediments/CA_grape sediments mean annual bars cc only.png", width=6, height=4.5, dpi=300)
+
+
+
+
+
+
+
+
+# PLOT FOR SHOWING NO TILL AND CONVENTIONAL TILL
 
 pal2 <- c("#20243d", "#669947")  #  "#C2e4ef",
 

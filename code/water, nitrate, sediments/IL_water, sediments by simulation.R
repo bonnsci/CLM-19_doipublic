@@ -12,13 +12,13 @@ se <- function(x) sd(x) / sqrt(length(x))
 # Sediment yield is kg/ha.
 
 # # sum data by year
-wdatyr <- wdat %>%
-  group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
-  summarize(trans.yr = sum(Transpiration.mm.),
-            evap.yr = sum(Evaporation.mm.),
-            leach.yr = sum(WaterLeaching),
-            run.yr = sum(Runoff),
-            sed.yr = sum(SedimentYield))
+# wdatyr <- wdat %>%
+#   group_by(site_name, crop_system_name, management_name, climate_scenario, Year) %>%
+#   summarize(trans.yr = sum(Transpiration.mm.),
+#             evap.yr = sum(Evaporation.mm.),
+#             leach.yr = sum(WaterLeaching),
+#             run.yr = sum(Runoff),
+#             sed.yr = sum(SedimentYield))
 # beepr::beep(sound=8)
 # # 
 # # clean up
@@ -286,9 +286,7 @@ wdat_nositesed <- group_by(wdat_persite, till, cc, variable) %>%
 cldsed <- as.data.frame.list(cldsed$`till:cc`)
 wdat_nositesed$cld <- cldsed$Letters
 
-<<<<<<< HEAD
-# wdat_nositesed$mean.tac <- wdat_nositesed$mean/(907.1847*2.471)
-# wdat_nositesed$se.tac <- wdat_nositesed$se/(907.1847*2.471)
+
 
 wdat_nositesed$mean.lbac <- wdat_nositesed$mean/(0.4536*2.471)
 wdat_nositesed$se.lbac <- wdat_nositesed$se/(0.4536*2.471)
@@ -304,18 +302,9 @@ wdat_nositesed
 # 6 NT    CC    sed       73.4  7.34 e       0.0328 0.00327      65.5    6.55
 
 ggplot(data=wdat_nositesed[wdat_nositesed$till %in% c("CT", "NT"),], aes(x=variable, y=mean.lbac)) +
-=======
-wpyrlong$mean.tac <- wpyrlong$mean/(907.1847*2.471)
-wpyrlong$se.tac <- wpyrlong$se/(907.1847*2.471)
-
-wpyrlong$mean.lbac <- wpyrlong$mean/(0.4536*2.471)
-wpyrlong$se.lbac <- wpyrlong$se/(0.4536*2.471)
-
-ggplot(data=wpyrlong[wpyrlong$variable =="sed" & wpyrlong$till %in% c("CT", "NT"),], aes(x=variable, y=mean.lbac)) +
->>>>>>> 3925e9244927fb2ce651dd7e9347f16dd8fc1bae
   geom_bar(stat="identity", position=position_dodge(), width=0.6, fill="burlywood3") +
-  geom_errorbar(aes(ymin=mean.lbac-se.lbac, ymax=mean.lbac+se.lbac), 
-                width=0.3, position=position_dodge(0.8),color="sienna4") +
+  # geom_errorbar(aes(ymin=mean.lbac-se.lbac, ymax=mean.lbac+se.lbac), 
+  #               width=0.3, position=position_dodge(0.8),color="sienna4") +
   facet_grid(cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
              # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
              labeller = as_labeller(
@@ -327,14 +316,8 @@ ggplot(data=wpyrlong[wpyrlong$variable =="sed" & wpyrlong$till %in% c("CT", "NT"
   # geom_bar(data=wdat_nositesed, 
   #          aes(x=till, y=mean), stat="identity", 
   #          position=position_dodge(), color=NA, fill=NA) +
-<<<<<<< HEAD
-  geom_text(aes(x=variable, label=cld, y=mean), vjust=-2,
-            position=position_dodge(0.9), color="gray20", size=4, fontface="bold") +
-=======
-  # geom_text(data=wdat_nositesed, 
-  #           aes(x=till, label=cld, y=mean), vjust=-2,
+  # geom_text(aes(x=variable, label=cld, y=mean), vjust=-2,
   #           position=position_dodge(0.9), color="gray20", size=4, fontface="bold") +
->>>>>>> 3925e9244927fb2ce651dd7e9347f16dd8fc1bae
   xlab("Tillage") +
   ylab('2022-72 mean annual sediment loss (lb per ac)') +
   theme(
@@ -348,7 +331,7 @@ ggplot(data=wpyrlong[wpyrlong$variable =="sed" & wpyrlong$till %in% c("CT", "NT"
     strip.text=element_text(face="bold", size=11))
 # # strip.background=element_rect(fill="lightblue", color="black", size=1) 
 
-ggsave("plots/water, nitrate, sediments/IL_sediments mean annual barsRCP60_no letters.png", width=5, height=3.5, dpi=300)
+ggsave("plots/water, nitrate, sediments/IL_sediments mean annual barsRCP60_no letters_no error bars.png", width=5, height=3.5, dpi=300)
 
 
 

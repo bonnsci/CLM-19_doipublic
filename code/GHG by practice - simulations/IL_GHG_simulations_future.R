@@ -296,8 +296,8 @@ ggplot(data=ghgsocsum, aes(x=dummy)) +
   # dsoc bars, error bars, letters
   geom_bar(aes(y=mean.soc.ac*-1),  
            stat="identity", position=position_dodge(), fill="#1982be", width=0.6) + #, color="gray20") +
-  geom_errorbar(aes(ymin= (-1*mean.soc.ac)-se.soc.ac, ymax=(-1*mean.soc.ac)+se.soc.ac),  
-                width=0.2, position=position_dodge(0.9), color="#20243d") +
+  # geom_errorbar(aes(ymin= (-1*mean.soc.ac)-se.soc.ac, ymax=(-1*mean.soc.ac)+se.soc.ac),  
+  #               width=0.2, position=position_dodge(0.9), color="#20243d") +
   # geom_text(aes(x=dummy, label=cldsoc, y= (mean.soc.ac*-1) + 0.05),
   #           vjust=-0.5, color="#0077BB", size=4, fontface="bold") +
   # 
@@ -324,7 +324,7 @@ ggplot(data=ghgsocsum, aes(x=dummy)) +
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/ghgs/IL_simulation mean annual SOC buildup_no letters.png", width=5, height=3, dpi=300)
+ggsave("plots/ghgs/IL_simulation mean annual SOC buildup_no letters_no err bars.png", width=5, height=3, dpi=300)
 
 
 

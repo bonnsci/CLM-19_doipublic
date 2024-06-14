@@ -30,7 +30,7 @@ spei <- read.csv("data/climate data not large/speiIL_formerge.csv")
 
 ################################## resilience: sediment yield
 
-sed <- read.csv("data/water, nitrate, sediments/wdatyr.csv")
+sed <- read.csv("data/water, nitrate, sediments/IL_wdatyr.csv")
 
 
 sed$crop <- ifelse(sed$crop_system_name=="corn-soy" & sed$year%%2 ==0, "soy",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
@@ -57,38 +57,38 @@ speised <- inner_join(spei[,-2], sed[-4], join_by(site==site_name, year==year),
 # so we need to go back to daily data rather than annual sum
 
 # # if you need daily estimates use this:
-# wdat <- read.csv("data/large_data/daily water, sediments/IL_corn_day_water.csv")
-# beepr::beep(sound=8)
-# # UNITS: Transpiration, Evaporation, Water leaching, and runoff are mm/day.
-# # Sediment yield is kg/ha.
-# 
-# 
-# wdatssn.site <- wdat %>%
-#   mutate(month = strftime(as.Date(date), "%m"),
-#          dayofmo = strftime(as.Date(date), "%d")) %>%
-#   filter(climate_scenario == "rcp60") %>%   
-#   mutate(season =  ifelse(month %in% c("12", "01", "02"), "Winter",
-#                           ifelse(month %in% c("03", "04", "05"), "Spring",
-#                                  ifelse(month %in% c("06", "07", "08"), "Summer", "Fall"))),
-#        till = ifelse(grepl("ct-", management_name), "CT",
-#                         ifelse(grepl("rt-", management_name), "RT", "NT")),
-#        cc = ifelse(grepl("-cc-", management_name), "CC", "NC"),
-#        nfert = ifelse(grepl("-cn", management_name), "High N",
-#                        ifelse(grepl("-fn", management_name), "Fall N","Recommended N"))) %>%
-#   group_by(site_name, crop_system_name, management_name, Year, season, till, cc, nfert) %>%
-#   summarize(sed.ssncrop = sum(SedimentYield)) %>% # sum sediments for season at each site for each crop rotation
-#   group_by(site_name, management_name, Year, season, till, cc, nfert) %>%  # now take the mean of the two crop rotation types at each site for each season
-#   summarize(sed.ssn = mean(sed.ssncrop))
-# 
-# beepr::beep(sound=8)
-# 
-# write.csv(wdatssn.site, "data/water, nitrate, sediments/seds_IL_ssntotals.csv", row.names=F)
+wdat <- read.csv("data/large_data/daily water, sediments/IL_corn_day_water.csv")
+beepr::beep(sound=14)
+# UNITS: Transpiration, Evaporation, Water leaching, and runoff are mm/day.
+# Sediment yield is kg/ha.
+
+
+wdatssn.site.b <- wdat %>%
+  mutate(month = strftime(as.Date(date), "%m"),
+         dayofmo = strftime(as.Date(date), "%d")) %>%
+  filter(climate_scenario == "rcp60") %>%
+  mutate(season =  ifelse(month %in% c("12", "01", "02"), "Winter",
+                          ifelse(month %in% c("03", "04", "05"), "Spring",
+                                 ifelse(month %in% c("06", "07", "08"), "Summer", "Fall"))),
+       till = ifelse(grepl("ct-", management_name), "CT",
+                        ifelse(grepl("rt-", management_name), "RT", "NT")),
+       cc = ifelse(grepl("-cc-", management_name), "CC", "NC"),
+       nfert = ifelse(grepl("-cn", management_name), "High N",
+                       ifelse(grepl("-fn", management_name), "Fall N","Recommended N"))) %>%
+  group_by(site_name, management_name, Year, season, till, cc, nfert) %>%
+  summarize(sed.ssncrop = mean(SedimentYield)) # mean sediments across 2 rotations (corn-soy, soy-corn) for season at each site 
+  # group_by(site_name, management_name, Year, season, till, cc, nfert) %>%  # now take the mean of the two crop rotation types at each site for each season
+  # summarize(sed.ssn = mean(sed.ssncrop))
+
+beepr::beep(sound=8)
+
+write.csv(wdatssn.site, "data/water, nitrate, sediments/IL_seds_ssntotals.csv", row.names=F)
 
 #
 # clean up
 rm(wdat)
 
-wdatssn.site <- read.csv("data/water, nitrate, sediments/seds_IL_ssntotals.csv")
+wdatssn.site.a <- read.csv("data/water, nitrate, sediments/IL_seds_ssntotals.csv")
 
 # get spei ready to join to sediments
 spei <- spei[spei$rcp=="rcp60",]

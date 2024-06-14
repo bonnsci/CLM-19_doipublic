@@ -72,18 +72,83 @@ se <- function(x) sd(x) / sqrt(length(x))
 # 
 # wdatyr$et.yr <- wdatyr$evap.yr + wdatyr$trans.yr
 # 
+
+# hist(wdatyr[grepl("alfalfa-", wdatyr$crop_system_name) & wdatyr$sed.yr>2000,"sed.yr"])
+# wdatyr[grepl("alfalfa-", wdatyr$crop_system_name) & wdatyr$sed.yr>10000,"sed.yr"]
+# hist(wdatyr$sed.yr)
+# unique(wdatyr$crop_system_name)
+
+# 
+# # sequences of years for each crop (corn, alfalfa, triticale) in each of the 5 alfalfa rotations (act, cta, cta2, act2, act3)
+# actcorn <- seq(2017,2072, 5)
+# ctacorn <- seq(2013, 2072, 5)
+# cta2corn <- seq(2014, 2072, 5)
+# act2corn <- seq(2015, 2072, 5)
+# act3corn <- seq(2016, 2072, 5)
+# 
+# actalf <- sort(c(seq(2014,2072, 5), seq(2015,2072,5), seq(2016,2072,5)))
+# ctaalf <- sort(c(seq(2015,2072, 5), seq(2016,2072,5), seq(2017,2072,5)))
+# cta2alf <- sort(c(seq(2016,2072, 5), seq(2017,2072,5), seq(2018,2072,5)))
+# act2alf <- sort(c(seq(2017,2072, 5), seq(2018,2072,5), seq(2019,2072,5)))
+# act3alf <- sort(c(seq(2018,2072, 5), seq(2019,2072,5), seq(2020,2072,5)))
+# 
+# acttri <- seq(2018,2072, 5)
+# ctatri <- seq(2019, 2072, 5)
+# cta2tri <- seq(2020, 2072, 5)
+# act2tri <- seq(2021, 2072, 5)
+# act3tri <- seq(2022, 2072, 5)
+# 
+# unique(wdatyr$crop_system_name)
+# # label data for the crop they are (depends on the rotation and the year)
+# # if we want to know NO3 loss from corn per year or soy per year, need to split up data by odd and even years.
+# wdatyr$crop <- ifelse(wdatyr$crop_system_name=="corn-soy" & wdatyr$year%%2 ==0, "soy cs",   # %%2 returns the remainder when divided by 2. if no remainder, then its an even number.
+#                       ifelse(wdatyr$crop_system_name=="corn-soy" & !wdatyr$year%%2 ==0, "corn grain cs",  # cs= to indicate corn-soy rotation
+#                              ifelse(wdatyr$crop_system_name=="soy-corn" & wdatyr$year%%2 ==0, "corn grain cs",
+#                                     ifelse(wdatyr$crop_system_name=="soy-corn" & !wdatyr$year%%2 ==0, "soy cs", 
+#                                            ifelse(wdatyr$crop_system_name=="corn-grain", "corn grain mono",
+#                                                   ifelse(wdatyr$crop_system_name=="corn-silage", "corn silage mono",
+#                     # corn in alfalfa rotation
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-act" & wdatyr$year %in% actcorn, "corn alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-cta" & wdatyr$year %in% ctacorn, "corn alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-cta2" & wdatyr$year %in% cta2corn, "corn alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-act2" & wdatyr$year %in% act2corn, "corn alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-act3" & wdatyr$year %in% act3corn, "corn alf",
+#                      # alf in alf rotation
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-act" & wdatyr$year %in% actalf, "alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-cta" & wdatyr$year %in% ctaalf, "alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-cta2" & wdatyr$year %in% cta2alf, "alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-act2" & wdatyr$year %in% act2alf, "alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-act3" & wdatyr$year %in% act3alf, "alf",
+#                # triticale in alf rotation
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-act" & wdatyr$year %in% acttri, "tri alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-cta" & wdatyr$year %in% ctatri, "tri alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-cta2" & wdatyr$year %in% cta2tri, "tri alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-act2" & wdatyr$year %in% act2tri, "tri alf",
+#                           ifelse(wdatyr$crop_system_name=="alfalfa-act3" & wdatyr$year %in% act3tri, "tri alf",  "X")))))))))))))))))))))
+# 
+# 
+# 
+# # check no Xs
+# # unique(wdatyr$crop)
+# rm(actalf, actcorn,acttri,
+#    ctaalf, ctacorn, ctatri, 
+#    cta2alf, cta2corn, cta2tri,
+#    act2alf, act2corn, act2tri,
+#    act3alf, act3corn, act3tri)
+# 
+# 
+# # add simpler rotation factor to lump corn-soy and soy-corn together, and all the alfalfas (4 total rotations)
+wdatyr$rot <- ifelse(wdatyr$crop_system_name %in% c("corn-soy", "soy-corn"), "corn soy",
+                     ifelse(grepl("alfalfa-", wdatyr$crop_system_name), "alf",
+                            ifelse(wdatyr$crop_system_name == "corn-silage", "corn silage",
+                                   ifelse(wdatyr$crop_system_name == "corn-grain", "corn grain", "X"))))
+# 
+# # check no Xs
+# unique(wdatyr$rot)
+# 
 # write.csv(wdatyr, "data/water, nitrate, sediments/NY_wdatyr.csv", row.names=F)
 
 wdatyr <- read.csv("data/water, nitrate, sediments/NY_wdatyr.csv")
-hist(wdatyr[grepl("alfalfa-", wdatyr$crop_system_name) & wdatyr$sed.yr>2000,"sed.yr"])
-wdatyr[grepl("alfalfa-", wdatyr$crop_system_name) & wdatyr$sed.yr>10000,"sed.yr"]
-hist(wdatyr$sed.yr)
-unique(wdatyr$crop_system_name)
-# add simpler rotation factor to lump corn-soy and soy-corn together, and all the alfalfas (4 total rotations)
-wdatyr$rot <- ifelse(wdatyr$crop_system_name %in% c("corn-soy", "soy-corn"), "corn_soy",
-                     ifelse(grepl("alfalfa-", wdatyr$crop_system_name), "alf", 
-                            ifelse(wdatyr$crop_system_name == "corn-silage", "corn_silage", 
-                                   ifelse(wdatyr$crop_system_name == "corn-grain", "corn_grain", "X"))))
 
 
 # first sum by site and crop name across all years, then calculate mean across crop types per site, 
@@ -119,27 +184,27 @@ wdatyr$rot <- ifelse(wdatyr$crop_system_name %in% c("corn-soy", "soy-corn"), "co
 #             sed.se = se(sed.sitemean))
 
 
-wdat_tmtperyr <- wdatyr %>%
-  group_by(site_name, till, cc) %>%
-  summarize( #et.sitemean = mean(et.yr),  # mean of corn-soy and soy-corn per site and n treatment
-            # evap.sitemean = mean(evap.yr),
-            # trans.sitemean = mean(trans.yr),
-            # leach.sitemean = mean(leach.yr),
-            # run.sitemean = mean(run.yr),
-            sed.sitemean = mean(sed.yr)) %>%
-  group_by(till, cc) %>%
-  summarize( # et.mean = mean(et.sitemean), # mean across sites and N treatments in each treatment combo
-            # et.se = se(et.sitemean), # variability across sites and N treatments in each treatment combo
-            # evap.mean = mean(evap.sitemean),
-            # evap.se = se(evap.sitemean),
-            # trans.mean = mean(trans.sitemean),
-            # trans.se = se(trans.sitemean),
-            # leach.mean = mean(leach.sitemean),
-            # leach.se = se(leach.sitemean),
-            # run.mean = mean(run.sitemean),
-            # run.se = se(run.sitemean),
-            sed.mean = mean(sed.sitemean),
-            sed.se = se(sed.sitemean))
+# wdat_tmtperyr <- wdatyr %>%
+#   group_by(site_name, till, cc) %>%
+#   summarize( #et.sitemean = mean(et.yr),  # mean of corn-soy and soy-corn per site and n treatment
+#             # evap.sitemean = mean(evap.yr),
+#             # trans.sitemean = mean(trans.yr),
+#             # leach.sitemean = mean(leach.yr),
+#             # run.sitemean = mean(run.yr),
+#             sed.sitemean = mean(sed.yr)) %>%
+#   group_by(till, cc) %>%
+#   summarize( # et.mean = mean(et.sitemean), # mean across sites and N treatments in each treatment combo
+#             # et.se = se(et.sitemean), # variability across sites and N treatments in each treatment combo
+#             # evap.mean = mean(evap.sitemean),
+#             # evap.se = se(evap.sitemean),
+#             # trans.mean = mean(trans.sitemean),
+#             # trans.se = se(trans.sitemean),
+#             # leach.mean = mean(leach.sitemean),
+#             # leach.se = se(leach.sitemean),
+#             # run.mean = mean(run.sitemean),
+#             # run.se = se(run.sitemean),
+#             sed.mean = mean(sed.sitemean),
+#             sed.se = se(sed.sitemean))
 
 # ############################### 50 YEAR TOTAL WATER AND SED LOSSES PLOT
 # # prep data for plotting
@@ -228,11 +293,11 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 
 
 ############# change to fill by tillage, facet by variable
-
+unique(wdatyr$rot)
 # # are the bars in the below plot significantly different from each other?
 wdat_persite <- wdatyr %>%
-  filter(!till=="RT", !rot=="alf") %>%
-  group_by(site_name, till, cc, rot, crop_system_name) %>%
+  filter(!till=="RT", !rot=="alf") %>%   # 
+  group_by(site_name, till, cc, rot, crop) %>%
   summarize( # et = mean(et.yr), # mean across all years and nferts and two cropping systems
             # evap = mean(evap.yr),
             # trans = mean(trans.yr),
@@ -240,104 +305,127 @@ wdat_persite <- wdatyr %>%
             # run = mean(run.yr),
             sed = mean(sed.yr)) # %>%
   # melt(., ids=c("site_name", "till", "cc"))
-unique(wdatyr$rot)
+
 
 wdatyr2 <- wdatyr[!wdatyr$till == "RT" & !wdatyr$rot == "alf",]
-lmsed_rot <- lm(sed.yr~ till*cc*rot, data=wdatyr2)
+lmsed_rot <- lm(sed.yr~ till + cc + rot + year, data=wdatyr2)
 summary(lmsed_rot)
+# Call:
+#   lm(formula = sed.yr ~ till + cc + rot + year, data = wdatyr2)
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -1255.8  -617.6  -395.5   270.5 13623.9 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)    -1.362e+04  1.294e+03 -10.521  < 2e-16 ***
+#   tillNT         -1.910e+02  1.861e+01 -10.265  < 2e-16 ***
+#   ccNC            1.573e+02  1.861e+01   8.454  < 2e-16 ***
+#   rotcorn-silage  2.845e+02  2.632e+01  10.810  < 2e-16 ***
+#   rotcorn-soy     7.058e+01  2.279e+01   3.097  0.00196 ** 
+#   year            6.966e+00  6.321e-01  11.020  < 2e-16 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 1063 on 13050 degrees of freedom
+# Multiple R-squared:  0.0319,	Adjusted R-squared:  0.03153 
+# F-statistic: 85.99 on 5 and 13050 DF,  p-value: < 2.2e-16
+######### it's really YEAR that is significant here, if you take year out
+######### take out year and the other 3 factors are not significant
+
 effectsed <- aov(sed.yr~ till*cc*rot, data=wdatyr2)
+effectsed <- aov(sed.yr~ till + cc + rot + year, data=wdatyr2)
 summary(effectsed)
 tukoutsed <- TukeyHSD(effectsed)
 cldsed <- multcompView::multcompLetters4(effectsed, tukoutsed)
 
 
-lmsed_rot <- lm(sed~ till*cc*rot, data=wdat_persite)
+lmsed_rot <- lm(sed~cc +till + rot, data=wdat_persite)
 summary(lmsed_rot)
+# Call:
+#   lm(formula = sed ~ cc + till + rot, data = wdat_persite)
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -1052.4  -587.0  -394.2   500.7  4340.1 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)      643.57     140.13   4.593 6.93e-06 ***
+#   ccNC             157.33     114.42   1.375   0.1703    
+# tillNT          -191.03     114.42  -1.670   0.0962 .  
+# rotcorn-silage   284.48     161.81   1.758   0.0799 .  
+# rotcorn-soy       70.58     140.13   0.504   0.6150    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 915.3 on 251 degrees of freedom
+# Multiple R-squared:  0.03149,	Adjusted R-squared:  0.01606 
+# F-statistic:  2.04 on 4 and 251 DF,  p-value: 0.08928
+
+
 # Call:
 #   lm(formula = sed ~ till * cc * rot, data = wdat_persite)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -3465.0 -1455.2  -443.0   713.4 13034.7 
+# -1137.1  -591.5  -395.8   525.3  4056.3 
 # 
 # Coefficients:
-#   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                 3012.247    281.545  10.699  < 2e-16 ***
-#   tillNT                      -552.009    398.165  -1.386 0.166182    
-# ccNC                         551.807    398.165   1.386 0.166337    
-# rotcorn_grain              -2258.842    689.642  -3.275 0.001120 ** 
-#   rotcorn_silage             -2296.881    689.642  -3.331 0.000924 ***
-#   rotcorn_soy                -2224.710    526.723  -4.224 2.81e-05 ***
-#   tillNT:ccNC                    3.266    563.091   0.006 0.995375    
-# tillNT:rotcorn_grain         224.346    975.302   0.230 0.818154    
-# tillNT:rotcorn_silage        590.456    975.302   0.605 0.545153    
-# tillNT:rotcorn_soy           270.610    744.899   0.363 0.716529    
-# ccNC:rotcorn_grain          -471.385    975.302  -0.483 0.629056    
-# ccNC:rotcorn_silage         -269.733    975.302  -0.277 0.782217    
-# ccNC:rotcorn_soy            -462.347    744.899  -0.621 0.535060    
-# tillNT:ccNC:rotcorn_grain    -15.547   1379.285  -0.011 0.991011    
-# tillNT:ccNC:rotcorn_silage   139.018   1379.285   0.101 0.919754    
-# tillNT:ccNC:rotcorn_soy       19.624   1053.446   0.019 0.985144    
+#   Estimate Std. Error t value Pr(>|t|)   
+# (Intercept)                 753.405    230.498   3.269  0.00124 **
+#   tillNT                     -327.663    325.973  -1.005  0.31580   
+# ccNC                         80.422    325.973   0.247  0.80534   
+# rotcorn-silage              -38.039    325.973  -0.117  0.90720   
+# rotcorn-soy                  34.132    282.301   0.121  0.90386   
+# tillNT:ccNC                 -12.281    460.995  -0.027  0.97877   
+# tillNT:rotcorn-silage       366.109    460.995   0.794  0.42787   
+# tillNT:rotcorn-soy           46.264    399.233   0.116  0.90784   
+# ccNC:rotcorn-silage         201.652    460.995   0.437  0.66219   
+# ccNC:rotcorn-soy              9.038    399.233   0.023  0.98196   
+# tillNT:ccNC:rotcorn-silage  154.565    651.946   0.237  0.81279   
+# tillNT:ccNC:rotcorn-soy      35.171    564.601   0.062  0.95038   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 2518 on 560 degrees of freedom
-# Multiple R-squared:  0.1834,	Adjusted R-squared:  0.1615 
-# F-statistic: 8.386 on 15 and 560 DF,  p-value: < 2.2e-16
+# Residual standard error: 922 on 244 degrees of freedom
+# Multiple R-squared:  0.04477,	Adjusted R-squared:  0.001708 
+# F-statistic:  1.04 on 11 and 244 DF,  p-value: 0.4119
 
-lmsed_crop <- lm(sed~ till*cc*crop_system_name, data=wdat_persite)
+lmsed_crop <- lm(sed~ till +cc +crop, data=wdat_persite)
 summary(lmsed_crop)
 # Call:
-#   lm(formula = sed ~ till * cc * crop_system_name, data = wdat_persite)
+#   lm(formula = sed ~ till * cc * crop, data = wdat_persite)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -3495.0 -1452.9  -430.7   707.6 12893.9 
+# -1137.1  -595.7  -392.0   532.3  4056.3 
 # 
 # Coefficients:
-#   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)                               3209.6168   640.7794   5.009 7.43e-07 ***
-#   tillNT                                    -680.7179   906.1989  -0.751  0.45287    
-# ccNC                                       495.1907   906.1989   0.546  0.58498    
-# crop_system_namealfalfa-act2              -314.3471   906.1989  -0.347  0.72881    
-# crop_system_namealfalfa-act3              -152.4769   906.1989  -0.168  0.86644    
-# crop_system_namealfalfa-cta               -279.1190   906.1989  -0.308  0.75819    
-# crop_system_namealfalfa-cta2              -240.9038   906.1989  -0.266  0.79046    
-# crop_system_namecorn-grain               -2456.2117   906.1989  -2.710  0.00693 ** 
-#   crop_system_namecorn-silage              -2494.2507   906.1989  -2.752  0.00611 ** 
-#   crop_system_namecorn-soy                 -2423.3469   906.1989  -2.674  0.00772 ** 
-#   crop_system_namesoy-corn                 -2420.8124   906.1989  -2.671  0.00778 ** 
-#   tillNT:ccNC                                 19.6121  1281.5587   0.015  0.98780    
-# tillNT:crop_system_namealfalfa-act2        102.3237  1281.5587   0.080  0.93639    
-# tillNT:crop_system_namealfalfa-act3        -25.0211  1281.5587  -0.020  0.98443    
-# tillNT:crop_system_namealfalfa-cta         298.6538  1281.5587   0.233  0.81582    
-# tillNT:crop_system_namealfalfa-cta2        267.5855  1281.5587   0.209  0.83469    
-# tillNT:crop_system_namecorn-grain          353.0547  1281.5587   0.275  0.78305    
-# tillNT:crop_system_namecorn-silage         719.1642  1281.5587   0.561  0.57492    
-# tillNT:crop_system_namecorn-soy            399.0345  1281.5587   0.311  0.75564    
-# tillNT:crop_system_namesoy-corn            399.6029  1281.5587   0.312  0.75531    
-# ccNC:crop_system_namealfalfa-act2           71.9740  1281.5587   0.056  0.95523    
-# ccNC:crop_system_namealfalfa-act3          129.4081  1281.5587   0.101  0.91961    
-# ccNC:crop_system_namealfalfa-cta            51.9204  1281.5587   0.041  0.96770    
-# ccNC:crop_system_namealfalfa-cta2           29.7813  1281.5587   0.023  0.98147    
-# ccNC:crop_system_namecorn-grain           -414.7687  1281.5587  -0.324  0.74633    
-# ccNC:crop_system_namecorn-silage          -213.1165  1281.5587  -0.166  0.86799    
-# ccNC:crop_system_namecorn-soy             -404.4250  1281.5587  -0.316  0.75245    
-# ccNC:crop_system_namesoy-corn             -407.0358  1281.5587  -0.318  0.75090    
-# tillNT:ccNC:crop_system_namealfalfa-act2   -36.4496  1812.3977  -0.020  0.98396    
-# tillNT:ccNC:crop_system_namealfalfa-act3   -63.9388  1812.3977  -0.035  0.97187    
-# tillNT:ccNC:crop_system_namealfalfa-cta    -34.9502  1812.3977  -0.019  0.98462    
-# tillNT:ccNC:crop_system_namealfalfa-cta2    53.6062  1812.3977   0.030  0.97641    
-# tillNT:ccNC:crop_system_namecorn-grain     -31.8935  1812.3977  -0.018  0.98597    
-# tillNT:ccNC:crop_system_namecorn-silage    122.6711  1812.3977   0.068  0.94606    
-# tillNT:ccNC:crop_system_namecorn-soy         5.8440  1812.3977   0.003  0.99743    
-# tillNT:ccNC:crop_system_namesoy-corn         0.7114  1812.3977   0.000  0.99969    
+#   Estimate Std. Error t value Pr(>|t|)   
+# (Intercept)                       761.755    232.373   3.278   0.0012 **
+#   tillNT                           -268.538    328.624  -0.817   0.4146   
+# ccNC                               83.876    328.624   0.255   0.7988   
+# cropcorn grain mono                -8.350    328.624  -0.025   0.9798   
+# cropcorn silage mono              -46.389    328.624  -0.141   0.8879   
+# cropsoy cs                         51.564    328.624   0.157   0.8754   
+# tillNT:ccNC                        24.181    464.745   0.052   0.9585   
+# tillNT:cropcorn grain mono        -59.125    464.745  -0.127   0.8989   
+# tillNT:cropcorn silage mono       306.984    464.745   0.661   0.5095   
+# tillNT:cropsoy cs                 -25.722    464.745  -0.055   0.9559   
+# ccNC:cropcorn grain mono           -3.454    464.745  -0.007   0.9941   
+# ccNC:cropcorn silage mono         198.198    464.745   0.426   0.6702   
+# ccNC:cropsoy cs                    11.168    464.745   0.024   0.9808   
+# tillNT:ccNC:cropcorn grain mono   -36.462    657.249  -0.055   0.9558   
+# tillNT:ccNC:cropcorn silage mono  118.102    657.249   0.180   0.8575   
+# tillNT:ccNC:cropsoy cs             -2.582    657.249  -0.004   0.9969   
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 2563 on 540 degrees of freedom
-# Multiple R-squared:  0.1843,	Adjusted R-squared:  0.1314 
-# F-statistic: 3.485 on 35 and 540 DF,  p-value: 3.501e-10
+# Residual standard error: 929.5 on 240 degrees of freedom
+# Multiple R-squared:  0.04508,	Adjusted R-squared:  -0.0146 
+# F-statistic: 0.7554 on 15 and 240 DF,  p-value: 0.7261
 
 
 effectsed <- aov(sed~ till*cc*rot, data=wdat_persite)
@@ -374,26 +462,22 @@ wdat_nosite$se.lbac <- wdat_nosite$se/(0.4536*2.471)
 
 print(wdat_nosite, n=nrow(wdat_nosite))
 
-# # A tibble: 16 × 7
+# # A tibble: 12 × 8
 # # Groups:   till, cc [4]
-# till  cc    rot          mean    se mean.lbac se.lbac
-# <chr> <chr> <chr>       <dbl> <dbl>     <dbl>   <dbl>
-#   1 CT    NC    alf         3564.  88.3     3180.    78.8
-# 2 NT    NC    alf         3015.  81.2     2690.    72.4
-# 3 CT    CC    alf         3012.  70.2     2687.    62.6
-# 4 NT    CC    alf         2460.  63.4     2195.    56.6
-# 5 NT    NC    corn_silage 1178.  58.5     1051.    52.2
-# 6 CT    NC    corn_silage  997.  46.5      890.    41.5
-# 7 CT    NC    corn_soy     877.  29.2      782.    26.1
-# 8 CT    NC    corn_grain   834.  39.8      744.    35.5
-# 9 CT    CC    corn_soy     788.  26.5      703.    23.6
-# 10 NT    CC    corn_silage  754.  37.9      673.    33.8
-# 11 CT    CC    corn_grain   753.  36.2      672.    32.3
-# 12 CT    CC    corn_silage  715.  34.4      638.    30.7
-# 13 NT    NC    corn_soy     618.  23.1      552.    20.6
-# 14 NT    CC    corn_soy     506.  19.1      452.    17.0
-# 15 NT    NC    corn_grain   494.  26.5      441.    23.6
-# 16 NT    CC    corn_grain   426.  22.9      380.    20.4
+# till  cc    rot          mean    se cld   mean.lbac se.lbac
+# <chr> <chr> <chr>       <dbl> <dbl> <chr>     <dbl>   <dbl>
+#   1 NT    NC    corn silage 1178.  58.5 a         1051.    52.2
+# 2 CT    NC    corn silage  997.  46.5 a          890.    41.5
+# 3 CT    NC    corn soy     877.  29.2 a          782.    26.1
+# 4 CT    NC    corn grain   834.  39.8 a          744.    35.5
+# 5 CT    CC    corn soy     788.  26.5 a          703.    23.6
+# 6 NT    CC    corn silage  754.  37.9 a          673.    33.8
+# 7 CT    CC    corn grain   753.  36.2 a          672.    32.3
+# 8 CT    CC    corn silage  715.  34.4 a          638.    30.7
+# 9 NT    NC    corn soy     618.  23.1 a          552.    20.6
+# 10 NT    CC    corn soy     506.  19.1 a          452.    17.0
+# 11 NT    NC    corn grain   494.  26.5 a          441.    23.6
+# 12 NT    CC    corn grain   426.  22.9 a          380.    20.4
 
 # use these letters in the plot:
 
@@ -405,7 +489,7 @@ ggplot(data=wdat_nosite, aes(x=cctill, y=mean.lbac, fill=cctill)) +
   geom_bar(stat="identity", position=position_dodge(), width=0.6) + #  , fill="burlywood3") +
   geom_errorbar(aes(ymin=mean.lbac-se.lbac, ymax=mean.lbac+se.lbac), 
                 width=0.3, position=position_dodge(0.8),color="gray60") +
-  facet_grid(cols=vars(factor(rot, levels=c("corn_grain", "corn_soy", "corn_silage", "alf")))) + 
+  facet_grid(cols=vars(factor(rot, levels=c("corn grain", "corn soy", "corn silage")))) + 
                #vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
              # factor(nfert, levels=c("Fall N", "High N", "Recommended N"))),  
              # labeller = as_labeller(
@@ -437,9 +521,9 @@ ggsave("plots/water, nitrate, sediments/NY_sediments mean annual bars_rotations_
 
 
 # Same chart by crop rather than rotation
-wdat_nosite_crop <- group_by(wdat_persite, till, cc, crop_system_name) %>%
-  summarize(mean=mean(sed),
-            se=se(sed)) %>%
+wdat_nosite_crop <- group_by(wdatyr, till, cc, crop) %>%
+  summarize(mean=mean(sed.yr),
+            se=se(sed.yr)) %>%
   mutate(mean.lbac = mean/(0.4536*2.471),
          se.lbac = se/(0.4536*2.471),
          cctill = paste0(till, "-", cc)) %>%
@@ -526,10 +610,48 @@ ggsave("plots/water, nitrate, sediments/NY_sediments mean annual bars_crops_RCP6
 
 
 
+# precipitation and time and sediment yield
+
+# load data
+dat <- read.csv("data/large_data/clm_ny.csv")
+# can get rid of row numbers, model, #### double check the column numbers below
+# model is "IPSL-CM5A-LR"
+
+dat <- dat[,c(3,5:11)]
 
 
+# convert doy to dates so we can get monthly  means/totals # Takes a sec to run
+dat <- dat %>%
+  mutate(date_ = as.Date(doy-1, origin=paste0(year, "-01-01")),  # subtract 1 b/c R uses a 0 base index
+         month = strftime(date_, "%m"),
+         day = strftime(date_, "%d")) 
+# beepr::beep(sound=8)
 
+# SPEI works on monthly data
 
+datmo <- dat %>%
+  filter(year >2021, year <2073) %>%
+  group_by(scenario, name, year, month) %>%
+  summarize(tmed = mean(avg_temp),
+            tmax = max(max_temp),
+            tmin = min(min_temp), # mean monthly temp in C
+            prcp = (sum(precip))) # total precip in mm
+
+rm(dat)
+
+datmo1 <- filter(datmo, name=="f_1", scenario=="rcp60")
+datmo1$mmyyyy <- paste0(datmo1$month, "-01-", datmo1$year)
+datmo1$mmyyyy <- as.POSIXct(datmo1$mmyyyy, format="%m-%d-%Y")
+
+datmo1$season <- ifelse(datmo1$month %in% c("12", "01", "02"), "Winter",
+                      ifelse(datmo1$month %in% c("03", "04", "05"), "Spring",
+                             ifelse(datmo1$month %in% c("06", "07", "08"), "Summer", "Fall")))
+
+ggplot(dat=datmo1, aes(x=mmyyyy, y=prcp)) +
+  geom_point() +
+  facet_grid(cols=vars(season))
+
+# no clear answer here
 
 
 

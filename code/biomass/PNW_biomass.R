@@ -42,7 +42,7 @@ library(multcompView) # for tukey HSD letters
 #######################   (1) set up the data
 #######################   
 
-bm <- read.csv("data/biomass/biomass_hops.csv")
+bm <- read.csv("data/biomass/biomass_hops_20240220.csv")
 
 # DO NOT need to find literature values to convert kg C grain to kg grain.
 # since we'll only be looking at them RELATIVE TO EACH OTHER, not absolute amounts...
@@ -51,7 +51,7 @@ bm <- read.csv("data/biomass/biomass_hops.csv")
 # min(bm$Year) # 2013 --2013-2021 start up years, start at 2022
 # max(bm$Year) # 2073
 
-bm <- bm[bm$Year>2020,]
+bm <- bm[bm$Year>2020 & bm$climate_scenario=="rcp60",]
 
 unique(bm$site_name) # 16 sites
 unique(bm$region_name) # PNW only
@@ -70,7 +70,7 @@ unique(bm$crop_system_name) # "hops-a" "hops-c"
 
 unique(bm$crop_name) # "fallow"             "hops"               "rye, winter, cover"
 
-# make dummy factor for CT, RT, NT
+# make  factor for CT, RT, NT
 bm$till <- ifelse(grepl("ct-", bm$management_name), "CT", 
                     ifelse(grepl("rt-", bm$management_name), "RT", 
                            ifelse(grepl("nt-", bm$management_name), "NT", "NA")))
@@ -78,7 +78,7 @@ bm$till <- ifelse(grepl("ct-", bm$management_name), "CT",
 # unique(bm$till)
 
 
-# dummy for CC or NC
+# factor for CC or NC
 bm$cc <- ifelse(grepl("-nc", bm$management_name), "NC", 
                    ifelse(grepl("-bc", bm$management_name), "CC", "NA"))  #barley, legume
 
@@ -86,7 +86,7 @@ bm$cc <- ifelse(grepl("-nc", bm$management_name), "NC",
 # # check
 # unique(bm$cc)
 
-# dummy for N treatment
+# factor for N treatment
 bm$nfert <- ifelse(grepl("cn", bm$management_name), "Conventional N", 
                      ifelse(grepl("on", bm$management_name), "Organic N", "NA"))
 
@@ -94,7 +94,7 @@ bm$system <- ifelse(grepl("-a", bm$crop_system_name), "alley", "crop")
 # # check
 # unique(bm$nfert)
 
-# dummy for decade
+# factor for decade
 bm$decade <- ifelse(bm$Year <2021, "2010s",
                       ifelse(bm$Year>=2021 & bm$Year <2031, "2020s",
                         ifelse(bm$Year>=2031 & bm$Year <2041, "2030s",
@@ -125,36 +125,38 @@ cv <- function(x) sd(x) / mean(x)
 # is the grain C biomass significantly different with High N vs Recommended N?
 # let's look at biomass by decade
 biomass_summary <- bm %>%
-  group_by(climate_scenario,crop_name, cc, till, nfert, decade) %>%
+  filter(crop_name == "hops") %>%
+  group_by(crop_name, cc, till, nfert) %>%
   summarize(biomass_mean = mean(Grain.C.kgC.ha.), 
-            biomass_se = se(Grain.C.kgC.ha.))
+            biomass_se = se(Grain.C.kgC.ha.)) %>%
+  mutate(biomass_mean.lbac = biomass_mean*2.47105/2.20462,
+         biomass_se.lbac = iomass_se*2.47105/2.20462) 
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
 # convert kg/ha to lb/ac
-biomass_summary$biomass_mean.lbac <- biomass_summary$biomass_mean*2.47105/2.20462
-biomass_summary$biomass_se.lbac <- biomass_summary$biomass_se*2.47105/2.20462
 
 
-ggplot(data=biomass_summary[biomass_summary$crop_name == "hops",],
-       aes(x=decade, y=biomass_mean.lbac, fill=nfert)) +
-  geom_bar(stat="identity", position=position_dodge(), color="#332288") +
+
+ggplot(data=biomass_summary,
+       aes(x=nfert, y=biomass_mean.lbac, fill=nfert)) +
+  geom_bar(stat="identity", position=position_dodge(), width=0.7, show.legend=F) +
   geom_errorbar(width=0.3, aes(ymin=biomass_mean.lbac - biomass_se.lbac, ymax=biomass_mean.lbac + biomass_se.lbac),  
                                position=position_dodge(0.9),
                                 color="#332288") +
-  facet_grid(cols=vars(factor(climate_scenario, levels=c("rcp26", "rcp60"))),
-             # cols=vars(factor(cc, levels=c("CC", "NC"))),
-             labeller = as_labeller(
-               c(rcp26="RCP 2.6", rcp60="RCP 6.0"))) +
+  # facet_grid(cols=vars(factor(climate_scenario, levels=c("rcp26", "rcp60"))),
+  #            # cols=vars(factor(cc, levels=c("CC", "NC"))),
+  #            labeller = as_labeller(
+  #              c(rcp26="RCP 2.6", rcp60="RCP 6.0"))) +
   xlab("Decade") +
-  ylab("grape carbon (lb/ac)") +
+  ylab("hops biomass carbon (lb/ac)") +
   scale_fill_manual(values=c("#CC6677","#99DDFF", "#44AA99" ), name="N management") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/biomass/PNW_hops_biomass_bars.png", width=8, height=5, dpi=300)
+ggsave("plots/biomass/PNW_hops_biomass_bars.png", width=3, height=4, dpi=300)
 
 
 
@@ -163,32 +165,36 @@ ggsave("plots/biomass/PNW_hops_biomass_bars.png", width=8, height=5, dpi=300)
 
 bm_cover_sum <- bm %>%
   filter(crop_name ==  "rye, winter, cover") %>%
-  group_by(climate_scenario,crop_name, till, cc, nfert, decade) %>%
+  group_by(crop_name, till, cc, nfert) %>%
   summarize(biomass_mean = mean(Grain.C.kgC.ha.+Leaf.C.kgC.ha.+Stem.C.kgC.ha.),  # all aboveground biomass for cover crops 
-            biomass_se = se(Grain.C.kgC.ha.+Leaf.C.kgC.ha.+Stem.C.kgC.ha.))  
+            biomass_se = se(Grain.C.kgC.ha.+Leaf.C.kgC.ha.+Stem.C.kgC.ha.)) %>%
+  mutate(biomass_mean.lbac = biomass_mean*2.47105/2.20462,
+        biomass_se.lbac = biomass_se*2.47105/2.20462)  
+
+
 
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
 
-ggplot(data=bm_cover_sum[bm_cover_sum$climate_scenario=="rcp60",],  
-       aes(x=decade, y=biomass_mean)) + #, fill=crop_name)) +
-  geom_bar(stat="identity", position=position_dodge(), color="#332288") +
-  geom_errorbar(width=0.3, aes(ymin=biomass_mean - biomass_se, ymax=biomass_mean + biomass_se),  
+ggplot(data=bm_cover_sum,  
+       aes(x=till, y=biomass_mean.lbac, fill=till)) + #, fill=crop_name)) +
+  geom_bar(stat="identity", position=position_dodge(), width=0.7, show.legend=F) +
+  geom_errorbar(width=0.3, aes(ymin=biomass_mean.lbac - biomass_se.lbac, ymax=biomass_mean.lbac + biomass_se.lbac),  
                 position=position_dodge(0.9),
                 color="#332288") +
-  facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))),
-             # cols=vars(factor(cc, levels=c("BarC", "LegC"))),
-             labeller = as_labeller(
-               c(CT="Conventional Till", RT="Reduced Till", NT="No Till")))+   
-                 # BarC= "barley Cover", LegC="Legume Cover"))) +
+  # facet_grid(rows=vars(factor(till, levels=c("CT", "RT", "NT"))),
+  #            # cols=vars(factor(cc, levels=c("BarC", "LegC"))),
+  #            labeller = as_labeller(
+  #              c(CT="Conventional Till", RT="Reduced Till", NT="No Till")))+   
+  #                # BarC= "barley Cover", LegC="Legume Cover"))) +
   xlab("Decade") +
-  ylab("ABVGD carbon (kg/ha)") +
+  ylab("Rye aboveground carbon (lb/ac)") +
   # scale_fill_manual(values=c("#CC6677","#99DDFF", "#44AA99" ), name="N management") +
   theme(
     panel.grid.minor=element_blank(), 
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/biomass/PNW_rye_coverbiomass_bars.png", width=4, height=5.5, dpi=300)
+ggsave("plots/biomass/PNW_rye_coverbiomass_bars.png", width=4, height=4, dpi=300)
 
 

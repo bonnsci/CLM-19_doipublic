@@ -43,41 +43,41 @@ datw$county <- str_remove(datw$county, " County")
 
 ######### DATA CLEANING
 # compare acres evaluated to harvested corn grain and soybean acres from NASS annual surveys
-
-
-# ### IMPROVEMENT: add harvested forage crop acres 2015-2021 by county from NASS survey data
-# ### only need to do once
-# # prep data
-# # note alfalfa ("HAYLAGE") and wheat data are not by county.
-df <- list.files(path="data/NASS harvested acres", pattern=" NY ", full.names=T)
-df <- df[1:2]  # note alfalfa ("HAYLAGE") and wheat data are not by county, so not helpful for assessing acreage evaluated as % of county crop acres.
-df <- lapply(df, function(i){
-        i <- read.csv(i)
-        i <- i %>%
-          select("Year", "County", "Data.Item", "Value") %>%
-          filter(!County %in% c("OTHER COUNTIES", "OTHER (COMBINED) COUNTIES")) %>%
-          rename("year"="Year", "county"="County", "crop_name"="Data.Item", "harv_ac"="Value")
-        i$harv_ac <- as.numeric(gsub(",", "", i$harv_ac)) # remove commas from values
-        i$crop_name <- gsub("CORN, GRAIN - ACRES HARVESTED", "Corn grain", i$crop_name)
-        i$crop_name <- gsub("CORN, SILAGE - ACRES HARVESTED", "Corn silage", i$crop_name)
-        i$crop_name <- gsub("SOYBEANS - ACRES HARVESTED", "Soybeans", i$crop_name)
-        i$county <- tools::toTitleCase(tolower(i$county)) # get county names ready to merge with OpTIS spellings, which are correct
-        i <- arrange(i, county)
-      })
-
-# unique(df[[1]]$crop_name)
-# unique(df[[1]]$County)  ### 14 of 62 acres
-# [1] "CAYUGA"      "CORTLAND"    "ONONDAGA"    "TOMPKINS"    "CATTARAUGUS" "CHAUTAUQUA"  "ERIE"       
-# [8] "GENESEE"     "LIVINGSTON"  "ONTARIO"     "WAYNE"       "WYOMING"     "YATES"       "ALLEGANY"   
-# unique(df[[2]]$County)  ### 15 of 62 acres
-# [1] "CAYUGA"      "CORTLAND"    "ONONDAGA"    "TOMPKINS"    "ALLEGANY"    "CATTARAUGUS" "CHAUTAUQUA" 
-# [8] "STEUBEN"     "ERIE"        "GENESEE"     "LIVINGSTON"  "ONTARIO"     "WAYNE"       "WYOMING"    
-# [15] "YATES"      
-
-acres <- bind_rows(df) # combine dfs into one df
-rm(df)
-
-write.csv(acres, "data/NASS harvested acres/NY_harvested_forages2015-2021.csv", row.names=F)
+# 
+# 
+# # ### IMPROVEMENT: add harvested forage crop acres 2015-2021 by county from NASS survey data
+# # ### only need to do once
+# # # prep data
+# # # note alfalfa ("HAYLAGE") and wheat data are not by county.
+# df <- list.files(path="data/NASS harvested acres", pattern=" NY ", full.names=T)
+# df <- df[1:2]  # note alfalfa ("HAYLAGE") and wheat data are not by county, so not helpful for assessing acreage evaluated as % of county crop acres.
+# df <- lapply(df, function(i){
+#         i <- read.csv(i)
+#         i <- i %>%
+#           select("Year", "County", "Data.Item", "Value") %>%
+#           filter(!County %in% c("OTHER COUNTIES", "OTHER (COMBINED) COUNTIES")) %>%
+#           rename("year"="Year", "county"="County", "crop_name"="Data.Item", "harv_ac"="Value")
+#         i$harv_ac <- as.numeric(gsub(",", "", i$harv_ac)) # remove commas from values
+#         i$crop_name <- gsub("CORN, GRAIN - ACRES HARVESTED", "Corn grain", i$crop_name)
+#         i$crop_name <- gsub("CORN, SILAGE - ACRES HARVESTED", "Corn silage", i$crop_name)
+#         i$crop_name <- gsub("SOYBEANS - ACRES HARVESTED", "Soybeans", i$crop_name)
+#         i$county <- tools::toTitleCase(tolower(i$county)) # get county names ready to merge with OpTIS spellings, which are correct
+#         i <- arrange(i, county)
+#       })
+# 
+# # unique(df[[1]]$crop_name)
+# # unique(df[[1]]$County)  ### 14 of 62 acres
+# # [1] "CAYUGA"      "CORTLAND"    "ONONDAGA"    "TOMPKINS"    "CATTARAUGUS" "CHAUTAUQUA"  "ERIE"       
+# # [8] "GENESEE"     "LIVINGSTON"  "ONTARIO"     "WAYNE"       "WYOMING"     "YATES"       "ALLEGANY"   
+# # unique(df[[2]]$County)  ### 15 of 62 acres
+# # [1] "CAYUGA"      "CORTLAND"    "ONONDAGA"    "TOMPKINS"    "ALLEGANY"    "CATTARAUGUS" "CHAUTAUQUA" 
+# # [8] "STEUBEN"     "ERIE"        "GENESEE"     "LIVINGSTON"  "ONTARIO"     "WAYNE"       "WYOMING"    
+# # [15] "YATES"      
+# 
+# acres <- bind_rows(df) # combine dfs into one df
+# rm(df)
+# 
+# write.csv(acres, "data/NASS harvested acres/NY_harvested_forages2015-2021.csv", row.names=F)
 
 
 
@@ -215,9 +215,9 @@ max(na.omit(NYac$perc_eval)) # 124.73
 
 length(unique(NYac$county))  #43
 
-# number of counties represented in IL data
+# number of counties represented in NY data
 datw %>%
-  # filter(state %in% "IL") %>%
+  # filter(state %in% "NY") %>%
   distinct(county) %>%
   n_distinct()
 # 49 (48, 1 IS IN VT)
@@ -260,9 +260,10 @@ datw$perc_rt <- 100*(datw$rt.acres / datw$eval.acres)
 
 datw2 <- inner_join(datw, NYac[,c(1,2,3,6)]) #  inner_join() only keeps observations from x that have a matching key in y.
 # datw has 1186 obs, while datw2 only has 364
+# datw2 only has corn and soybeans
 
 # long form again, but leave out acreages, only need %s
-datl <- melt(datw2[, -c(4:8)], id=c("county","year", "crop_name", "perc_eval"), na.rm=T)
+datl <- melt(datw2, id=c("county","year", "crop_name", "perc_eval"), na.rm=T)  # [, -c(4:8)]
 # using na.rm = TRUE because do not have all combinations of crop acres per cover crop or tillage acres, e.g. 
 # we have soybean acres in Ulster County, NY in 2015, but we do not have soybean cover crop acres for that 
 # county-year. So when we melt, we get a bunch of Value = NA rows.
@@ -273,7 +274,7 @@ datl <- melt(datw2[, -c(4:8)], id=c("county","year", "crop_name", "perc_eval"), 
 # use this to make map of counties see "/code/plot_making/OpTIS_county_heatmap_IL.R"
 means_county <- datl %>%
   filter(year>2017) %>%
-  group_by(county, variable) %>%
+  group_by(county, variable) %>%   # means across corn and soybean acres (not grouping by crop)
   summarize(mean.perc = mean(value), 
             mean.eval = mean(perc_eval)) %>%
   arrange(variable, desc(mean.perc)) %>%
