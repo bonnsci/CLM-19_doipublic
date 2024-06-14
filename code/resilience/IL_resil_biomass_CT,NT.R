@@ -20,11 +20,12 @@ library(ggpattern)
 
 
 spei <- read.csv("data/climate data not large/speiIL_formerge.csv")
-# created in code/ climate projections/ spei_IL.R
+# created in code/ climate projections/ spei_IL.R  # fix Dec. from previous year to go with Jan and Feb following year
 
 
 ######################################   pull in biomass data
 bmil <- read.csv("data/biomass/biomass_IL.csv")
+# Grain.C.kgC.ha    kg C /ha      Kilograms of Carbon per hectare of grain as part of the crop.
 colnames(bmil)[9] <- "grainc"
 bmil <- bmil[bmil$climate_scenario=="rcp60",]
 bmilgr <- bmil[,c(2,4, 6:9),]
