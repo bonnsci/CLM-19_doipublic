@@ -249,15 +249,66 @@ summary(lm(value~year + county, data=datny[datny$variable %in% "perc_nt",])) # i
 
 # rate of change - reduced till
 # summary(lm(value~year, data=datny[datny$variable %in% "perc_rt",])) # R2 only 0.02, p is sig., slope=1.21
-summary(lm(value~year + county, data=datny[datny$variable %in% "perc_rt",])) # improves R2 to 0.27, slope=1.21
-# slope means that rt adoption is increasing on average by 1.2% per year.  trend is significant (i.e. not zero)
+summary(lm(value~year + county, data=datny[datny$variable %in% "perc_rt",])) # improves R2 to 0.49, slope=1.7
+
+# Call:
+#   lm(formula = value ~ year + county, data = datny[datny$variable %in% 
+#                                                      "perc_rt", ])
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -41.003  -6.992   0.367   6.442  41.410 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)       -3376.4233   740.0735  -4.562 7.64e-06 ***
+#   year                  1.6997     0.3667   4.635 5.53e-06 ***
+#   countyBroome         -6.1443     6.6091  -0.930  0.35336    
+# countyCattaraugus    -3.6518     5.4776  -0.667  0.50554    
+# countyCayuga         -4.9026     5.5894  -0.877  0.38119    
+# countyChautauqua     -1.0075     5.5893  -0.180  0.85708    
+# countyChemung         2.0080     5.8782   0.342  0.73291    
+# countyChenango       -1.2711     7.0074  -0.181  0.85619    
+# countyCortland       -0.2168     5.5893  -0.039  0.96908    
+# countyDelaware        4.8990     8.4403   0.580  0.56210    
+# countyErie          -15.4210     5.2965  -2.912  0.00389 ** 
+#   countyFranklin      -52.2401     8.4605  -6.175 2.38e-09 ***
+#   countyFulton        -31.1836     6.6077  -4.719 3.78e-06 ***
+#   countyGenesee        -2.5290     5.8799  -0.430  0.66745    
+# countyHerkimer       11.0095     5.5893   1.970  0.04987 *  
+#   countyJefferson      11.2028     5.2965   2.115  0.03532 *  
+#   countyLewis          10.7820     5.5916   1.928  0.05486 .  
+# countyLivingston     -5.2799     5.4779  -0.964  0.33597    
+# countyMadison         1.2139     5.2965   0.229  0.81889    
+# countyMontgomery    -17.6275     6.0696  -2.904  0.00398 ** 
+#   countyOneida          2.4093     5.2965   0.455  0.64956    
+# countyOnondaga       -4.3035     5.2965  -0.813  0.41721    
+# countyOntario        -6.7629     5.3807  -1.257  0.20987    
+# countyOrange        -46.7001     5.8789  -7.944 5.11e-14 ***
+#   countyOswego         -6.1544     5.8812  -1.046  0.29628    
+# countyOtsego          1.4047     5.7218   0.245  0.80626    
+# countySchoharie     -44.2886     7.0074  -6.320 1.05e-09 ***
+#   countySchuyler      -14.9361     9.9220  -1.505  0.13338    
+# countySeneca        -19.5591    13.4585  -1.453  0.14729    
+# countySteuben        -3.9124     5.3810  -0.727  0.46781    
+# countySullivan       12.4616     7.5716   1.646  0.10095    
+# countyTioga          -7.1891     5.8787  -1.223  0.22242    
+# countyTompkins       -2.2861     5.3810  -0.425  0.67128    
+# countyWyoming        -1.0618     5.4779  -0.194  0.84645    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 12.79 on 274 degrees of freedom
+# Multiple R-squared:  0.5478,	Adjusted R-squared:  0.4933 
+# F-statistic: 10.06 on 33 and 274 DF,  p-value: < 2.2e-16
+
+# slope means that rt adoption is increasing on average by 1.7% (+/-0.4) per year.  trend is significant (i.e. not zero)
 # which looks about right given the plot above.
 # at this rate we will reach 50% adoption in year ___?
-# according to means_global NY rt adoption is at 39.9% (+/- 0.41).
-# according to means_1821 rt adoption is at 41.3 (+/- 0.55)
-# increasing by 1.14% per year
-(50-41.3)/1.14  # 8 years to get to 50% adoption 
-2023+8 # 2031
+
+# according to means_1821 rt adoption is at 51.7 (+/- 1.2)
+# increasing by 1.7% per year
+
 
 # rate of change - conventional till
 summary(lm(value~year + county, data=datny[datny$variable %in% "perc_ct",])) # improves R2 to 0.30, slope=1.12

@@ -105,6 +105,8 @@ rm(complete, vars, mapnames, datnames, mapnames2, varnames)
 means_county$mybin <- ordered(means_county$mybin, levels=unique(means_county$mybin))
 length(unique(means_county$county))  # 62
 
+means_county$focus_area <- ifelse(means_county$county %in% c("Wyoming", "Livingston", "Genesee"), "yes", "no")
+
 
 # join rates with spatial data:
 ny <- left_join(ny, means_county, join_by(subregion==county), relationship="many-to-many")
@@ -133,6 +135,9 @@ pcc <- ggplot() +
   geom_polygon(data=ny[ny$variable %in% "perc_cc",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
                color="#20243d", linewidth=0.2) +
+  geom_polygon(data=ny[ny$focus_area == "yes",],
+               mapping=aes(x=long, y=lat, group=subregion),
+               color="blue", linewidth=0.6, fill=NA) +
  coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palcc,
@@ -148,7 +153,7 @@ pcc <- ggplot() +
 
 pcc
 
-ggsave("plots/maps/county_heatmap_NYcc.png")
+ggsave("plots/maps/county_heatmap_NYcc_wfocuscounties.png")
 
 
 
@@ -159,6 +164,9 @@ pnt <- ggplot() +
   geom_polygon(data=ny[ny$variable %in% "perc_nt",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
                color="#20243d", linewidth=0.2) +
+  geom_polygon(data=ny[ny$focus_area == "yes",],
+               mapping=aes(x=long, y=lat, group=subregion),
+               color="blue", linewidth=0.6, fill=NA) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palnt,
@@ -174,7 +182,7 @@ pnt <- ggplot() +
 
 pnt
 
-ggsave("plots/maps/county_heatmap_NYnt.png")
+ggsave("plots/maps/county_heatmap_NYnt_wfocuscounties.png")
 
 
 
@@ -184,6 +192,9 @@ prt <- ggplot() +
   geom_polygon(data=ny[ny$variable %in% "perc_rt",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
                color="#20243d", linewidth=0.2) +
+  geom_polygon(data=ny[ny$focus_area == "yes",],
+               mapping=aes(x=long, y=lat, group=subregion),
+               color="blue", linewidth=0.6, fill=NA) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palrt,
@@ -199,7 +210,7 @@ prt <- ggplot() +
 
 prt
 
-ggsave("plots/maps/county_heatmap_NYrt.png")
+ggsave("plots/maps/county_heatmap_NYrt_wfocuscounties.png")
 
 
 
@@ -208,6 +219,9 @@ pct <- ggplot() +
   geom_polygon(data=ny[ny$variable %in% "perc_ct",],
                mapping=aes(x=long, y=lat, fill=mybin, group=subregion),
                color="#20243d",linewidth=0.2) +
+  geom_polygon(data=ny[ny$focus_area == "yes",],
+               mapping=aes(x=long, y=lat, group=subregion),
+               color="blue", linewidth=0.6, fill=NA) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palct,
@@ -236,7 +250,7 @@ pcc + pnt + prt + pct + plot_layout(ncol=2)
 ggsave("plots/maps/county_heatmap_NYall4_2x2.png", width=9, height=8, units="in")
 
 pcc + pnt + prt + pct + plot_layout(ncol=1)
-ggsave("plots/maps/county_heatmap_NYall4_1x4.png", width=4, height=9, units="in")
+ggsave("plots/maps/county_heatmap_NYall4_1x4_focus counties.png", width=4, height=9, units="in")
 
 pcc + pnt + pct + plot_layout(ncol=1)
 ggsave("plots/maps/county_heatmap_NYCC,CT,NTonly.png", width=4, height=7, units="in")
