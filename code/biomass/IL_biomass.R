@@ -345,9 +345,9 @@ pal3 <- c("#20243d","#C2e4ef", "#669947")   # )
 
 ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=pdiff, fill=nfert)) +
   geom_bar(stat="identity", position=position_dodge(), show.legend=F) +
-  geom_errorbar(width=0.3, aes(ymin=pdiff-pdiff.se, ymax=pdiff+pdiff.se),
-                position=position_dodge(0.9),
-                color="#20243d") +
+  # geom_errorbar(width=0.3, aes(ymin=pdiff-pdiff.se, ymax=pdiff+pdiff.se),
+  #               position=position_dodge(0.9),
+  #               color="#20243d") +
   facet_grid( # rows=vars(factor(till, levels=c("CT", "NT"))), 
     cols=vars(factor(cc, levels=c("NC", "CC")),factor(till, levels=c("CT", "NT"))), 
     labeller = as_labeller(
@@ -358,7 +358,9 @@ ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=pdiff, fill
   ylab(expression(bold('Corn yield % difference from overall average corn yield'))) + 
   scale_x_discrete(breaks=c("Fall N", "High N", "Recommended N"),
                    labels = c("Fall N", "High N", "Recomm. N")) +
-  scale_y_continuous(labels=scales::percent_format()) +
+  scale_y_continuous(labels=scales::percent_format(), 
+                     breaks=seq(-0.3, 0.1, 0.1), 
+                     limits=c(-0.3, 0.15)) +
   # ylim(0,3800)+
   # geom_text(aes(label=cld, y=mean+(2*se)), vjust=-0.5,
             # color="gray20", size=4, fontface="bold") +
@@ -375,7 +377,7 @@ ggplot(data=cornsum[cornsum$till %in% c("CT", "NT"),],aes(x=nfert, y=pdiff, fill
 # # strip.background=element_rect(fill="lightblue", color="black", size=1) 
 
 
-ggsave("plots/biomass/IL_corn_biomass_percent diff global mean.png", width=6, height=3, dpi=300)
+ggsave("plots/biomass/IL_corn_biomass_percent diff global mean_no err bars.png", width=6, height=3, dpi=300)
 
 
 # NC + CT + high N compared to CC + NT + recommended N

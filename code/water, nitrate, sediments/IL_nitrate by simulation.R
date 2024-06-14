@@ -319,11 +319,11 @@ ndat_tmtperyr
 (49.4+197.6)*2.20462/2.47105 # 220.37 lb/ac
 
 
-ggplot(data=npyrlongnoRT, 
+ggplot(data=ndat_tmtperyr, 
        aes(x=nfert, y=meanlbac, fill=nfert)) +   # fill=variable
   geom_bar(stat="identity", position=position_dodge(), show.legend=F) + # color="#332288", 
-  geom_errorbar(aes(ymin=meanlbac-selbac, ymax=meanlbac+selbac), 
-                width=0.3, position=position_dodge(0.9), color="#20243d") +
+  # geom_errorbar(aes(ymin=meanlbac-selbac, ymax=meanlbac+selbac), 
+  #               width=0.3, position=position_dodge(0.9), color="#20243d") +
   # facet_grid(rows=vars(factor(till, levels=c("CT", "NT"))),   2x2 facets
   #            cols=vars(factor(cc, levels=c("NC", "CC"))), 
   #            #factor(nfert, levels=c("Fall N", "High N", "Recommended N"))), 
@@ -349,7 +349,7 @@ ggplot(data=npyrlongnoRT,
     panel.grid.major=element_blank(),
     panel.background = element_rect(fill = 'gray95'))
 
-ggsave("plots/water, nitrate, sediments/IL_NO3 losses mean annual bars lbac 1x4 no letters.png", width=6, height=3, dpi=300)
+ggsave("plots/water, nitrate, sediments/IL_NO3 losses mean annual bars lbac 1x4 no letters no err bars.png", width=6, height=3, dpi=300)
 
 
 # percent differences

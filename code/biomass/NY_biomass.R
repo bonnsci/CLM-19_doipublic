@@ -194,9 +194,17 @@ cv <- function(x) sd(x) / mean(x)
 
 bm <- read.csv("data/biomass/NY_bm.csv")
 
+# # add simpler rotation factor to lump corn-soy and soy-corn together, and all the alfalfas (4 total rotations)
+bm$rot <- ifelse(bm$crop_system_name %in% c("corn-soy", "soy-corn"), "corn-soy",
+                     ifelse(grepl("alfalfa-", bm$crop_system_name), "alf",
+                            ifelse(bm$crop_system_name == "corn-silage", "corn-silage",
+                                   ifelse(bm$crop_system_name == "corn-grain", "corn-grain", "X"))))
+
 # calculate the treatment means, then the pdiff from the mean of those means
 bmsum1 <- group_by(bm, cc, till, crop_name) %>%
-  filter(!till=="RT", crop_name %in% c("corn, grain", "corn, silage", "soybean")) %>%
+  filter( #!till=="RT", 
+         !rot=="alf", # decided alfalfa rotation is messed up, should get OK corn yields with 22 lb N after 4 yr alf IRL
+         crop_name %in% c("corn, grain", "corn, silage", "soybean")) %>%
   summarize(mean_gr=mean(Grain.C.kgC.ha.), 
             se_gr=se(Grain.C.kgC.ha.),
             mean_abvg = mean(abvg),
@@ -214,6 +222,41 @@ bmsum1 <- mutate(bmsum1,
                                     ifelse(crop_name == "soybean", (mean_harv - meansoy)/mean_harv,
                                            ifelse(crop_name == "corn, grain", (mean_harv - meancorng)/mean_harv, NA))),
                      pdiff_se = se_harv/mean_harv)
+
+bmsum1   
+# results with RT
+# # A tibble: 18 × 11
+# # Groups:   cc, till [6]
+# cc    till  crop_name    mean_gr se_gr mean_abvg se_abvg mean_harv se_harv    pdiff pdiff_se
+# <chr> <chr> <chr>          <dbl> <dbl>     <dbl>   <dbl>     <dbl>   <dbl>    <dbl>    <dbl>
+#  1 NC    NT    corn, silage   2012. 11.4      7315.   15.7      7315.   15.7   0.0349   0.00215
+#  2 CC    NT    corn, silage   1973. 10.0      7252.   15.0      7252.   15.0   0.0265   0.00207
+#  3 CC    RT    corn, silage   1747.  8.19     7029.   13.4      7029.   13.4  -0.00445  0.00191
+#  4 CC    CT    corn, silage   1674.  8.80     6956.   14.1      6956.   14.1  -0.0149   0.00203
+#  5 NC    RT    corn, silage   1669. 10.5      6923.   15.5      6923.   15.5  -0.0198   0.00223
+#  6 NC    CT    corn, silage   1629. 11.5      6885.   16.6      6885.   16.6  -0.0255   0.00242
+#  7 CC    NT    corn, grain    3301. 13.0      8666.   18.1      3301.   13.0   0.0727   0.00395
+#  8 NC    NT    corn, grain    3217. 13.0      8682.   18.2      3217.   13.0   0.0483   0.00403
+#  9 CC    RT    corn, grain    3066. 12.3      8513.   17.3      3066.   12.3   0.00161  0.00401
+# 10 NC    RT    corn, grain    3013. 12.6      8531.   17.8      3013.   12.6  -0.0160   0.00417
+# 11 CC    CT    corn, grain    2892. 11.9      8307.   17.3      2892.   11.9  -0.0586   0.00412
+# 12 NC    CT    corn, grain    2879. 12.5      8381.   18.0      2879.   12.5  -0.0634   0.00433
+# 13 CC    NT    soybean         852.  5.77     3236.    6.41      852.    5.77  0.0432   0.00677
+# 14 NC    NT    soybean         837.  5.64     3221.    6.25      837.    5.64  0.0266   0.00673
+# 15 CC    RT    soybean         813.  5.46     3197.    6.09      813.    5.46 -0.00285  0.00672
+# 16 NC    RT    soybean         805.  5.50     3189.    6.10      805.    5.50 -0.0122   0.00683
+# 17 CC    CT    soybean         794.  5.34     3178.    5.99      794.    5.34 -0.0261   0.00673
+# 18 NC    CT    soybean         789.  5.42     3173.    6.03      789.    5.42 -0.0332   0.00687
+
+# % diff in yield for NC-CT - CC-NT
+(6885-7252)/6885  # -5.3%
+(2879-3301)/2879  # -14.7%
+(789-852)/789     # -8.0
+mean(c(5.3, 14.7, 8))  # 9.3%
+
+# for nitrate text, compare yields for corn grain in CT, NC vs NT, CC
+(2879-3301)/2879  # 14%
+
 
 bmsum2 <- group_by(bmsum1, cc, till) %>%
   reframe(pdiff_mean = mean(pdiff),
@@ -296,17 +339,18 @@ bmsum2$cctill <- paste0(bmsum2$till, "-", bmsum2$cc)
 
 bmsum2
 
+# > bmsum2
+# # A tibble: 4 × 8
 # cc    till  pdiff_mean pdiff_se mean_harv se_harv cld   cctill
 # <chr> <chr>      <dbl>    <dbl>     <dbl>   <dbl> <chr> <chr> 
-# 1 CC    NT        0.0451  0.00479     3603.    11.9 a     NT-CC 
-# 2 NC    NT        0.0327  0.00487     3591.    12.1 b     NT-NC 
-# 3 NC    CT       -0.0420  0.00507     3346.    12.0 c     CT-NC 
-# 4 CC    CT       -0.0440  0.00497     3355.    11.2 c     CT-CC 
-mean(c(3603, 3591)) # 3597
-mean(c(3346, 3355)) # 3350.5
-(3597-3350.5)/3350.5
+#   1 CC    NT        0.0432  0.00426     3802.    11.3 a     NT-CC 
+# 2 NC    NT        0.0324  0.00430     3790.    11.4 b     NT-NC 
+# 3 CC    CT       -0.0378  0.00429     3548.    10.5 c     CT-CC 
+# 4 NC    CT       -0.0453  0.00454     3517.    11.5 c     CT-NC 
+mean(c(3802, 3790)) # 3796  NT yields
+mean(c(3548, 3517)) # 3532.5   CT yields
+(3796-3532.5)/3532.5  # -7.5%
 
-(3603-3591)/3591 # 1%
 
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
@@ -339,7 +383,7 @@ ggplot(data=bmsum2,
   ylab(expression(bold('Percent difference from overall mean'))) + 
   # ylim(0,3800)+
   # geom_text(aes(label=cld, y=ifelse(pdiff_mean<0, pdiff_mean-0.01, pdiff_mean+0.006)), vjust=-0.5,
-  #            color="gray20", size=4, fontface="bold") +
+  #             color="gray20", size=4, fontface="bold") +
   scale_fill_manual(values=pal4, breaks=c("CT-NC", "CT-CC", "NT-NC", "NT-CC")) +
   scale_x_discrete(limits=c("CT-NC", "CT-CC", "NT-NC", "NT-CC")) +
   theme(

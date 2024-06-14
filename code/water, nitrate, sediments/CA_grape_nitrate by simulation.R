@@ -289,7 +289,7 @@ ndat_mean
 
 #N treatment rates in lb/ac
 # Conventional
-(2*25)*2.20462/2.47105 # 47 lb/ac
+(2*25)*(2.20462)*(1/2.471) # 44.6 lb/ac
 # Reduced
 (2*20)*2.20462/2.47105 # 36 lb/ac
 

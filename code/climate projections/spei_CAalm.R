@@ -316,6 +316,11 @@ write.csv(spei, "data/climate data not large/spei_alm_formerge.csv", row.names =
 
 
 
+
+
+
+
+
 ##### MAKE SOME PLOTS
 
 windows(xpinch=200, ypinch=200, width=5, height=5)
