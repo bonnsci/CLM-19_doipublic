@@ -20,7 +20,7 @@ library(ggpattern)
 
 
 spei <- read.csv("data/climate data not large/speiIL_formerge.csv")
-# from script spei_IL.R
+# created in code/ climate projections/ spei_IL.R
 
 
 ######################################   pull in biomass data
@@ -29,18 +29,18 @@ colnames(bmil)[9] <- "grainc"
 bmil <- bmil[bmil$climate_scenario=="rcp60",]
 bmilgr <- bmil[,c(2,4, 6:9),]
 
-# make dummy factor for CT, RT, NT
+# make factor for CT, RT, NT
 bmilgr$till <- ifelse(grepl("ct-", bmilgr$management_name), "CT", 
                       ifelse(grepl("rt-", bmilgr$management_name), "RT", "NT"))
 # # check
 # unique(bmilgr$till)
 
-# dummy for CC or NC
+# factor for CC or NC
 bmilgr$cc <- ifelse(grepl("-cc-", bmilgr$management_name), "CC", "NC")
 # # check
 # unique(bmilgr$cc)
 
-# dummy for N treatment
+# factor for N treatment
 bmilgr$nfert <- ifelse(grepl("-cn", bmilgr$management_name), "High N", 
                        ifelse(grepl("-fn", bmilgr$management_name), "Fall N","Recommended N"))
 # # check
@@ -82,6 +82,9 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 # sum(is.na(ch[ch$year==2022,"fit.12mo"]))  # 19008
 # sum(is.na(ch[!ch$year==2022,"fit.12mo"]))  # 0
 
+
+
+
 # following fig. 5c in Scheffer et al 2015 - inferring probabilistic resilience from massive data.
 # Not sure we have "massive" data but probably enough to try this approach.
 # I'm thinking histograms of crop yields at different drought and wetness categories
@@ -113,7 +116,7 @@ norm30grainc_cornmedssn <- median(norm30cornssn$graincMg)
 
 
 
-# make plots like Fig. 5c
+# make plots like Scheffer Fig. 5c
 
 # A histogram is frequency. but a relative frequency AKA density gives % probability rather than just count.
 # if N is large enough, then relative freq histogram starts to resemble the populations distribution,
