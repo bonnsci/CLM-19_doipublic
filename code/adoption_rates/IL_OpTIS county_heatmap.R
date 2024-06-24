@@ -47,7 +47,8 @@ pal6new <- c("#8c510a", "#bf812d", "#dfc27d", "#80cdc1", "#35978f", "#01665e")
 pal5new <- c("#bf812d", "#dfc27d", "#80cdc1", "#35978f", "#01665e")
 pal8new <- c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3","#c7eae5", "#80cdc1", "#35978f", "#01665e")
 
-palcc <- c("#ffffcc", "#d9f0a3", "#addd8e", "#78c679","#31a354", "#006837")
+# palcc <- c("#ffffcc", "#d9f0a3", "#addd8e", "#78c679","#31a354", "#006837")
+palcc <- c("#f1eef6", "#d0d1e6", "#a6bddb", "#74a9cf", "#2b8cbe", "#045a8d")
 palnt <-  c("#ffffe5", "#f7fcb9", "#d9f0a3", "#addd8e", "#78c679", "#41ab5d", "#238443", "#005a32") 
 palct <-  c("#ffffd4", "#fed98e", "#fe9929", "#d95f0e", "#993404") 
 
@@ -87,6 +88,8 @@ county2 <- sort(rep(county2, length(variable2)))
 dat_na <- data.frame(county=county2, variable=variable3)
 
 means_county <- full_join(means_county, dat_na)
+
+means_county$mybin <- ifelse(means_county$mybin=="NA", means_county$mybin, paste0(means_county$mybin, "%"))
 
 means_county$mybin <- ordered(means_county$mybin, levels=unique(means_county$mybin))
 
@@ -140,12 +143,12 @@ pcc <- ggplot() +
                color="#20243d", linewidth=0.2) +
   geom_polygon(data=ill[ill$focus_area == "yes",],
                mapping=aes(x=long, y=lat, group=subregion),
-               color="blue", linewidth=0.6, fill=NA) +
+               color="blue", linewidth=2, fill=NA) +
  coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palcc,
                     na.value = "gray80",
-                    name= "Mean % Cover Crop\nAdoption 2018-2021") +
+                    name= "Cover Crops") +
   scale_color_manual(values=NA) +
   theme_bw() +
   ditch_the_axes +
@@ -155,7 +158,7 @@ pcc <- ggplot() +
 
 pcc
 
-ggsave("plots/maps/county_heatmap_ILcc_wfocuscounties.png")
+ggsave("plots/maps/county_heatmap_ILcc_wfocuscounties_blue.png")
 
 
 
@@ -168,12 +171,12 @@ pnt <- ggplot() +
                color="#20243d", linewidth=0.2) +
   geom_polygon(data=ill[ill$focus_area == "yes",],
                mapping=aes(x=long, y=lat, group=subregion),
-               color="blue", linewidth=0.6, fill=NA) +
+               color="blue", linewidth=2, fill=NA) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palnt,
                     na.value = "gray80",
-                    name= "Mean % No-Till\nAdoption 2018-2021") +
+                    name= "No-till") +
   scale_color_manual(values=NA) +
   theme_bw() +
   ditch_the_axes +
@@ -195,12 +198,12 @@ prt <- ggplot() +
                color="#20243d", linewidth=0.2) +
   geom_polygon(data=ill[ill$focus_area == "yes",],
                mapping=aes(x=long, y=lat, group=subregion),
-               color="blue", linewidth=0.6, fill=NA) +
+               color="blue", linewidth=2, fill=NA) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palcc,
                     na.value = "gray80",
-                    name= "Mean % Reduced Till\nAdoption 2018-2021") +
+                    name= "Reduced\ntillage") +
   scale_color_manual(values=NA) +
   theme_bw() +
   ditch_the_axes +
@@ -221,12 +224,12 @@ pct <- ggplot() +
                color="#20243d",linewidth=0.2) +
   geom_polygon(data=ill[ill$focus_area == "yes",],
                mapping=aes(x=long, y=lat, group=subregion),
-               color="blue", linewidth=0.6, fill=NA) +
+               color="blue", linewidth=2, fill=NA) +
   coord_sf(default_crs = sf::st_crs(4326)) +  # , # read x and y as latitude and longitude
   #          xlim = c(-92, -87), ylim=c(36.5, 43)) +
   scale_fill_manual(values=palct,
                     na.value = "gray80",
-                    name= "Mean % Conventional\nTill Adoption\n2018-2021")+
+                    name= "Conventional\ntillage")+
   scale_color_manual(values=NA) +
   theme_bw() +
   ditch_the_axes +
