@@ -8,9 +8,9 @@
 # script started 6/13/2024 by Bonnie McGill
 
 library(ggplot2)
-# library(tidyr)
-library(dplyr)
+library(tidyverse)
 
+se <- function(x) sd(x) / sqrt(length(x))
 
 
 ###### 1) prepare the data
@@ -128,19 +128,21 @@ ggsave("plots/adoption/densities 2017_4 practices.png", width=8, height=7, dpi=3
 
 
 
-###### Are these populations significantly different in 2017
+###### 3) Are these populations significantly different in 2017
 
 
 
-ccny <- aov(value~source, data=dat[dat$year==2017& dat$variable=="perc_cc" & dat$state=="New York",])
+ccny <- aov(value~source, data=dat[dat$cc_year==2017& dat$variable=="perc_cc" & dat$state=="New York",])
 summary(ccny)
-# Df Sum Sq Mean Sq F value   Pr(>F)    
-# source        1    817   817.2   13.89 0.000264 ***
-#   Residuals   168   9881    58.8        
+# Df Sum Sq Mean Sq F value  Pr(>F)   
+# source        1    530   530.2   9.164 0.00288 **
+#   Residuals   160   9257    57.9                   
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1     
 Tukoutccny <- TukeyHSD(ccny)
 # $source
-# diff       lwr       upr    p adj
-# OpTIS-AgCensus -4.758274 -7.278419 -2.238129 0.000264
+# diff       lwr       upr     p adj
+# OpTIS-AgCensus -4.0674 -6.720897 -1.413903 0.0028775
 
 
 ntny <- aov(value~source, data=dat[dat$year==2017& dat$variable=="perc_nt" & dat$state=="New York",])
@@ -228,5 +230,96 @@ Tukoutctil
 # Transect-AgCensus   6.431625   1.927914 10.93533 0.002426
 # Transect-OpTIS     19.694753  15.151703 24.23780 0.000000
 
-max(na.omit(dat[dat$year==2017 & dat$state=="Illinois" & dat$variable=="perc_ct" & dat$source=="OpTIS","value"]))
-(na.omit(dat[dat$year==2017 & dat$state=="Illinois" & dat$variable=="perc_ct" & dat$source=="Transect" & dat$value>90,]))
+
+
+####### 4) how many counties have >90% of a practice?
+
+
+
+dct <- filter(dat, year==2017, state=="Illinois", variable=="perc_ct", value>75) # 11 counties
+drt <- filter(dat, year==2017, state=="Illinois", variable=="perc_rt", value>75)
+dnt <- filter(dat, year==2017, state=="Illinois", variable=="perc_nt", value>75) # 8 counties
+
+
+# what is the state level % adoption AgCensus
+state_cc <- filter(dat, variable=="perc_cc",  source=="AgCensus") %>%
+  group_by(state, year) %>%
+  summarize(mean.cc = mean(value),
+            se.cc=se(value))
+
+state_till <- filter(dat, !variable=="perc_cc", source=="AgCensus") %>%
+  group_by(state, year, variable) %>%
+  summarize(mean.value = mean(na.omit(value)),
+            se.value=se(na.omit(value)))
+
+# Ag Census rate of change
+
+# cc
+(state_cc[state_cc$state=="Illinois" & state_cc$year==2022,"mean.cc"] -
+    state_cc[state_cc$state=="Illinois" & state_cc$year==2017,"mean.cc"] ) /
+  (2022-2017)   # 0.163
+
+(state_cc[state_cc$state=="New York" & state_cc$year==2022,"mean.cc"] -
+    state_cc[state_cc$state=="New York" & state_cc$year==2017,"mean.cc"] ) /
+  (2022-2017)   # 0.437
+
+# no till
+(state_till[state_till$state=="Illinois" & state_till$year==2022 & state_till$variable=="perc_nt","mean.value"] -
+    state_till[state_till$state=="Illinois" & state_till$year==2017 & state_till$variable=="perc_nt","mean.value"] ) /
+  (2022-2017)  # 0.405
+
+(state_till[state_till$state=="New York" & state_till$year==2022 & state_till$variable=="perc_nt","mean.value"] -
+    state_till[state_till$state=="New York" & state_till$year==2017 & state_till$variable=="perc_nt","mean.value"] ) /
+  (2022-2017)  # 0.680
+
+# reduced till
+(state_till[state_till$state=="Illinois" & state_till$year==2022 & state_till$variable=="perc_rt","mean.value"] -
+    state_till[state_till$state=="Illinois" & state_till$year==2017 & state_till$variable=="perc_rt","mean.value"] ) /
+  (2022-2017)  # -0.104
+
+(state_till[state_till$state=="New York" & state_till$year==2022 & state_till$variable=="perc_rt","mean.value"] -
+    state_till[state_till$state=="New York" & state_till$year==2017 & state_till$variable=="perc_rt","mean.value"] ) /
+  (2022-2017)  # 0.513
+
+
+# conventional till
+(state_till[state_till$state=="Illinois" & state_till$year==2022 & state_till$variable=="perc_ct","mean.value"] -
+    state_till[state_till$state=="Illinois" & state_till$year==2017 & state_till$variable=="perc_ct","mean.value"] ) /
+  (2022-2017)  # -0.301
+
+(state_till[state_till$state=="New York" & state_till$year==2022 & state_till$variable=="perc_ct","mean.value"] -
+    state_till[state_till$state=="New York" & state_till$year==2017 & state_till$variable=="perc_ct","mean.value"] ) /
+  (2022-2017)  # -1.194
+
+
+
+state_cc_all <- filter(dat, variable=="perc_cc", cc_year==2017) %>%
+  group_by(state, year, source) %>%
+  summarize(mean.cc = mean(value),
+            se.cc=se(value))
+
+state_till_all <- filter(dat, !variable=="perc_cc", year==2017) %>%
+  group_by(state, year, variable, source) %>%
+  summarize(mean.value = mean(na.omit(value)),
+            se.value=se(na.omit(value)))
+
+
+# transect rate of change
+state_till_transect <- filter(dat, !variable=="perc_cc", source=="Transect", year %in% c(2015, 2018)) %>%
+  group_by(year, variable) %>%
+  summarize(mean.value = mean(na.omit(value)),
+            se.value=se(na.omit(value)))
+
+
+# conventional till
+(state_till_transect[state_till_transect$year==2018 & state_till_transect$variable=="perc_ct","mean.value"] -
+    state_till_transect[state_till_transect$year==2015 & state_till_transect$variable=="perc_ct","mean.value"] ) /
+  (2018-2015)  # 0.37
+
+(state_till_transect[state_till_transect$year==2018 & state_till_transect$variable=="perc_rt","mean.value"] -
+    state_till_transect[state_till_transect$year==2015 & state_till_transect$variable=="perc_rt","mean.value"] ) /
+  (2018-2015)  # -0.09
+
+(state_till_transect[state_till_transect$year==2018 & state_till_transect$variable=="perc_nt","mean.value"] -
+    state_till_transect[state_till_transect$year==2015 & state_till_transect$variable=="perc_nt","mean.value"] ) /
+  (2018-2015)  # -0.81
