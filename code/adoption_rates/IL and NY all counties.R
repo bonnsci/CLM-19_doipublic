@@ -29,7 +29,9 @@ opt <- bind_rows(optny, optil)
 rm(optil, optny)
 opt$source <- rep("OpTIS", nrow(opt))
 # unique(opt$crop_name)  #  "Soybeans" "Corn" 
-
+y <- unique(opt[c("county", "state")])
+nrow(y[y$state=="New York",])
+nrow(y[y$state=="Illinois",])
 
 # census data
 # came from spreadsheet in /CLM-19 FFAR GHG - General / Results / carpe adoption data
@@ -48,10 +50,21 @@ censb$crop_name <- rep("Corn", nrow(censb))
 cens <- bind_rows(cens, censb)
 rm(censb)
 
+# fix county names to match optis
+cens$county <- ifelse(cens$county == "Du Page", "DuPage",
+                      ifelse(cens$county == "De Kalb", "DeKalb",
+                             ifelse(cens$county == "De Witt", "DeWitt",
+                                    ifelse(cens$county == "La Salle", "LaSalle",
+                                           ifelse(cens$county == "Mcdonough", "McDonough",
+                                                  ifelse(cens$county == "Mchenry", "McHenry",
+                                                         ifelse(cens$county =="Mclean", "McLean",
+                                                                ifelse(cens$county == "St Clair", "St. Clair", cens$county))))))))
+
 # tillage transect data
 till <- read.csv("data/optis/Illinois tillage transect survey data 2015-2018_all counties.csv")
 # came from spreadsheet in /CLM-19 FFAR GHG - General / Results / IL tillage transect data
 # as.data.frame(names(till))
+till <- filter(till, !County=="Total")
 # note the "%" symbol doesn't come through into R but these aren't acres these are %s:
 till <- till[,c(1,2,4,9,12,15,18)]
 colnames(till) <- c("year", "crop_name", "county", "perc_nt", "perc_mt", "perc_rt", "perc_ct")
@@ -71,10 +84,19 @@ till$state <- rep("Illinois", nrow(till))
 till <- till[,c(7,3,1,2,5,6,4)]
 unique(till$crop_name)
 till$crop_name <- ifelse(till$crop_name=="corn", "Corn", "Soybeans")
+unique(till$county)
 
+till$county <- ifelse(till$county=="JoDaviess", "Jo Daviess",
+                      ifelse(till$county== "St Clair", "St. Clair",
+                             ifelse(till$county== "StClair", "St. Clair",
+                             ifelse(till$county=="RockIsland", "Rock Island", till$county))))
 
 dat <- bind_rows(cens,opt,till)
 rm(cens,opt,till)
+
+x <- unique(dat[c("county", "state")])
+nrow(x[x$state=="Illinois",])
+nrow(x[x$state=="New York",])
 
 # dat$crop_source <- paste0(dat$crop_name, " ", dat$source)
 
@@ -140,6 +162,7 @@ summary(ccny)
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1     
 Tukoutccny <- TukeyHSD(ccny)
+Tukoutccny
 # $source
 # diff       lwr       upr     p adj
 # OpTIS-AgCensus -4.0674 -6.720897 -1.413903 0.0028775
@@ -239,6 +262,7 @@ Tukoutctil
 dct <- filter(dat, year==2017, state=="Illinois", variable=="perc_ct", value>75) # 11 counties
 drt <- filter(dat, year==2017, state=="Illinois", variable=="perc_rt", value>75)
 dnt <- filter(dat, year==2017, state=="Illinois", variable=="perc_nt", value>75) # 8 counties
+
 
 
 # what is the state level % adoption AgCensus
