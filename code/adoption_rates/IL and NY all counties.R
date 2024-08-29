@@ -29,9 +29,11 @@ opt <- bind_rows(optny, optil)
 rm(optil, optny)
 opt$source <- rep("OpTIS", nrow(opt))
 # unique(opt$crop_name)  #  "Soybeans" "Corn" 
+
 # y <- unique(opt[c("county", "state")])
 # nrow(y[y$state=="New York",])
 # nrow(y[y$state=="Illinois",])
+
 
 # census data
 # came from spreadsheet in /CLM-19 FFAR GHG - General / Results / carpe adoption data
@@ -45,6 +47,16 @@ cens <- pivot_longer(cens, cols=c(perc_cc, perc_nt, perc_rt, perc_ct), names_to=
 # make a copy of census label one as corn and one as soybeans so they get plotted in those facets
 # Census data are for all cropland, not by crop like the other data sources
 cens$crop_name <- rep("Cropland", nrow(cens))
+
+# fix county names to match optis
+cens$county <- ifelse(cens$county == "Du Page", "DuPage",
+                      ifelse(cens$county == "De Kalb", "DeKalb",
+                             ifelse(cens$county == "De Witt", "DeWitt",
+                                    ifelse(cens$county == "La Salle", "LaSalle",
+                                           ifelse(cens$county == "Mcdonough", "McDonough",
+                                                  ifelse(cens$county == "Mchenry", "McHenry",
+                                                         ifelse(cens$county =="Mclean", "McLean",
+                                                                ifelse(cens$county == "St Clair", "St. Clair", cens$county))))))))
 
 # fix county names to match optis
 cens$county <- ifelse(cens$county == "Du Page", "DuPage",
@@ -90,9 +102,11 @@ till$county <- ifelse(till$county=="JoDaviess", "Jo Daviess",
 dat <- bind_rows(cens,opt,till)
 rm(cens,opt,till)
 
+
 # x <- unique(dat[c("county", "state")])
 # nrow(x[x$state=="Illinois",])
 # nrow(x[x$state=="New York",])
+
 
 # dat$crop_source <- paste0(dat$crop_name, " ", dat$source)
 
@@ -192,10 +206,12 @@ summary(ccwny)
 # source:crop_name  2    561  280.52   7.288 0.00273 **
 #   Residuals        29   1116   38.49                   
 # ---
+
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 Tukoutccwny <- TukeyHSD(ccwny)
 Tukoutccwny  ########################### yes there are ways to specify which contrasts you want, but I didn't figure that out yet so just seeing them all
 # $`source:crop_name`
+
 # diff       lwr       upr     p adj
 # OpTIS:Corn-AgCensus:Corn                    NA        NA        NA        NA
 # AgCensus:Cropland-AgCensus:Corn             NA        NA        NA        NA
@@ -657,175 +673,5 @@ region_sum2$denom <- ifelse(region_sum2$source=="OpTIS", 2021-2015,
 region_sum2$rateofchange <- (region_sum2$mean.b - region_sum2$mean.a)/region_sum2$denom
 
 region_sum2 <- region_sum2[,c("region", "source", "variable", "rateofchange", "mean.a", "mean.b", "denom")]
-
-# cc  #### rates of change AgCensus Table 1
-(region_cc[region_cc$region=="Central IL" & region_cc$year==2022,"mean.cc"] -
-    region_cc[region_cc$region=="Central IL" & region_cc$year==2017,"mean.cc"] ) /
-  (2022-2017)   # 0.21
-
-(region_cc[region_cc$region=="Southern IL" & region_cc$year==2022,"mean.cc"] -
-    region_cc[region_cc$region=="Southern IL" & region_cc$year==2017,"mean.cc"] ) /
-  (2022-2017)   # 0.13
-
-(region_cc[region_cc$region=="Western NY" & region_cc$year==2022,"mean.cc"] -
-    region_cc[region_cc$region=="Western NY" & region_cc$year==2017,"mean.cc"] ) /
-  (2022-2017)   # 0.32
-
-# no till
-(region_till[region_till$region=="Central IL" & region_till$year==2022 & region_till$variable=="perc_nt","mean.value"] -
-    region_till[region_till$region=="Central IL" & region_till$year==2017 & region_till$variable=="perc_nt","mean.value"] ) /
-  (2022-2017)  # 0.21
-
-(region_till[region_till$region=="Southern IL" & region_till$year==2022 & region_till$variable=="perc_nt","mean.value"] -
-    region_till[region_till$region=="Southern IL" & region_till$year==2017 & region_till$variable=="perc_nt","mean.value"] ) /
-  (2022-2017)  # 0.76
-
-(region_till[region_till$region=="Western NY" & region_till$year==2022 & region_till$variable=="perc_nt","mean.value"] -
-    region_till[region_till$region=="Western NY" & region_till$year==2017 & region_till$variable=="perc_nt","mean.value"] ) /
-  (2022-2017)  # 0.27
-
-# reduced till
-(region_till[region_till$region=="Central IL" & region_till$year==2022 & region_till$variable=="perc_rt","mean.value"] -
-    region_till[region_till$region=="Central IL" & region_till$year==2017 & region_till$variable=="perc_rt","mean.value"] ) /
-  (2022-2017)  # 0.03
-
-(region_till[region_till$region=="Southern IL" & region_till$year==2022 & region_till$variable=="perc_rt","mean.value"] -
-    region_till[region_till$region=="Southern IL" & region_till$year==2017 & region_till$variable=="perc_rt","mean.value"] ) /
-  (2022-2017)  # -0.42
-
-(region_till[region_till$region=="Western NY" & region_till$year==2022 & region_till$variable=="perc_rt","mean.value"] -
-    region_till[region_till$region=="Western NY" & region_till$year==2017 & region_till$variable=="perc_rt","mean.value"] ) /
-  (2022-2017)  # 0.58
-
-
-# conventional till
-(region_till[region_till$region=="Central IL" & region_till$year==2022 & region_till$variable=="perc_ct","mean.value"] -
-    region_till[region_till$region=="Central IL" & region_till$year==2017 & region_till$variable=="perc_ct","mean.value"] ) /
-  (2022-2017)  # -0.25
-
-(region_till[region_till$region=="Southern IL" & region_till$year==2022 & region_till$variable=="perc_ct","mean.value"] -
-    region_till[region_till$region=="Southern IL" & region_till$year==2017 & region_till$variable=="perc_ct","mean.value"] ) /
-  (2022-2017)  # -0.34
-
-(region_till[region_till$region=="Western NY" & region_till$year==2022 & region_till$variable=="perc_ct","mean.value"] -
-    region_till[region_till$region=="Western NY" & region_till$year==2017 & region_till$variable=="perc_ct","mean.value"] ) /
-  (2022-2017)  # -0.85
-
-
-
-
-
-
-
-# Ag Census rate of change BY STATE
-
-# cc
-(state_cc[state_cc$state=="Illinois" & state_cc$year==2022,"mean.cc"] -
-    state_cc[state_cc$state=="Illinois" & state_cc$year==2017,"mean.cc"] ) /
-  (2022-2017)   # 0.163
-
-(state_cc[state_cc$state=="New York" & state_cc$year==2022,"mean.cc"] -
-    state_cc[state_cc$state=="New York" & state_cc$year==2017,"mean.cc"] ) /
-  (2022-2017)   # 0.437
-
-# no till
-(state_till[state_till$state=="Illinois" & state_till$year==2022 & state_till$variable=="perc_nt","mean.value"] -
-    state_till[state_till$state=="Illinois" & state_till$year==2017 & state_till$variable=="perc_nt","mean.value"] ) /
-  (2022-2017)  # 0.405
-
-(state_till[state_till$state=="New York" & state_till$year==2022 & state_till$variable=="perc_nt","mean.value"] -
-    state_till[state_till$state=="New York" & state_till$year==2017 & state_till$variable=="perc_nt","mean.value"] ) /
-  (2022-2017)  # 0.680
-
-# reduced till
-(state_till[state_till$state=="Illinois" & state_till$year==2022 & state_till$variable=="perc_rt","mean.value"] -
-    state_till[state_till$state=="Illinois" & state_till$year==2017 & state_till$variable=="perc_rt","mean.value"] ) /
-  (2022-2017)  # -0.104
-
-(state_till[state_till$state=="New York" & state_till$year==2022 & state_till$variable=="perc_rt","mean.value"] -
-    state_till[state_till$state=="New York" & state_till$year==2017 & state_till$variable=="perc_rt","mean.value"] ) /
-  (2022-2017)  # 0.513
-
-
-# conventional till
-(state_till[state_till$state=="Illinois" & state_till$year==2022 & state_till$variable=="perc_ct","mean.value"] -
-    state_till[state_till$state=="Illinois" & state_till$year==2017 & state_till$variable=="perc_ct","mean.value"] ) /
-  (2022-2017)  # -0.301
-
-(state_till[state_till$state=="New York" & state_till$year==2022 & state_till$variable=="perc_ct","mean.value"] -
-    state_till[state_till$state=="New York" & state_till$year==2017 & state_till$variable=="perc_ct","mean.value"] ) /
-  (2022-2017)  # -1.194
-
-
-
-state_cc_all <- filter(dat, variable=="perc_cc", cc_year==2017) %>%
-  group_by(state, year, source) %>%
-  summarize(mean.cc = mean(value),
-            se.cc=se(value))
-
-state_till_all <- filter(dat, !variable=="perc_cc", year==2017) %>%
-  group_by(state, year, variable, source) %>%
-  summarize(mean.value = mean(na.omit(value)),
-            se.value=se(na.omit(value)))
-
-
-# transect rate of change  ###### Table 1 Transect values
-region_till_transect <- filter(dat, !variable=="perc_cc", source=="Transect", year %in% c(2015, 2017, 2018)) %>%
-  group_by(year, variable, region) %>%
-  summarize(mean.value = mean(na.omit(value)),
-            se.value=se(na.omit(value)))
-
-### Central IL
-# conventional till
-(region_till_transect[region_till_transect$year==2018 & 
-                        region_till_transect$variable=="perc_ct" &
-                        region_till_transect$region=="Central IL","mean.value"] -
-    region_till_transect[region_till_transect$year==2015 & 
-                           region_till_transect$variable=="perc_ct" &
-                           region_till_transect$region=="Central IL","mean.value"] ) /
-  (2018-2015)  # 0.61
-# reduced till
-(region_till_transect[region_till_transect$year==2018 & region_till_transect$variable=="perc_rt" &
-                        region_till_transect$region=="Central IL","mean.value"] -
-    region_till_transect[region_till_transect$year==2015 & region_till_transect$variable=="perc_rt" &
-                         region_till_transect$region=="Central IL","mean.value"] ) /
-  (2018-2015)  # 0.45
-# no till
-(region_till_transect[region_till_transect$year==2018 & region_till_transect$variable=="perc_nt" &
-                      region_till_transect$region=="Central IL","mean.value"] -
-    region_till_transect[region_till_transect$year==2015 & region_till_transect$variable=="perc_nt" &
-    region_till_transect$region=="Central IL","mean.value"] ) /
-  (2018-2015)  # -1.48
-
-
-### Southern IL
-# conventional till
-(region_till_transect[region_till_transect$year==2018 & 
-                        region_till_transect$variable=="perc_ct" &
-                        region_till_transect$region=="Southern IL","mean.value"] -
-    region_till_transect[region_till_transect$year==2015 & 
-                           region_till_transect$variable=="perc_ct" &
-                           region_till_transect$region=="Southern IL","mean.value"] ) /
-  (2018-2015)  # 0.084
-# reduced till
-(region_till_transect[region_till_transect$year==2018 & region_till_transect$variable=="perc_rt" &
-                        region_till_transect$region=="Southern IL","mean.value"] -
-    region_till_transect[region_till_transect$year==2015 & region_till_transect$variable=="perc_rt" &
-                           region_till_transect$region=="Southern IL","mean.value"] ) /
-  (2018-2015)  # -0.486
-# no till
-(region_till_transect[region_till_transect$year==2018 & region_till_transect$variable=="perc_nt" &
-                        region_till_transect$region=="Southern IL","mean.value"] -
-    region_till_transect[region_till_transect$year==2015 & region_till_transect$variable=="perc_nt" &
-                           region_till_transect$region=="Southern IL","mean.value"] ) /
-  (2018-2015)  # 0.375
-
-
-
-
-
-########### OpTIS 2017 adoption levels
-
-
 
 

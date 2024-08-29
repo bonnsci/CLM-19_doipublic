@@ -11,6 +11,7 @@ library(sf)
 se <- function(x) sd(x, na.rm=T) / sqrt(length(x))
 
 
+
 ### load and prep optis data
 # prepped from other scripts in this repo
 optny <- read.csv("data/optis/datny_cleanlong.csv")
@@ -120,6 +121,7 @@ ggplot(dat.2017, aes(x=Transect, y=OpTIS)) +
                    aes(label=after_stat(r.label)),  # not showing p-value because this is not a subsample of a whole population, this is all the counties
                        r.accuracy=0.01,
                    #aes(label = paste(after_stat(rr.label), after_stat(p.label), sep="~`,`~")), makes it say R2 which technically is incorrect
+
                    label.y=100) +
   facet_grid(. ~ crop_name) + 
   xlim(0,100) + ylim(0,100) +
@@ -218,6 +220,7 @@ ggplot(resid.2017, aes(x=resid, fill=variable)) +
         axis.text=element_text(size=12))
 ggsave("plots/adoption/OpTIS_vs_Transect.histogram.png", height=4, width=7)
 
+
 # are the residuals significantly different by tillage type?
 till.tr <- aov(resid~variable*crop_name, data=resid.2017)
 summary(till.tr)
@@ -264,6 +267,7 @@ TukeyHSD(till.tr)
 # No-till:Soybeans-Reduced:Soybeans       -58.692542 -67.985213 -49.3998710 0.0000000
 
 
+
 ### graphs comparing tillage estimates for OpTIS and AgCensus
 dat.2017.mean <- dat.2017 %>%
   group_by(state.lower, state, county.lower, variable) %>%
@@ -286,6 +290,7 @@ ggplot(dat.2017.mean, aes(x=AgCensus, y=OpTIS)) +
                    # aes(label = paste(after_stat(rr.label), after_stat(p.label), sep="~`,`~")),
                    aes(label=after_stat(r.label)),  # not showing p-value because this is not a subsample of a whole population, this is all the counties
                    r.accuracy=0.01,
+
                    label.y=100) +
   facet_grid(. ~ state) +  
   xlim(0,100) + ylim(0,100) +
@@ -400,6 +405,7 @@ ggplot(resid.2017, aes(x=resid, fill=variable)) +
 ggsave("plots/adoption/OpTIS_vs_AgCensus.histogram.png", height=4, width=7)
 
 
+
 # are the residuals significantly different by tillage type?
 
 till.ce <- aov(resid~variable*state, data=resid.2017)
@@ -446,6 +452,7 @@ TukeyHSD(till.ce)
 # No-till:New York-Conventional:New York       46.514794  36.2745487  56.755040 0.0000000
 # No-till:New York-Reduced:New York            -2.092993 -12.1418155   7.955829 0.9912297
 
+
 ### graphs comparing cover crops estimates for OpTIS and AgCensus
 dat.2017 <- dat %>%
   filter(year == 2017)
@@ -468,8 +475,10 @@ ggplot(dat.2017.mean, aes(x=AgCensus, y=OpTIS, fill=state)) +
   # scale_fill_brewer(palette='Set2', labels=c('Illinois', 'New York'), name='State') +
   ggpubr::stat_cor(method='spearman', 
                    aes(color=state,
+
                        label=after_stat(r.label)),  # not showing p-value because this is not a subsample of a whole population, this is all the counties
                    r.accuracy=0.01,
+
                    label.y=c(40,37)) +
   facet_grid(. ~ variable, labeller=as_labeller(c("perc_cc" = 'Cover Crop'))) + 
   xlim(0,40) + ylim(0,40) +
@@ -486,6 +495,7 @@ ggplot(dat.2017.mean, aes(x=AgCensus, y=OpTIS, fill=state)) +
         legend.title=element_text(size=13),
         axis.title=element_text(size=12),
         axis.text=element_text(size=11))
+
 ggsave("plots/adoption/OpTIS_vs_AgCensus.scatter.cc.png", height=3, width=3)
 
 resid.2017 <- dat.2017.mean %>%
@@ -515,6 +525,7 @@ ggplot(resid.2017, aes(x=resid, fill=state)) +
         panel.grid.major=element_blank(),
         legend.margin=margin(c(0.5, 0.5, 0.5, 0.5)),
         legend.key.spacing.x=unit(1, "cm"),
+
         legend.position = c(0.78, 0.82),
         legend.box.spacing = unit(0.2, "cm"),
         legend.text=element_text(size=11, margin=margin(l=5)),
@@ -523,6 +534,7 @@ ggplot(resid.2017, aes(x=resid, fill=state)) +
         axis.title=element_text(size=12),
         axis.text=element_text(size=11))
 ggsave("plots/adoption/OpTIS_vs_AgCensus.histogram.cc.png", height=3, width=3.3)
+
 
 # are the residuals significantly different by tillage type?
 
@@ -535,7 +547,7 @@ summary(cc.ce)
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 28 observations deleted due to missingness
 TukeyHSD(cc.ce)
-Tukey multiple comparisons of means
+
 # 95% family-wise confidence level
 # 
 # Fit: aov(formula = resid ~ state, data = resid.2017)
@@ -543,7 +555,6 @@ Tukey multiple comparisons of means
 # $state
 #                     diff       lwr       upr p adj
 # New York-Illinois -6.941947 -9.445089 -4.438805 2e-07
-
 
 
 all <- map_data("county", c("New York", "Illinois"))
