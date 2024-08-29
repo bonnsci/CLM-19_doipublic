@@ -11,12 +11,6 @@ library(sf)
 se <- function(x) sd(x, na.rm=T) / sqrt(length(x))
 
 
-## to do:
-# Fix legend titles in maps for agcensus vs optis (tillage and cc)
-# plot maps together
-# plot plots together
-
-
 
 ### load and prep optis data
 # prepped from other scripts in this repo
@@ -124,7 +118,10 @@ ggplot(dat.2017, aes(x=Transect, y=OpTIS)) +
   # scale_fill_brewer(palette='Set1', name='Tillage Type') +
   #stat_smooth(method='lm', se=FALSE) +
   ggpubr::stat_cor(method='spearman',
-                   aes(label = paste(after_stat(rr.label), after_stat(p.label), sep="~`,`~")),
+                   aes(label=after_stat(r.label)),  # not showing p-value because this is not a subsample of a whole population, this is all the counties
+                       r.accuracy=0.01,
+                   #aes(label = paste(after_stat(rr.label), after_stat(p.label), sep="~`,`~")), makes it say R2 which technically is incorrect
+
                    label.y=100) +
   facet_grid(. ~ crop_name) + 
   xlim(0,100) + ylim(0,100) +
@@ -224,6 +221,52 @@ ggplot(resid.2017, aes(x=resid, fill=variable)) +
 ggsave("plots/adoption/OpTIS_vs_Transect.histogram.png", height=4, width=7)
 
 
+# are the residuals significantly different by tillage type?
+till.tr <- aov(resid~variable*crop_name, data=resid.2017)
+summary(till.tr)
+# Df Sum Sq Mean Sq F value Pr(>F)    
+#   variable             2 113228   56614 108.274 <2e-16 ***
+#   crop_name            1     11      11   0.022  0.883    
+#   variable:crop_name   2  88080   44040  84.226 <2e-16 ***
+#   Residuals          585 305884     523                   
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 375 observations deleted due to missingness
+TukeyHSD(till.tr)
+# Tukey multiple comparisons of means
+# 95% family-wise confidence level
+# 
+# Fit: aov(formula = resid ~ variable * crop_name, data = resid.2017)
+# 
+# $variable
+# diff       lwr        upr     p adj
+# Reduced-Conventional  28.353159  22.93948  33.766842 0.0000000
+# No-till-Conventional  -1.923678  -7.33736   3.490005 0.6814568
+# No-till-Reduced      -30.276837 -35.69052 -24.863155 0.0000000
+# 
+# $crop_name
+# diff       lwr     upr     p adj
+# Soybeans-Corn 0.2779926 -3.416795 3.97278 0.8825738
+# 
+# $`variable:crop_name`
+# diff        lwr         upr     p adj
+# Reduced:Corn-Conventional:Corn           21.713484  12.373522  31.0534464 0.0000000
+# No-till:Corn-Conventional:Corn           20.142308  10.802346  29.4822699 0.0000000
+# Conventional:Soybeans-Conventional:Corn  10.510259   1.193913  19.8266058 0.0166478
+# Reduced:Soybeans-Conventional:Corn       45.436026  36.119680  54.7523727 0.0000000
+# No-till:Soybeans-Conventional:Corn      -13.256515 -22.572862  -3.9401690 0.0007616
+# No-till:Corn-Reduced:Corn                -1.571176 -10.911139   7.7687856 0.9968102
+# Conventional:Soybeans-Reduced:Corn      -11.203225 -20.519571  -1.8868786 0.0082028
+# Reduced:Soybeans-Reduced:Corn            23.722542  14.406195  33.0388884 0.0000000
+# No-till:Soybeans-Reduced:Corn           -34.970000 -44.286346 -25.6536534 0.0000000
+# Conventional:Soybeans-No-till:Corn       -9.632049 -18.948395  -0.3157021 0.0379551
+# Reduced:Soybeans-No-till:Corn            25.293718  15.977372  34.6100648 0.0000000
+# No-till:Soybeans-No-till:Corn           -33.398823 -42.715170 -24.0824769 0.0000000
+# Reduced:Soybeans-Conventional:Soybeans   34.925767  25.633096  44.2184377 0.0000000
+# No-till:Soybeans-Conventional:Soybeans  -23.766775 -33.059446 -14.4741040 0.0000000
+# No-till:Soybeans-Reduced:Soybeans       -58.692542 -67.985213 -49.3998710 0.0000000
+
+
 
 ### graphs comparing tillage estimates for OpTIS and AgCensus
 dat.2017.mean <- dat.2017 %>%
@@ -244,7 +287,10 @@ ggplot(dat.2017.mean, aes(x=AgCensus, y=OpTIS)) +
   scale_fill_manual(values=till3col, name='Tillage Type') +
   # scale_fill_brewer(palette='Set1', name='Tillage Type') +
   ggpubr::stat_cor(method='spearman',
-                   aes(label = paste(after_stat(rr.label), after_stat(p.label), sep="~`,`~")),
+                   # aes(label = paste(after_stat(rr.label), after_stat(p.label), sep="~`,`~")),
+                   aes(label=after_stat(r.label)),  # not showing p-value because this is not a subsample of a whole population, this is all the counties
+                   r.accuracy=0.01,
+
                    label.y=100) +
   facet_grid(. ~ state) +  
   xlim(0,100) + ylim(0,100) +
@@ -359,6 +405,54 @@ ggplot(resid.2017, aes(x=resid, fill=variable)) +
 ggsave("plots/adoption/OpTIS_vs_AgCensus.histogram.png", height=4, width=7)
 
 
+
+# are the residuals significantly different by tillage type?
+
+till.ce <- aov(resid~variable*state, data=resid.2017)
+# summary(till.ce)
+#                    Df Sum Sq Mean Sq F value Pr(>F)    
+#   variable         2  14060    7030  40.799 <2e-16 ***
+#   state            1    266     266   1.546  0.214    
+#   variable:state   2  27181   13591  78.875 <2e-16 ***
+#   Residuals      379  65304     172                   
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 101 observations deleted due to missingness
+TukeyHSD(till.ce)
+# Tukey multiple comparisons of means
+# 95% family-wise confidence level
+# 
+# Fit: aov(formula = resid ~ variable * state, data = resid.2017)
+# 
+# $variable
+# diff       lwr       upr     p adj
+# Reduced-Conventional 12.4018362  8.540934 16.262739 0.0000000
+# No-till-Conventional 13.2607859  9.399883 17.121689 0.0000000
+# No-till-Reduced       0.8589497 -2.986842  4.704741 0.8588886
+# 
+# $state
+# diff       lwr      upr     p adj
+# New York-Illinois -2.031593 -5.244445 1.181259 0.2145182
+# 
+# $`variable:state`
+# diff         lwr        upr     p adj
+# Reduced:Illinois-Conventional:Illinois        2.865868  -2.4250800   8.156816 0.6310444
+# No-till:Illinois-Conventional:Illinois        4.543178  -0.7477699   9.834126 0.1390009
+# Conventional:New York-Conventional:Illinois -31.834154 -40.1027859 -23.565521 0.0000000
+# Reduced:New York-Conventional:Illinois       16.773634   8.7432866  24.803982 0.0000001
+# No-till:New York-Conventional:Illinois       14.680641   6.6502934  22.710988 0.0000040
+# No-till:Illinois-Reduced:Illinois             1.677310  -3.6136379   6.968258 0.9443404
+# Conventional:New York-Reduced:Illinois      -34.700022 -42.9686539 -26.431389 0.0000000
+# Reduced:New York-Reduced:Illinois            13.907766   5.8774186  21.938114 0.0000157
+# No-till:New York-Reduced:Illinois            11.814773   3.7844254  19.845120 0.0004473
+# Conventional:New York-No-till:Illinois      -36.377332 -44.6459641 -28.108699 0.0000000
+# Reduced:New York-No-till:Illinois            12.230456   4.2001084  20.260803 0.0002390
+# No-till:New York-No-till:Illinois            10.137463   2.1071152  18.167810 0.0045530
+# Reduced:New York-Conventional:New York       48.607788  38.3675419  58.848033 0.0000000
+# No-till:New York-Conventional:New York       46.514794  36.2745487  56.755040 0.0000000
+# No-till:New York-Reduced:New York            -2.092993 -12.1418155   7.955829 0.9912297
+
+
 ### graphs comparing cover crops estimates for OpTIS and AgCensus
 dat.2017 <- dat %>%
   filter(year == 2017)
@@ -381,7 +475,10 @@ ggplot(dat.2017.mean, aes(x=AgCensus, y=OpTIS, fill=state)) +
   # scale_fill_brewer(palette='Set2', labels=c('Illinois', 'New York'), name='State') +
   ggpubr::stat_cor(method='spearman', 
                    aes(color=state,
-                       label = paste(after_stat(rr.label), after_stat(p.label), sep="~`,`~")),
+
+                       label=after_stat(r.label)),  # not showing p-value because this is not a subsample of a whole population, this is all the counties
+                   r.accuracy=0.01,
+
                    label.y=c(40,37)) +
   facet_grid(. ~ variable, labeller=as_labeller(c("perc_cc" = 'Cover Crop'))) + 
   xlim(0,40) + ylim(0,40) +
@@ -393,11 +490,12 @@ ggplot(dat.2017.mean, aes(x=AgCensus, y=OpTIS, fill=state)) +
         legend.key.spacing.x=unit(1, "cm"),
         legend.position = c(0.8, 0.4),
         legend.box.spacing = unit(0.05, "cm"),
-        legend.text=element_text(size=10, margin=margin(l=0.05)),
-        strip.text=element_text(size=10, face="bold"),
-        legend.title=element_text(size=11),
-        axis.title=element_text(size=10),
-        axis.text=element_text(size=8))
+        legend.text=element_text(size=12, margin=margin(l=0.05)),
+        strip.text=element_text(size=12, face="bold"),
+        legend.title=element_text(size=13),
+        axis.title=element_text(size=12),
+        axis.text=element_text(size=11))
+
 ggsave("plots/adoption/OpTIS_vs_AgCensus.scatter.cc.png", height=3, width=3)
 
 resid.2017 <- dat.2017.mean %>%
@@ -427,14 +525,36 @@ ggplot(resid.2017, aes(x=resid, fill=state)) +
         panel.grid.major=element_blank(),
         legend.margin=margin(c(0.5, 0.5, 0.5, 0.5)),
         legend.key.spacing.x=unit(1, "cm"),
-        legend.position = c(0.8, 0.5),
+
+        legend.position = c(0.78, 0.82),
         legend.box.spacing = unit(0.2, "cm"),
-        legend.text=element_text(size=10, margin=margin(l=5)),
-        strip.text=element_text(size=10, face="bold"),
-        legend.title=element_text(size=11),
-        axis.title=element_text(size=10),
-        axis.text=element_text(size=8))
-ggsave("plots/adoption/OpTIS_vs_AgCensus.histogram.cc.png", height=3, width=3)
+        legend.text=element_text(size=11, margin=margin(l=5)),
+        strip.text=element_text(size=12, face="bold"),
+        legend.title=element_text(size=12),
+        axis.title=element_text(size=12),
+        axis.text=element_text(size=11))
+ggsave("plots/adoption/OpTIS_vs_AgCensus.histogram.cc.png", height=3, width=3.3)
+
+
+# are the residuals significantly different by tillage type?
+
+cc.ce <- aov(resid~state, data=resid.2017)
+summary(cc.ce)
+# Df Sum Sq Mean Sq F value   Pr(>F)    
+# state         1   1196  1195.7    30.1 2.04e-07 ***
+#   Residuals   131   5204    39.7                     
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 28 observations deleted due to missingness
+TukeyHSD(cc.ce)
+
+# 95% family-wise confidence level
+# 
+# Fit: aov(formula = resid ~ state, data = resid.2017)
+# 
+# $state
+#                     diff       lwr       upr p adj
+# New York-Illinois -6.941947 -9.445089 -4.438805 2e-07
 
 
 all <- map_data("county", c("New York", "Illinois"))
