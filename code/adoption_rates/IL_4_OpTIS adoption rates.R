@@ -50,6 +50,12 @@ means_1821 <- datil%>%
   filter(year>2017) %>%
   group_by(variable) %>%
   summarize(Mean = mean(value), se=se(value))
+# variable  Mean    se
+# <chr>    <dbl> <dbl>
+#   1 perc_cc   7.86 0.295
+# 2 perc_ct  17.0  0.500
+# 3 perc_nt  41.3  0.701
+# 4 perc_rt  41.4  0.555
 
 # what are the state average adoption rates across all years and crops
 means_global <- datil%>%

@@ -51,6 +51,13 @@ means_1821 <- datny%>%  # across all acrops
   group_by(variable) %>%
   summarize(Mean = mean(value), se=se(value))
 
+# variable  Mean    se
+# <chr>    <dbl> <dbl>
+# 1 perc_cc   8.61 0.551
+# 2 perc_ct  11.9  0.630
+# 3 perc_nt  25.8  1.04 
+# 4 perc_rt  51.8  1.23 
+
 means_1821[means_1821$variable=="perc_nt", "Mean"] + means_1821[means_1821$variable=="perc_rt", "Mean"] #77.6
 (means_1821[means_1821$variable=="perc_nt", "se"] + means_1821[means_1821$variable=="perc_rt", "se"])/2 # 1.14
 

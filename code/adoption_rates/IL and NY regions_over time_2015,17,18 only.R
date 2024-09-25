@@ -8,50 +8,10 @@ library(maps)
 library(sf)
 # install.packages("ggnewscale")
 # library(ggnewscale)
+# install.packages("Rmisc") 
+library(Rmisc)  # for summarySE
 
 se <- function(x) sd(x, na.rm=T) / sqrt(length(x))
-
-## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
-##   data: a data frame.
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   groupvars: a vector containing names of columns that contain grouping variables
-##   na.rm: a boolean that indicates whether to ignore NA's
-##   conf.interval: the percent range of the confidence interval (default is 95%)
-summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
-                      conf.interval=.95, .drop=TRUE) {
-  library(plyr)
-  
-  # New version of length which can handle NA's: if na.rm==T, don't count them
-  length2 <- function (x, na.rm=FALSE) {
-    if (na.rm) sum(!is.na(x))
-    else       length(x)
-  }
-  
-  # This does the summary. For each group's data frame, return a vector with
-  # N, mean, and sd
-  datac <- ddply(data, groupvars, .drop=.drop,
-                 .fun = function(xx, col) {
-                   c(N    = length2(xx[[col]], na.rm=na.rm),
-                     mean = mean   (xx[[col]], na.rm=na.rm),
-                     sd   = sd     (xx[[col]], na.rm=na.rm)
-                   )
-                 },
-                 measurevar
-  )
-  
-  # Rename the "mean" column    
-  datac <- rename(datac, c("mean" = measurevar))
-  
-  datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
-  
-  # Confidence interval multiplier for standard error
-  # Calculate t-statistic for confidence interval: 
-  # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
-  ciMult <- qt(conf.interval/2 + .5, datac$N-1)
-  datac$ci <- datac$se * ciMult
-  
-  return(datac)
-}
 
 
 ### to do
@@ -71,8 +31,11 @@ optil$state <- rep("Illinois", nrow(optil))
 opt <- bind_rows(optny, optil)
 rm(optil, optny)
 opt$source <- rep("OpTIS", nrow(opt))
-opt$year <- opt$year -1   # to (somewhat) align optis crop year with ag census calendar year
-# unique(opt$crop_name)  #  "Soybeans" "Corn" 
+opt$year <- ifelse(opt$variable=="perc_cc", opt$year-1, opt$year)   # to (somewhat) align optis crop year with ag census calendar year
+# Doing this for cover crops but not for tillage see supplemental Fig. S1
+# i.e., crop year 2018 optis spring tillage, aligns with Census and Transect 2018 spring tillage, etc. ==DO NOT SUBTRACT 1 
+# but crop year 2018 cover crop (fall 2017) aligns with Census calendar year fall 2017 planted-cover crop.  ==DO SUBTRACT 1
+
 
 
 ### load and prep census data
@@ -155,7 +118,7 @@ dat$region <- ifelse(dat$state == "New York" & dat$county %in% c("Niagara", "Orl
 dat <- dat[dat$region != "X",]
 
 # bring in climate data from Alison Thiem
-clm <- read.csv("data/optis/OpTIS_weather_v3/ThreeCountyWeatherOverviewV3.csv")
+clm <- read.csv("data/optis/OpTIS_weather_v4/ThreeCountyWeatherOverviewV4.csv")
 clm <- clm[,1:13]
 # From Alison: I’m attaching a folder containing the daily data for each of the 
 # three highlighted lat/lon locations for 2014-2015, 2015-2016, 2016-2017, 2017-2018, 2018-2019, 
@@ -180,15 +143,20 @@ clm <- clm[,1:13]
 # minimum daily average temperature (C), and the date of that minimum 
 # average daily temperature.\
 
-# The 3 locations are 
-# Wyoming County, NY 42.7, -78.2  (western New York)
-# Livingston County, IL 40.9, -88.5 (central IL)
-# Macoupin County, IL 39.3, -89.9 (southern IL)
+# The 3 locations representing the 3 regions are:
+# Central IL (Logan County)
+# Southern IL (Jefferson County)
+# Western NY (Livingston County)
 
-clm$region <- ifelse(clm$County=="Wyoming, NY", "Western NY",
-                     ifelse(clm$County=="Livingston, IL", "Central IL", "Southern IL"))
+clm <- clm[clm$County %in% c( "Central IL (Logan County) 40.102 N, -89.357 W" ,
+                              "Southern IL (Jefferson County) 38.292 N, -88.778 W",
+                              "Western NY (Livingston County) 42.600 N, -77.797 W"),]
+
+clm$region <- ifelse(clm$County=="Western NY (Livingston County) 42.600 N, -77.797 W", "Western NY",
+                     ifelse(clm$County== "Central IL (Logan County) 40.102 N, -89.357 W", "Central IL", "Southern IL"))
 
 clm$year <- as.numeric(str_sub(clm$Year, 6,10))
+
 
 
 
@@ -259,19 +227,19 @@ dat.cc$year.cat <- as.factor(dat.cc$year)
 clm2$year.cat <- as.factor(clm2$year)
 dat.cc$crop_source <- paste0(dat.cc$crop_name, "_", dat.cc$source)
 ccsum <- summarySE(dat.cc, measurevar="value", groupvars=c("year.cat", "source", "crop_name", "region", "crop_source"))
-
+ccsum <- ccsum[ccsum$year.cat %in% c("2015", "2017", "2018"),]
 
 ggplot() +
   #GDD bars in background
-  geom_bar(data=clm2[clm2$variable=="perc_cc" & clm2$year <2023,], 
+  geom_bar(data=clm2[clm2$variable=="perc_cc" & clm2$year %in% c(2015, 2017, 2018),], 
            aes(x=year.cat, y=clm.dat, fill=variable), 
            stat="identity", width=0.9, alpha=0.3) +
   scale_fill_manual(breaks = "perc_cc",
-                     labels = "GDD",
+                     labels = "Fall GDD",
                      values="#DDCC77",
                      name = "") +
   # add points
-  geom_pointrange(data= ccsum, aes(x=year.cat, y=value, ymin= value-se, ymax=value+se, color=crop_source, shape=crop_source), 
+  geom_pointrange(data= ccsum, aes(x=year.cat, y=value, ymin= value-ci, ymax=value+ci, color=crop_source, shape=crop_source), 
              size=0.5, alpha=0.7, stroke=1,
              position=position_dodge(width=0.4)) +
 
@@ -288,11 +256,11 @@ ggplot() +
              cols=vars(factor(region)), 
              labeller = as_labeller(
                c("perc_cc" = "Cover crop",
-                 "Central IL" = "Central Illinois",
-                 "Southern IL" = "Southern Illinois",
-                 "Western NY" = "Western New York"))) +
-  scale_y_continuous(sec.axis = sec_axis(~.*scale_cc, name="GDD from Oct 1 to\nfirst deep freeze"), 
-                     name="% of county acres",
+                 "Central IL" = "CIL",
+                 "Southern IL" = "SIL",
+                 "Western NY" = "WNY"))) +
+  scale_y_continuous(sec.axis = sec_axis(~.*25, name="Fall GDD"), 
+                     name="% of cropland",
                      expand=expansion(mult=c(0,0.05))) +
   scale_x_discrete(name="Year") + # , 
   theme(
@@ -316,8 +284,8 @@ ggplot() +
     legend.key.size = unit(0.6, "cm")
   )	 
 
-ggsave("plots/adoption/perc acres_by year_CC_2013-14_21-22_no x axis.png", width=10, height=2.3, dpi=300)
-# ggsave("plots/adoption/perc acres_by year_CC_2013-14_21-22.png", width=10, height=3, dpi=300)
+ggsave("plots/adoption/perc acres_by year_CC_2015,17,18_no x axis.png", width=8, height=2.3, dpi=300)
+# ggsave("plots/adoption/perc acres_by year_CC_2015,17,18.png", width=10, height=3, dpi=300)
 
 
 
@@ -333,9 +301,10 @@ tillsum <- summarySE(dat.till,
                      measurevar="value", 
                      groupvars=c("year.cat","variable", "source", "crop_name", "region", "crop_source"),
                      na.rm=TRUE)
-clm2.till<- clm2[clm2$variable !="perc_cc" & clm2$year <2023,]
-clm2.till$variable <- factor(clm2.till$variable, levels=c('perc_ct', 'perc_rt', 'perc_nt'))
-levels(clm2.till$variable) <- c('Conventional till', 'Reduced till', 'No-till')
+clm2.till<- clm2[clm2$variable !="perc_cc" & clm2$year %in% c(2015, 2017, 2018),]
+clm2.till$variable <- factor(clm2.till$variable, levels=c('perc_nt', 'perc_rt', 'perc_ct'))
+levels(clm2.till$variable) <- c('No-till', 'Reduced till', 'Conventional till')
+tillsum <- tillsum[tillsum$year %in% c(2015, 2017, 2018),]
 
 
 # unique(tillsum$crop_source)  # "Corn_OpTIS"        "Soybeans_OpTIS"    "Corn_Transect"     "Soybeans_Transect" "Cropland_AgCensus"
@@ -350,7 +319,7 @@ ggplot() +
                     labels = "Crop year fall &\nspring precip",
                     name = "") +
   # add points
-  geom_pointrange(data= tillsum, aes(x=year.cat, y=value, ymin= value-se, ymax=value+se, color=crop_source, shape=crop_source), 
+  geom_pointrange(data= tillsum, aes(x=year.cat, y=value, ymin= value-ci, ymax=value+ci, color=crop_source, shape=crop_source), 
                   size=0.5, alpha=0.7, stroke=1,
                   position=position_dodge(width=0.4)) +
   scale_color_manual(breaks = c("Corn_OpTIS", "Soybeans_OpTIS", "Cropland_AgCensus", "Corn_Transect", "Soybeans_Transect"),
@@ -366,9 +335,9 @@ ggplot() +
              cols=vars(factor(region)), 
              labeller = as_labeller(
                c("No-till"="No-till","Reduced till"= "Reduced till", "Conventional till"= "Conventional till",
-                 "Central IL" = "Central Illinois","Southern IL" = "Southern Illinois","Western NY" = "Western New York"))) +
+                 "Central IL" = "CIL","Southern IL" = "SIL","Western NY" = "WNY"))) +
   scale_y_continuous(sec.axis = sec_axis(~.*scale_cc, name="Precip (mm)"), 
-                     name="% of county acres",
+                     name="% of cropland",
                      expand=expansion(mult=c(0,0.05))) +
   scale_x_discrete(name="Year") + # , 
   theme(
@@ -391,4 +360,46 @@ ggplot() +
     legend.key.size = unit(0.6, "cm")
   )	 
 
-ggsave("plots/adoption/perc acres_by year_tillage_2013-14_21-22_no region labels.png", width=10, height=6, dpi=300)
+ggsave("plots/adoption/perc acres_by year_tillage_2015,17,18_no region labels.png", width=8, height=6, dpi=300)
+
+
+
+
+############ is precip a predictor of tillage? is gdd a predictor of cover crops?
+
+
+# need to have clm and adoption data in one row
+clm3 <- clm[, c("year", "region", 
+                "cum_precip_mm_1001.1130.0301.0430", 
+                "Cumulative_GDD_1001.First.Big.Freeze")]
+
+colnames(clm3)[c(3,4)] <- c("cumprecip", "cumgdd")
+
+datclm <- left_join(dat, clm3)
+
+summary(lm.cc <- lm(value~cumgdd*region, dat=datclm[datclm$variable=="perc_cc",]))
+summary(lm.till <- lm(value~cumprecip*region*variable, dat=datclm[datclm$variable !="perc_cc",]))
+
+
+
+       
+summary(lm.cc <- lm(value~cumgdd*region, dat=datclm[datclm$variable=="perc_cc" & datclm$source=="OpTIS",]))
+summary(lm.till <- lm(value~cumprecip*region*variable, dat=datclm[datclm$variable !="perc_cc" & datclm$source=="OpTIS",]))
+       
+
+ggplot(dat=datclm[datclm$variable=="perc_cc" & datclm$source=="OpTIS",], 
+       aes(x=cumgdd, y=value, color=region)) +
+  geom_point()  +
+  xlab("Fall GDD") +
+  ylab("Cover crop adoption (%)")
+  # geom_smooth()
+
+
+ggplot(dat=datclm[datclm$variable!="perc_cc" & datclm$source=="OpTIS",], 
+       aes(x=cumprecip, y=value, color=region)) +
+  geom_point() + 
+  facet_grid(rows=vars(variable)) +
+  xlab("Fall and Spring precip (mm)") +
+  ylab("Cover crop adoption (%)")
+
+
