@@ -102,6 +102,18 @@ resid.2017 %>%
   summarize(mean = mean(resid, na.rm=T),
             sd = sd(resid, na.rm=T))
 
+# # A tibble: 6 × 4
+# # Groups:   crop_name [2]
+# crop_name variable       mean    sd
+# <chr>     <fct>         <dbl> <dbl>
+#   1 Corn      Conventional -30.2   33.7
+# 2 Corn      Reduced        7.70  20.8
+# 3 Corn      No-till       20.7   24.4
+# 4 Soybeans  Conventional  -9.42  19.8
+# 5 Soybeans  Reduced       17.6   13.4
+# 6 Soybeans  No-till       -9.40  25.9
+
+
 ggplot(resid.2017, aes(x=resid, fill=variable)) +                       
   #geom_histogram(aes(y = ..density..), position="identity", alpha=0.5, color='black') +
   geom_density(aes(color=variable), alpha=0.4) +
@@ -246,6 +258,18 @@ resid.2017 %>%
   summarize(mean = mean(resid, na.rm=T),
             sd = sd(resid, na.rm=T))
 
+# # A tibble: 6 × 4
+# # Groups:   state [2]
+# state    variable       mean    sd
+# <chr>    <fct>         <dbl> <dbl>
+#   1 Illinois Conventional -13.6  11.5 
+# 2 Illinois Reduced       -6.74 11.2 
+# 3 Illinois No-till       18.1  13.3 
+# 4 New York Conventional -36.2   9.77
+# 5 New York Reduced        8.14 18.4 
+# 6 New York No-till        8.07 19.9 
+
+
 resid.2017$variable <- factor(resid.2017$variable, 
                               levels=c('Conventional', 'Reduced', 'No-till'))
 
@@ -387,6 +411,14 @@ resid.2017 %>%
   group_by(state, variable) %>%
   summarize(mean = mean(resid, na.rm=T),
             sd = sd(resid, na.rm=T))
+
+# # A tibble: 2 × 4
+# # Groups:   state [2]
+# state    variable  mean    sd
+# <chr>    <chr>    <dbl> <dbl>
+# 1 Illinois perc_cc   2.65  5.21
+# 2 New York perc_cc  -4.29  8.88
+
 
 ggplot(resid.2017, aes(x=resid, fill=state)) +
   #geom_histogram(aes(y = ..density..), position="identity", alpha=0.5, color='black') +
