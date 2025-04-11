@@ -78,7 +78,7 @@ mapa <- ggplot() +
 mapa
 
 
-ggsave("plots/maps/countymap_3areas.png", height=7.25, width=8)
+ggsave("plots/maps/FigS1_countymap_3areas.png", height=7.25, width=8)
 
 
 

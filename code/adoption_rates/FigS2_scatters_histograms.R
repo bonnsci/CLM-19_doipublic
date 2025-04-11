@@ -3,9 +3,6 @@
 # Modified by McGill 3/17/25
 
 # This script creates Fig. S2  plots 
-# "Comparison of adoption data sources for 
-# tillage (a-d) and cover crops (e-f) across Illinois (102 counties) and New York 
-# (42 counties) in 2017."
 
 ################################################
 # FIRST RUN "0_Load_adopt_data.R" to load packages and data  
@@ -79,15 +76,11 @@ till3col <- c("#88CCEE", "#999933", "#AA4499")
 ggplot(dat.2017, aes(x=Transect, y=OpTIS)) +                              
   geom_abline(slope=1, intercept=0) +
   geom_point(aes(fill=variable), shape=21, size=2) + 
-  #scale_fill_brewer(palette='Set1', labels=c('Corn', 'Soybeans'), name='Crop') +
   scale_fill_manual(values=till3col, name='Tillage Type') +
-  # scale_fill_brewer(palette='Set1', name='Tillage Type') +
-  #stat_smooth(method='lm', se=FALSE) +
   ggpubr::stat_cor(method='spearman',
                    aes(label=after_stat(r.label)),  # not showing p-value because this is not a subsample of a whole population, this is all the counties
                    r.accuracy=0.01,
                    #aes(label = paste(after_stat(rr.label), after_stat(p.label), sep="~`,`~")), makes it say R2 which technically is incorrect
-                   
                    label.y=95, label.x=5, size=6) +
   facet_grid(set ~ crop_name, 
              labeller=as_labeller(c("year-0" = '2017 Crop Year', 
@@ -143,12 +136,9 @@ resid.2017 %>%
 # 12 year-1 Soybeans  Conventional till   3.06  18.6
 
 ggplot(resid.2017, aes(x=resid, fill=variable)) +                       
-  #geom_histogram(aes(y = ..density..), position="identity", alpha=0.5, color='black') +
   geom_density(aes(color=variable), alpha=0.4) +
   scale_color_manual(values=till3col, name="Tillage type") +
   scale_fill_manual(values=till3col, name="Tillage type")+
-  # scale_color_brewer(palette='Set1', name='Tillage Type') +
-  # scale_fill_brewer(palette='Set1', name='Tillage Type') +
   facet_grid(set ~ crop_name,  
              labeller=as_labeller(c("year-0" = '2017 Crop Year', 
                                     "year-1"="2018 Crop Year",
@@ -228,10 +218,6 @@ TukeyHSD(till.tr)
 
 ################### Fig. S2i-l ###################
 
-
-
-
-
 dat.2017.mean <- dat.2017 %>%
   group_by(state,county, variable, set) %>%  #, county, variable
   summarize(AgCensus = mean(AgCensus, na.rm=TRUE),
@@ -245,9 +231,7 @@ windows(xpinch=200, ypinch=200, width=5, height=5)
 ggplot(dat.2017.mean, aes(x=AgCensus, y=OpTIS)) +                  
   geom_abline(slope=1, intercept=0) +
   geom_point(aes(fill=variable), shape=21, size=2) + 
-  #stat_smooth(method='lm', se=FALSE) +
   scale_fill_manual(values=till3col, name='Tillage Type') +
-  # scale_fill_brewer(palette='Set1', name='Tillage Type') +
   ggpubr::stat_cor(method='spearman',
                    # aes(label = paste(after_stat(rr.label), after_stat(p.label), sep="~`,`~")),
                    aes(label=after_stat(r.label)),  # not showing p-value because this is not a subsample of a whole population, this is all the counties
@@ -312,18 +296,11 @@ resid.2017 %>%
 
 mean(c(12.1, 14.2, 34.5))
 
-resid.2017$variable <- factor(resid.2017$variable, 
-                              levels=c('Conventional', 'Reduced', 'No-till'))
 
 ggplot(resid.2017, aes(x=resid, fill=variable)) +
-  #geom_histogram(aes(y = ..density..), position="identity", alpha=0.5, color='black') +
   geom_density(aes(color=variable), alpha=0.4) +
   scale_color_manual(values=till3col, name="Tillage type") +
   scale_fill_manual(values=till3col, name="Tillage type")+
-  # scale_color_brewer(palette='Set1', name='Tillage Type') +
-  # scale_fill_brewer(palette='Set1', name='Tillage Type') +
-  facet_grid(. ~ state) + #, labeller = as_labeller(c("illinois" = "Illinois", "new york" = "New York"))) + 
-  #geom_vline(xintercept=0, color='black', lty=2) +
   facet_grid(set ~ state,  
              labeller=as_labeller(c("year-0" = '2017 Crop Year', 
                                     "year-1"="2018 Crop Year",
@@ -494,7 +471,7 @@ ggplot(resid.2017, aes(x=resid, fill=state)) +
         axis.title=element_text(size=12),
         axis.text=element_text(size=11))
 
-ggsave("plots/adoption/FigS2f.png", height=3.5, width=6.55)
+ggsave("plots/adoption/FigS2s-t.png", height=3.5, width=6.55)
 
 
 
