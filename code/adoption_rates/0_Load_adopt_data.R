@@ -14,21 +14,20 @@ se <- function(x) sd(x, na.rm=T) / sqrt(length(x))
 #### PROPRIETARY COUNTY-LEVEL REGROW DATA NOT SHARED IN THIS REPO
 ### so this script will not work for external users
 
-optny <- read.csv("data/adoption/datny_cleanlong.csv") ## not provided
+optny <- read.csv("data/adoption/datny_cleanlong.csv")   # not provided
 optny$state <- rep("New York", nrow(optny))
 optny <- optny[,c(7, 1:3,5,6)]
 
-optil <- read.csv("data/adoption/datil_cleanlong.csv")  ## not provided
+optil <- read.csv("data/adoption/datil_cleanlong.csv")   # not provided
 optil <- optil[,c(1,2,4,5,8,9)]
 optil$state <- rep("Illinois", nrow(optil))
 
 opt <- bind_rows(optny, optil)
 rm(optil, optny)
 opt$source <- rep("OpTIS", nrow(opt))
-opt$year <- ifelse(opt$variable=="perc_cc", opt$year-1, opt$year)   # to (somewhat) align optis crop year with ag census calendar year
-# Doing this for cover crops but not for tillage see Table S1.
-# i.e., crop year 2018 optis spring tillage, aligns with Census and Transect 2018 spring tillage, etc. ==DO NOT SUBTRACT 1 
-# but crop year 2018 cover crop (fall 2017) aligns with Census calendar year fall 2017 planted-cover crop.  ==DO SUBTRACT 1
+opt$year_1 <- opt$year-1  # to (somewhat) align optis crop year with ag census calendar year
+# to only subtract 1 from year for cover crop data:
+# opt$year <- ifelse(opt$variable=="perc_cc", opt$year-1, opt$year) 
 
 
 ### load and prep census data
@@ -42,6 +41,7 @@ cens$source <- rep("AgCensus", nrow(cens))
 cens <- pivot_longer(cens, cols=c(perc_cc, perc_nt, perc_rt, perc_ct), names_to="variable", values_to="value")
 # Census data are for all cropland, not by crop like the other data sources
 cens$crop_name <- rep("Cropland", nrow(cens))
+cens$year_1 <- cens$year # do NOT change this dataset's year
 
 # fix county names to match optis
 cens$county <- ifelse(cens$county == "Du Page", "DuPage",
@@ -82,6 +82,11 @@ till$county <- ifelse(till$county=="JoDaviess", "Jo Daviess",
                              ifelse(till$county== "StClair", "St. Clair",
                                     ifelse(till$county=="RockIsland", "Rock Island", till$county))))
 
+till$year_1<- till$year -1  # we're assuming that the tillage observed in the spring survey is from
+# tillage happening in the fall of 2017 or spring of 2018 so subtracting 1 would
+# potentially better align the data with OpTIS and also want to treat the data the same
+# as the OpTIS data where we subtracted 1.
+
 ###  combine data
 
 dat <- full_join(cens, opt) 
@@ -95,13 +100,13 @@ dat$costate <- paste0(dat$county, " County, ", dat$state)
 dat$region <- ifelse(dat$state == "New York" & dat$county %in% c("Niagara", "Orleans", "Monroe", "Wayne",
                                                                  "Erie", "Genesee", "Wyoming", "Livingston", "Ontario", "Yates", "Seneca",
                                                                  "Chautauqua", "Cattaraugus", "Allegany", "Steuben", "Schuyler", "Chemung"),
-                     "Western NY", 
+                     "Western NY",  # 17 counties
                      ifelse(dat$state=="Illinois" & dat$county %in% c("Henderson", "Warren", "Knox", "Stark", "Marshall", "Woodford", "Livingston", "Ford", "Iroquois",
                                                                       "Hancock", "McDonough", "Fulton", "Peoria", "Tazewell", "McLean",
                                                                       "Adams", "Schuyler", "Brown", "Cass", "Mason", "Menard", "Logan", "DeWitt", "Piatt", "Champaign", "Vermilion",
                                                                       "Pike", "Scott", "Morgan", "Sangamon", "Macon", 
                                                                       "Calhoun", "Greene", "Jersey", "Macoupin", "Montgomery", "Christian", "Shelby", "Moultrie", "Douglas", "Coles", "Cumberland", "Edgar", "Clark"),
-                            "Central IL",
+                            "Central IL",   # 44 counties
                             ifelse(dat$state=="Illinois" & dat$county %in% c("Madison", "Bond", "Fayette", "Effingham", "Jasper", "Crawford", 
                                                                              "St. Clair", "Clinton", "Marion", "Clay", "Richland", "Lawrence",
                                                                              "Monroe", "Washington", "Jefferson", "Wayne", "Edwards", "Wabash",
@@ -109,7 +114,7 @@ dat$region <- ifelse(dat$state == "New York" & dat$county %in% c("Niagara", "Orl
                                                                              "Jackson", "Williamson", "Saline", "Gallatin",
                                                                              "Union", "Johnson", "Pope", "Hardin",
                                                                              "Alexander", "Pulaski", "Massac"),
-                                   "Southern IL", "X")))
+                                   "Southern IL", "X")))  # 34 counties in SIL
 
 dat <- dat[dat$region != "X",]
 
@@ -153,8 +158,6 @@ clm$year <- as.numeric(str_sub(clm$Year, 6,10))
 # add the fall and spring precip from same crop year but different calendar years
 clm$cum_precip_mm_1001.1130.0301.0430 <-  clm$Cumulative_precip_mm_1001.1130 + clm$Cumulative_precip_mm_0301.0430
 
-
-
 # to plot a secondary y-axis in ggplot, we have to scale the second variable to the first one.
 # for cover crops we will be adding GDD data, what is the max?
 gddmax <- max(clm$Cumulative_GDD_1001.First.Big.Freeze)
@@ -172,12 +175,10 @@ scale_ct <- precipmax/ (maxtest %>% dplyr::filter(variable=="perc_ct") %>% pull)
 # The tillage scales are very similar so let's get the mean and use that for those 3
 scale_till <- mean(c(scale_nt, scale_rt, scale_ct))
 
-
 # scale clm data by adoption data
 # plotted the cc data and the max on the y-axis is 25 so using that instead:
 clm$cum_gdd_scaled <- clm$Cumulative_GDD_1001.First.Big.Freeze/25
 clm$cum_precip_tillscaled <- clm$cum_precip_mm_1001.1130.0301.0430/scale_till
-
 
 # clm needs to have "variable" to facet like in the plot below
 clmcc <- clm %>% select(year, region, cum_gdd_scaled) 
